@@ -10,6 +10,22 @@ export const en = {
   "review.banner": "This translation is a draft and needs native-speaker review.",
   "home.title": "Welcome to {business}",
   "home.tagline": "One shared view of sessions, attendance and progress.",
+  "home.pickRole": "Choose a view (placeholder until sign-in is built):",
+  "role.owner": "Owner",
+  "role.coach": "Coach",
+  "role.customer": "Member / Parent",
+  "nav.label": "Main navigation",
+  "nav.dashboard": "Dashboard",
+  "nav.members": "Members",
+  "nav.batches": "Batches",
+  "nav.coaches": "Coaches",
+  "nav.settings": "Settings",
+  "nav.today": "Today",
+  "nav.myRecord": "My record",
+  "nav.progress": "Progress",
+  "nav.schedule": "Schedule",
+  "nav.profile": "Profile",
+  "shell.placeholder": "This screen is a placeholder and will be built in a later task.",
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -3,7 +3,10 @@ import "./globals.css";
 import { getLocale } from "@/lib/i18n/server";
 import { I18nProvider } from "@/lib/i18n/client";
 
-export const metadata = { title: "Project All Star" };
+import { MOCK_THEME } from "@/lib/mock-session";
+
+// Tab title is the business's own name (white-label); will come from tenant theme config.
+export const metadata = { title: MOCK_THEME.displayName };
 export const viewport = { width: "device-width", initialScale: 1 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
