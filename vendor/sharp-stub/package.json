@@ -1,0 +1,7 @@
+{
+  "name": "sharp",
+  "version": "0.35.5",
+  "description": "Empty stand-in so the LGPL libvips binaries are not installed. Image optimization is disabled in next.config.ts.",
+  "license": "MIT",
+  "main": "index.js"
+}
