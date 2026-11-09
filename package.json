@@ -16,6 +16,7 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed/index.ts",
+    "db:import-exercises": "tsx prisma/catalog/index.ts",
     "setup": "node scripts/setup.mjs",
     "start:local": "npm run setup && npm run dev"
   },

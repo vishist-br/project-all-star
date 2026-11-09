@@ -48,4 +48,8 @@ MIT 338, Apache-2.0 29, ISC 13, BSD-2-Clause 8, BSD-3-Clause 3, CC0-1.0 1, 0BSD 
 
 ## Datasets
 
-None yet (free-exercise-db, Unlicense, is imported by a later task).
+| Dataset | License | Pinned source commit | Use |
+| --- | --- | --- | --- |
+| free-exercise-db (https://github.com/yuhonas/free-exercise-db) | The Unlicense (public domain; copy in `data/free-exercise-db/LICENSE.md`) | `f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5` | Gym exercise text/metadata, 876 entries, vendored at `data/free-exercise-db/exercises.json` by `scripts/fetch-free-exercise-db.mjs` and loaded by `npm run db:import-exercises` |
+
+**Images and media: NOT used.** The Unlicense covers the repository, but upstream does not state where its exercise photos came from (the README says the data was restructured from another project, wrkout/exercises.json, and the photos' own provenance and licence are not recorded). Per the reuse policy an unclear licence means we do not use it: the fetch script drops all image paths, the `exercises` table has no image column, and a Proposed decision is logged in Decisions & Docs. Exercise videos from any commercial app are never used.
