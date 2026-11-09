@@ -511,6 +511,16 @@ components:
         secondaryColor: {$ref: '#/components/schemas/HexColor'}
         accentColor: {type: string, pattern: '^#[0-9A-Fa-f]{6}$', nullable: true}
         defaultLocale: {$ref: '#/components/schemas/Locale'}
+        warnings:
+          type: array
+          description: Only present on the PUT /tenant/theme response. Non-blocking advice, e.g. low contrast of white text on a color (below 4.5:1).
+          items:
+            type: object
+            required: [field, code, message]
+            properties:
+              field: {type: string, example: primaryColor}
+              code: {type: string, enum: [low_contrast]}
+              message: {type: string}
     TenantThemeInput:
       type: object
       required: [displayName, primaryColor, secondaryColor]

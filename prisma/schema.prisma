@@ -514,3 +514,23 @@ model AuthSession {
   @@index([tenantId, userId])
   @@map("auth_sessions")
 }
+
+// ---------------------------------------------------------------------------
+// White-label theme
+// ---------------------------------------------------------------------------
+
+// One row per tenant. The display name lives on Tenant.name; no row means defaults.
+model TenantTheme {
+  id              String   @id @default(cuid())
+  tenantId        String   @map("tenant_id")
+  logoUrl         String?  @map("logo_url")
+  primaryColor    String   @map("primary_color") // #RRGGBB
+  secondaryColor  String   @map("secondary_color")
+  accentColor     String?  @map("accent_color")
+  defaultLocale   String   @default("en") @map("default_locale") // en | hi | kn
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  @@unique([tenantId])
+  @@map("tenant_themes")
+}
