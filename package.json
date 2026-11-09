@@ -12,6 +12,8 @@
     "db:up": "docker compose up -d --wait db",
     "db:down": "docker compose down",
     "db:generate": "prisma generate",
+    "db:deploy": "prisma migrate deploy",
+    "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "setup": "node scripts/setup.mjs",
     "start:local": "npm run setup && npm run dev"
