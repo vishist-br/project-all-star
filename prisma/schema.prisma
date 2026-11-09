@@ -18,7 +18,13 @@ model Tenant {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  users User[]
+  users       User[]
+  venues      Venue[]
+  sports      Sport[]
+  batches     Batch[]
+  guardians   Guardian[]
+  members     Member[]
+  enrollments BatchMember[]
 
   @@map("tenants")
 }
@@ -39,9 +45,173 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  batches   Batch[]    @relation("BatchCoach")
+  guardians Guardian[]
+  members   Member[]
 
   @@unique([tenantId, email])
   @@index([tenantId, role])
   @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Venues, sports, batches and members
+// ---------------------------------------------------------------------------
+
+model Venue {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  name      String
+  address   String?
+  city      String?
+  timezone  String   @default("Asia/Kolkata")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  batches Batch[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, isActive])
+  @@map("venues")
+}
+
+model Sport {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  slug      String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  batches Batch[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@map("sports")
+}
+
+enum BatchKind {
+  GROUP_CLASS
+  ONE_ON_ONE
+}
+
+// A recurring batch/class: one coach, one venue, one sport, a weekly schedule.
+model Batch {
+  id         String    @id @default(cuid())
+  tenantId   String    @map("tenant_id")
+  venueId    String    @map("venue_id")
+  sportId    String    @map("sport_id")
+  coachId    String    @map("coach_id") // User with role COACH
+  name       String
+  kind       BatchKind @default(GROUP_CLASS)
+  capacity   Int? // null = no cap
+  // Weekly schedule: ISO weekdays (1 = Monday ... 7 = Sunday) and local wall-clock times.
+  daysOfWeek Int[]
+  startTime  String // "HH:mm" in the venue timezone
+  endTime    String // "HH:mm"
+  startsOn   DateTime? @db.Date
+  endsOn     DateTime? @db.Date
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
+
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  venue       Venue         @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  sport       Sport         @relation(fields: [sportId], references: [id], onDelete: Restrict)
+  coach       User          @relation("BatchCoach", fields: [coachId], references: [id], onDelete: Restrict)
+  enrollments BatchMember[]
+
+  @@index([tenantId, isActive])
+  @@index([tenantId, coachId])
+  @@index([tenantId, venueId])
+  @@index([tenantId, sportId])
+  @@map("batches")
+}
+
+// Parent/guardian contact for a child member. Minimal data: name and one contact.
+// Verified by OTP later; `userId` links the CUSTOMER login once it exists.
+model Guardian {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  userId    String?  @map("user_id")
+  name      String
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  members Member[]
+
+  @@index([tenantId])
+  @@index([tenantId, userId])
+  @@map("guardians")
+}
+
+// Fee status is display only (cash or UPI marked paid by hand). No payment processing.
+enum FeeStatus {
+  PAID
+  DUE
+  OVERDUE
+  WAIVED
+}
+
+enum FeePaidMethod {
+  CASH
+  UPI
+}
+
+// Minimal personal data on purpose: a display name, a birth year (not a full date of
+// birth) and, for adults, an optional login. No photos, addresses or ID numbers.
+model Member {
+  id            String         @id @default(cuid())
+  tenantId      String         @map("tenant_id")
+  displayName   String
+  birthYear     Int?
+  isMinor       Boolean        @default(false)
+  guardianId    String?        @map("guardian_id") // set for kids
+  userId        String?        @map("user_id") // adult member login (CUSTOMER)
+  phone         String? // adults only; kids use the guardian
+  joinedOn      DateTime       @default(now()) @db.Date
+  isActive      Boolean        @default(true)
+  feeStatus     FeeStatus      @default(DUE)
+  feeDueOn      DateTime?      @db.Date
+  feePaidOn     DateTime?      @db.Date
+  feePaidMethod FeePaidMethod?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
+
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  guardian    Guardian?     @relation(fields: [guardianId], references: [id], onDelete: SetNull)
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  enrollments BatchMember[]
+
+  @@index([tenantId, isActive])
+  @@index([tenantId, guardianId])
+  @@index([tenantId, userId])
+  @@index([tenantId, feeStatus])
+  @@map("members")
+}
+
+// Which member is enrolled in which batch (a member can be in several).
+model BatchMember {
+  id        String    @id @default(cuid())
+  tenantId  String    @map("tenant_id")
+  batchId   String    @map("batch_id")
+  memberId  String    @map("member_id")
+  joinedOn  DateTime  @default(now()) @db.Date
+  leftOn    DateTime? @db.Date
+  createdAt DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  batch  Batch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, batchId, memberId])
+  @@index([tenantId, memberId])
+  @@map("batch_members")
 }
