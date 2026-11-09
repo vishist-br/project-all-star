@@ -20,6 +20,17 @@ describe("exercise catalog data", () => {
     }
   });
 
+  it("covers every non-gym demo sport with unique, non-empty drafts", () => {
+    const drafts = loadOriginalEntries();
+    const sports = new Set(drafts.map((d) => d.sportSlug));
+    for (const s of ["karate", "yoga", "zumba"]) expect(sports.has(s)).toBe(true);
+    expect(new Set(drafts.map((d) => d.sourceId)).size).toBe(drafts.length);
+    for (const d of drafts) {
+      expect(d.name.length).toBeGreaterThan(3);
+      expect(d.instructions.length).toBeGreaterThanOrEqual(3);
+    }
+  });
+
   it("documents the pinned commit and licence", () => {
     const doc = readFileSync("docs/THIRD_PARTY.md", "utf8");
     const { sourceCommit } = loadGymEntries()[0];
@@ -47,6 +58,9 @@ describe("exercise import (local Postgres)", () => {
     const first = await importCatalog(prisma, tenantId);
     const count = await prisma.exercise.count({ where: { tenantId } });
     expect(count).toBe(first.total);
+
+    const flagged = await prisma.exercise.count({ where: { tenantId, source: "ORIGINAL", needsTrainerReview: true } });
+    expect(flagged).toBe(loadOriginalEntries().length);
 
     const one = await prisma.exercise.findFirstOrThrow({ where: { tenantId } });
     await prisma.exercise.update({ where: { id: one.id }, data: { needsTrainerReview: !one.needsTrainerReview } });

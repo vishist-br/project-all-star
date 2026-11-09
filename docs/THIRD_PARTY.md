@@ -27,6 +27,7 @@ Policy: MIT, Apache-2.0, BSD, Unlicense or CC0 only (see CLAUDE.md). Update this
 | Item | License | Purpose |
 | --- | --- | --- |
 | lib/i18n (en/hi/kn) | Own code | Small i18n layer; no i18n library added, so no new dependency or licence. Hindi and Kannada strings are our own drafts, marked "needs native-speaker review". |
+| data/exercises/original-sports.json | Own content | Draft exercises for karate, yoga and dance fitness. All text self-written (no text, images or videos from Hevy, Cult.fit or any commercial app). Every entry is flagged "needs trainer review". |
 
 ## Infrastructure (not bundled in the repo)
 
