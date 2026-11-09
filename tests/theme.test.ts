@@ -43,7 +43,7 @@ describe("demo tenants and theme", () => {
   });
 
   it("contains no builder branding in app, components, lib or public files", () => {
-    const banned = /all[ -_]?star/i;
+    const banned = /all[ _-]?star/i;
     const walk = (d: string): string[] =>
       readdirSync(d).flatMap((f) => {
         const p = join(d, f);

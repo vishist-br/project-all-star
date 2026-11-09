@@ -47,3 +47,20 @@ body { padding-top: 2.25rem; }
 
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: .75rem 1rem; overflow-wrap: anywhere; }
 .card-list { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .75rem; }
+
+/* CSV import */
+.small { font-size: .85rem; }
+.btn { border: 0; font: inherit; font-weight: 600; cursor: pointer; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+.file-pick { display: block; margin: 1rem 0; }
+.file-pick span { display: block; font-weight: 600; margin-bottom: .25rem; }
+.file-pick input { width: 100%; min-height: 48px; font: inherit; }
+.import h2 { font-size: 1.1rem; margin: 1.25rem 0 .5rem; }
+.msg-error { color: #9b1c1c; }
+.msg-ok { color: #166534; font-weight: 600; }
+.msg-error-card { border-color: #e5a3a3; }
+.table-wrap { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+.table-wrap table { border-collapse: collapse; font-size: .85rem; white-space: nowrap; }
+.table-wrap th, .table-wrap td { padding: .4rem .6rem; border-bottom: 1px solid var(--line); text-align: left; }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.25rem 0; }

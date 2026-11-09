@@ -1,0 +1,4 @@
+name,phone,email,guardian_name,guardian_phone,batch_name,sport,level,goal,join_date,fee_status
+Sample Member One,+919000000001,sample.one@example.invalid,,,Evening beginners,Gym,Beginner,Build routine,2026-01-05,paid
+Sample Child Two,,,Sample Guardian Two,+919000000002,Kids karate,Karate,White belt,Yellow belt by June,2026-02-10,due
+Sample Member Three,+919000000003,,,,Morning group class,Group classes,Level 1,Attend 3 times a week,2026-03-01,overdue

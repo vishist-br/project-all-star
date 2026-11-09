@@ -54,6 +54,23 @@ export const en = {
   "home.customer.item1": "Your next sessions",
   "home.customer.item2": "Attendance and level progress",
   "home.customer.item3": "Notes shared by your coach",
+  "import.title": "Import members from CSV",
+  "import.intro": "Upload a CSV file of your members. We check it first and show a preview and any errors by row. Nothing is saved until you confirm.",
+  "import.template": "Download sample CSV template",
+  "import.columns": "Columns: {columns}. Only name is required.",
+  "import.choose": "Choose a CSV file",
+  "import.summary": "Check result",
+  "import.counts": "{total} rows, {valid} ready, {errors} errors.",
+  "import.errors": "Errors by row",
+  "import.row": "Row {row}",
+  "import.fixHint": "Fix these rows in your file and choose it again. Rows are saved only when there are no errors.",
+  "import.preview": "Preview (first rows)",
+  "import.confirm": "Import {count} members",
+  "import.another": "Choose another file",
+  "import.done": "Done. {count} members imported.",
+  "import.err.tooLarge": "This file is too large. Please split it into smaller files.",
+  "import.err.badFile": "This file could not be read. Check that it is a CSV with a name column.",
+  "import.err.network": "Network problem. Please try again.",
 } as const;
 
 export type MessageKey = keyof typeof en;
