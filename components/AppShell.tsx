@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { getT } from "@/lib/i18n/server";
 import { NEEDS_REVIEW } from "@/lib/i18n";
@@ -22,10 +23,10 @@ export async function AppShell({ role, children }: { role: Role; children: React
         ) : (
           <span className="logo-mark" aria-hidden="true">{theme.displayName.slice(0, 1)}</span>
         )}
-        <div className="shell-title">
+        <Link href={`/${role}`} className="shell-title">
           <strong>{theme.displayName}</strong>
           <small>{t(`role.${role}`)} · {name}</small>
-        </div>
+        </Link>
         <LanguageSwitcher />
       </header>
       {NEEDS_REVIEW.includes(locale) && <p className="review-banner">{t("review.banner")}</p>}
