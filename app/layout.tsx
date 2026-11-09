@@ -2,19 +2,27 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import { getLocale } from "@/lib/i18n/server";
 import { I18nProvider } from "@/lib/i18n/client";
+import { getSession, isDemoMode } from "@/lib/session";
+import { themeVars } from "@/lib/theme";
+import { DemoSwitcher } from "@/components/DemoSwitcher";
 
-import { MOCK_THEME } from "@/lib/mock-session";
-
-// Tab title is the business's own name (white-label); will come from tenant theme config.
-export const metadata = { title: MOCK_THEME.displayName };
+// Tab title is the business's own name (white-label), from the tenant theme.
+export async function generateMetadata() {
+  const { theme } = await getSession();
+  return { title: theme.displayName };
+}
 export const viewport = { width: "device-width", initialScale: 1 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const locale = await getLocale();
+  const session = await getSession();
   return (
-    <html lang={locale}>
+    <html lang={locale} style={themeVars(session.theme)}>
       <body>
-        <I18nProvider locale={locale}>{children}</I18nProvider>
+        <I18nProvider locale={locale}>
+          {children}
+          {isDemoMode() && <DemoSwitcher tenantSlug={session.tenantSlug} role={session.role} />}
+        </I18nProvider>
       </body>
     </html>
   );

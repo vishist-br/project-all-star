@@ -32,3 +32,14 @@ h1 { font-size: 1.4rem; margin: .5rem 0; overflow-wrap: anywhere; }
   .nav-link[aria-current="page"] { box-shadow: inset 3px 0 0 var(--primary); }
   .shell-header { margin-left: -200px; padding-left: calc(200px + 1rem); }
 }
+
+/* Tenant theme, about page, footer, demo switcher */
+.logo-img { border-radius: 8px; flex: none; display: block; }
+.about { max-width: 40rem; }
+.site-footer { display: flex; flex-wrap: wrap; gap: .5rem 1rem; justify-content: space-between; padding: 1rem; font-size: .85rem; color: var(--muted); border-top: 1px solid var(--line); }
+.site-footer a { color: var(--primary); min-height: 44px; display: inline-flex; align-items: center; }
+.demo-switcher { position: fixed; top: 0; right: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .5rem; max-width: 100%; padding: .25rem .5rem; background: #111; color: #fff; font-size: .7rem; opacity: .92; }
+.demo-switcher label { display: flex; align-items: center; gap: .25rem; }
+.demo-switcher select { font: inherit; max-width: 11rem; min-height: 28px; }
+body { padding-top: 2.25rem; }
+@media (min-width: 768px) { body { padding-top: 0; padding-bottom: 2.25rem; } .demo-switcher { top: auto; bottom: 0; right: 0; left: 0; } }

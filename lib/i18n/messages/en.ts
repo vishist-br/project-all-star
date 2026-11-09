@@ -10,7 +10,6 @@ export const en = {
   "review.banner": "This translation is a draft and needs native-speaker review.",
   "home.title": "Welcome to {business}",
   "home.tagline": "One shared view of sessions, attendance and progress.",
-  "home.pickRole": "Choose a view (placeholder until sign-in is built):",
   "role.owner": "Owner",
   "role.coach": "Coach",
   "role.customer": "Member / Parent",
@@ -26,6 +25,17 @@ export const en = {
   "nav.schedule": "Schedule",
   "nav.profile": "Profile",
   "shell.placeholder": "This screen is a placeholder and will be built in a later task.",
+  "home.continue": "Continue as {role}",
+  "demo.label": "Demo only",
+  "demo.tenant": "Business",
+  "demo.role": "View as",
+  "footer.copyright": "© {business}",
+  "footer.about": "About us",
+  "about.title": "About us",
+  "about.p1": "This is a shared visibility tool for gyms, sports arenas, fitness centres and kids' coaching academies.",
+  "about.p2": "Owners, coaches and members or parents see the same sessions, attendance and progress, each in their own view.",
+  "about.p3": "The aim is clear, positive visibility of what was delivered and how members are progressing.",
+  "about.back": "Back to home",
 } as const;
 
 export type MessageKey = keyof typeof en;
