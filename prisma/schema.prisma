@@ -18,17 +18,21 @@ model Tenant {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  users       User[]
-  venues      Venue[]
-  sports      Sport[]
-  batches     Batch[]
-  guardians   Guardian[]
-  members     Member[]
-  enrollments BatchMember[]
-  sessions    Session[]
-  attendance  Attendance[]
-  excused     ExcusedAbsence[]
-  holidays    Holiday[]
+  users        User[]
+  venues       Venue[]
+  sports       Sport[]
+  batches      Batch[]
+  guardians    Guardian[]
+  members      Member[]
+  enrollments  BatchMember[]
+  sessions     Session[]
+  attendance   Attendance[]
+  excused      ExcusedAbsence[]
+  holidays     Holiday[]
+  levels       Level[]
+  memberLevels MemberLevel[]
+  goals        Goal[]
+  achievements Achievement[]
 
   @@map("tenants")
 }
@@ -56,6 +60,8 @@ model User {
   sessions  Session[]        @relation("SessionCoach")
   marked    Attendance[]     @relation("AttendanceMarkedBy")
   excusedBy ExcusedAbsence[] @relation("ExcusedCreatedBy")
+  awarded   MemberLevel[]    @relation("LevelAwardedBy")
+  goalsSet  Goal[]           @relation("GoalCreatedBy")
 
   @@unique([tenantId, email])
   @@index([tenantId, role])
@@ -95,6 +101,8 @@ model Sport {
 
   tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   batches Batch[]
+  levels  Level[]
+  goals   Goal[]
 
   @@unique([tenantId, slug])
   @@index([tenantId])
@@ -193,12 +201,15 @@ model Member {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @default(now()) @updatedAt
 
-  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  guardian    Guardian?        @relation(fields: [guardianId], references: [id], onDelete: SetNull)
-  user        User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
-  enrollments BatchMember[]
-  attendance  Attendance[]
-  excused     ExcusedAbsence[]
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  guardian     Guardian?        @relation(fields: [guardianId], references: [id], onDelete: SetNull)
+  user         User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  enrollments  BatchMember[]
+  attendance   Attendance[]
+  excused      ExcusedAbsence[]
+  levelHistory MemberLevel[]
+  goals        Goal[]
+  achievements Achievement[]
 
   @@index([tenantId, isActive])
   @@index([tenantId, guardianId])
@@ -352,4 +363,116 @@ model Holiday {
 
   @@unique([tenantId, date])
   @@map("holidays")
+}
+
+// ---------------------------------------------------------------------------
+// Levels / belts, goals and achievements
+// ---------------------------------------------------------------------------
+
+// An ordered level (belt, grade, tier) within a sport, e.g. White (1) < Yellow (2).
+model Level {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  sportId   String   @map("sport_id")
+  name      String
+  rank      Int // 1 = lowest
+  colorHex  String? // optional display colour for belts
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  tenant  Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sport   Sport         @relation(fields: [sportId], references: [id], onDelete: Cascade)
+  history MemberLevel[]
+  goals   Goal[]
+
+  @@unique([tenantId, sportId, rank])
+  @@unique([tenantId, sportId, name])
+  @@map("levels")
+}
+
+// Level history timeline: one row each time a member reaches a level. The current level
+// is the row with the latest achievedOn for that member and sport.
+model MemberLevel {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  memberId    String   @map("member_id")
+  levelId     String   @map("level_id")
+  achievedOn  DateTime @db.Date
+  awardedById String?  @map("awarded_by_id")
+  coachNote   String?
+  createdAt   DateTime @default(now())
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member    Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  level     Level  @relation(fields: [levelId], references: [id], onDelete: Restrict)
+  awardedBy User?  @relation("LevelAwardedBy", fields: [awardedById], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, memberId, levelId])
+  @@index([tenantId, memberId, achievedOn])
+  @@map("member_levels")
+}
+
+enum GoalStatus {
+  ACTIVE
+  ACHIEVED
+  DROPPED
+}
+
+// A member's goal, optionally tied to a sport and a target level. `targetSessions`
+// and `targetDate` give the progress bar something to measure against.
+model Goal {
+  id             String     @id @default(cuid())
+  tenantId       String     @map("tenant_id")
+  memberId       String     @map("member_id")
+  sportId        String?    @map("sport_id")
+  targetLevelId  String?    @map("target_level_id")
+  title          String
+  targetSessions Int?
+  targetDate     DateTime?  @db.Date
+  status         GoalStatus @default(ACTIVE)
+  createdById    String?    @map("created_by_id")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @default(now()) @updatedAt
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member       Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  sport        Sport?        @relation(fields: [sportId], references: [id], onDelete: SetNull)
+  targetLevel  Level?        @relation(fields: [targetLevelId], references: [id], onDelete: SetNull)
+  createdBy    User?         @relation("GoalCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  achievements Achievement[]
+
+  @@index([tenantId, memberId, status])
+  @@map("goals")
+}
+
+// What an achievement is measured in. Hourly vs daily-streak is undecided (see the
+// Proposed entry in Decisions & Docs); both are representable.
+enum MeasureUnit {
+  HOURS
+  DAYS
+  STREAK_DAYS
+  SESSIONS
+}
+
+model Achievement {
+  id           String      @id @default(cuid())
+  tenantId     String      @map("tenant_id")
+  memberId     String      @map("member_id")
+  goalId       String?     @map("goal_id")
+  code         String // stable key, e.g. "first_10_sessions"
+  title        String
+  measureUnit  MeasureUnit @map("measure_unit")
+  measureValue Decimal     @map("measure_value") @db.Decimal(10, 2)
+  periodStart  DateTime?   @map("period_start")
+  periodEnd    DateTime?   @map("period_end")
+  earnedAt     DateTime    @default(now())
+  createdAt    DateTime    @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  goal   Goal?  @relation(fields: [goalId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, memberId, code, measureUnit, earnedAt])
+  @@index([tenantId, memberId, earnedAt])
+  @@map("achievements")
 }
