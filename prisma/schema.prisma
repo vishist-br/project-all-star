@@ -33,6 +33,7 @@ model Tenant {
   memberLevels MemberLevel[]
   goals        Goal[]
   achievements Achievement[]
+  exercises    Exercise[]
 
   @@map("tenants")
 }
@@ -533,4 +534,48 @@ model TenantTheme {
 
   @@unique([tenantId])
   @@map("tenant_themes")
+}
+
+// ---------------------------------------------------------------------------
+// Exercise catalog
+// ---------------------------------------------------------------------------
+
+enum ExerciseSource {
+  FREE_EXERCISE_DB // gym entries imported from free-exercise-db (Unlicense)
+  ORIGINAL // entries we wrote ourselves for non-gym sports
+}
+
+// Catalog rows are copied per tenant by the import script so each business can have its
+// own trainers review or edit them (and so every table carries tenant_id). `sportSlug`
+// matches Sport.slug but is a plain string: a tenant may load the catalog before it
+// creates the sport. Images are deliberately not stored (licence unclear, see THIRD_PARTY.md).
+model Exercise {
+  id                 String         @id @default(cuid())
+  tenantId           String         @map("tenant_id")
+  source             ExerciseSource
+  sourceId           String         @map("source_id") // stable key from the source / our draft file
+  sportSlug          String         @map("sport_slug")
+  name               String
+  category           String?
+  level              String?
+  equipment          String?
+  force              String?
+  mechanic           String?
+  primaryMuscles     String[]       @map("primary_muscles")
+  secondaryMuscles   String[]       @map("secondary_muscles")
+  instructions       String[]
+  licence            String // e.g. "Unlicense" or "Original (project)"
+  sourceCommit       String?        @map("source_commit")
+  // Drafts we wrote start true; a trainer clears it after reviewing. Re-imports never reset it.
+  needsTrainerReview Boolean        @default(true) @map("needs_trainer_review")
+  reviewedAt         DateTime?      @map("reviewed_at")
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @default(now()) @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, source, sourceId])
+  @@index([tenantId, sportSlug])
+  @@index([tenantId, needsTrainerReview])
+  @@map("exercises")
 }
