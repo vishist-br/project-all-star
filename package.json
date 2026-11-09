@@ -1,0 +1,35 @@
+{
+  "name": "project-all-star",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:up": "docker compose up -d --wait db",
+    "db:down": "docker compose down",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "setup": "node scripts/setup.mjs",
+    "start:local": "npm run setup && npm run dev"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "next": "^16.4.5",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.5",
+    "prisma": "^6.19.3",
+    "typescript": "^6.0.3",
+    "vitest": "^3.2.7"
+  }
+}
