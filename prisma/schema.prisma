@@ -7,13 +7,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Scaffold only: the full data model (roles, venues, members...) is a separate task.
-// Every future table must carry tenant_id.
+// TENANCY RULE: every model except Tenant carries a non-null `tenantId` (column tenant_id)
+// and an index that starts with it. Application code must reach tenant data through
+// lib/tenant-scope.ts (forTenant). tests/schema-tenancy.test.ts enforces the rule.
+
 model Tenant {
   id        String   @id @default(cuid())
   slug      String   @unique
   name      String
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  users User[]
 
   @@map("tenants")
+}
+
+// The fixed three-way hierarchy: owner, coach, customer (parent for kids).
+enum Role {
+  OWNER
+  COACH
+  CUSTOMER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  role      Role
+  email     String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@index([tenantId, role])
+  @@map("users")
 }
