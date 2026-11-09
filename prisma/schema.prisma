@@ -25,6 +25,10 @@ model Tenant {
   guardians   Guardian[]
   members     Member[]
   enrollments BatchMember[]
+  sessions    Session[]
+  attendance  Attendance[]
+  excused     ExcusedAbsence[]
+  holidays    Holiday[]
 
   @@map("tenants")
 }
@@ -45,10 +49,13 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  batches   Batch[]    @relation("BatchCoach")
+  tenant    Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  batches   Batch[]          @relation("BatchCoach")
   guardians Guardian[]
   members   Member[]
+  sessions  Session[]        @relation("SessionCoach")
+  marked    Attendance[]     @relation("AttendanceMarkedBy")
+  excusedBy ExcusedAbsence[] @relation("ExcusedCreatedBy")
 
   @@unique([tenantId, email])
   @@index([tenantId, role])
@@ -124,6 +131,7 @@ model Batch {
   sport       Sport         @relation(fields: [sportId], references: [id], onDelete: Restrict)
   coach       User          @relation("BatchCoach", fields: [coachId], references: [id], onDelete: Restrict)
   enrollments BatchMember[]
+  sessions    Session[]
 
   @@index([tenantId, isActive])
   @@index([tenantId, coachId])
@@ -185,10 +193,12 @@ model Member {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @default(now()) @updatedAt
 
-  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  guardian    Guardian?     @relation(fields: [guardianId], references: [id], onDelete: SetNull)
-  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  guardian    Guardian?        @relation(fields: [guardianId], references: [id], onDelete: SetNull)
+  user        User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
   enrollments BatchMember[]
+  attendance  Attendance[]
+  excused     ExcusedAbsence[]
 
   @@index([tenantId, isActive])
   @@index([tenantId, guardianId])
@@ -214,4 +224,132 @@ model BatchMember {
   @@unique([tenantId, batchId, memberId])
   @@index([tenantId, memberId])
   @@map("batch_members")
+}
+
+// ---------------------------------------------------------------------------
+// Sessions, attendance, excused absences and the holiday calendar
+// ---------------------------------------------------------------------------
+//
+// TIMELINE RULE (logic is a later task; the schema only stores what it needs):
+// A member's progress timeline is counted in attended sessions. A missed class
+// (Attendance.status = ABSENT) pushes the member's expected completion date out by one
+// session. It does NOT extend the timeline when
+//   (a) the absence is EXCUSED (reason exam, illness, festival or travel), or
+//   (b) the session date falls on a Holiday for the tenant (such sessions are also
+//       not counted as missed).
+// See docs/DATA_MODEL.md.
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+model Session {
+  id          String        @id @default(cuid())
+  tenantId    String        @map("tenant_id")
+  batchId     String        @map("batch_id")
+  coachId     String        @map("coach_id") // coach who actually ran (or was due to run) it
+  startsAt    DateTime
+  endsAt      DateTime
+  status      SessionStatus @default(SCHEDULED)
+  completedAt DateTime?
+  coachNote   String?
+  // Offline-sync friendly: generated on the device, makes retried uploads idempotent.
+  clientId    String?       @map("client_id")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt
+
+  tenant     Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  batch      Batch        @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  coach      User         @relation("SessionCoach", fields: [coachId], references: [id], onDelete: Restrict)
+  attendance Attendance[]
+
+  @@unique([tenantId, batchId, startsAt])
+  @@unique([tenantId, clientId])
+  @@index([tenantId, startsAt])
+  @@index([tenantId, coachId, startsAt])
+  @@index([tenantId, status, startsAt])
+  @@map("sessions")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  EXCUSED
+}
+
+enum ExcuseReason {
+  EXAM
+  ILLNESS
+  FESTIVAL
+  TRAVEL
+}
+
+// One row per member per session. `reason` is required when status = EXCUSED and must be
+// null otherwise (enforced by a CHECK constraint in the migration).
+model Attendance {
+  id         String           @id @default(cuid())
+  tenantId   String           @map("tenant_id")
+  sessionId  String           @map("session_id")
+  memberId   String           @map("member_id")
+  status     AttendanceStatus
+  reason     ExcuseReason?
+  note       String?
+  // Optional photo reference (object-storage key). Nullable: one-tap roll call needs no photo.
+  photoRef   String?          @map("photo_ref")
+  // Offline-sync: client-generated id (e.g. UUID) for idempotent upsert on resync.
+  clientId   String           @map("client_id")
+  markedById String           @map("marked_by_id")
+  markedAt   DateTime         @default(now())
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @default(now()) @updatedAt // last-write-wins on sync
+
+  tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  session  Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  member   Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  markedBy User    @relation("AttendanceMarkedBy", fields: [markedById], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, sessionId, memberId])
+  @@unique([tenantId, clientId])
+  @@index([tenantId, memberId, status])
+  @@index([tenantId, updatedAt])
+  @@map("attendance")
+}
+
+// An absence declared ahead of time (e.g. exam week, family travel). A later task turns
+// it into EXCUSED attendance rows for sessions that fall inside the range.
+model ExcusedAbsence {
+  id          String       @id @default(cuid())
+  tenantId    String       @map("tenant_id")
+  memberId    String       @map("member_id")
+  fromDate    DateTime     @db.Date
+  toDate      DateTime     @db.Date
+  reason      ExcuseReason
+  note        String?
+  createdById String       @map("created_by_id")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member    Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdBy User   @relation("ExcusedCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, memberId, fromDate])
+  @@map("excused_absences")
+}
+
+// Per-tenant holiday calendar. Sessions on these dates do not count as missed.
+model Holiday {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  date      DateTime @db.Date
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, date])
+  @@map("holidays")
 }
