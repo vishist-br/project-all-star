@@ -1,0 +1,50 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__e65b0064-2804-4785-8da8-24734f55560b__notion-fetch",
+      "mcp__e65b0064-2804-4785-8da8-24734f55560b__notion-search",
+      "mcp__e65b0064-2804-4785-8da8-24734f55560b__notion-get-self",
+      "mcp__e65b0064-2804-4785-8da8-24734f55560b__notion-get-users",
+      "mcp__e65b0064-2804-4785-8da8-24734f55560b__notion-get-comments",
+      "mcp__e65b0064-2804-4785-8da8-24734f55560b__notion-query-data-sources",
+      "mcp__e65b0064-2804-4785-8da8-24734f55560b__notion-query-multiple-data-sources",
+      "mcp__e65b0064-2804-4785-8da8-24734f55560b__notion-create-pages",
+      "mcp__e65b0064-2804-4785-8da8-24734f55560b__notion-update-page",
+      "mcp__e65b0064-2804-4785-8da8-24734f55560b__notion-create-comment",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(git switch*)",
+      "Bash(git checkout*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git worktree*)",
+      "Bash(git fetch*)",
+      "Bash(npm install*)",
+      "Bash(npm run*)",
+      "Bash(npm test*)",
+      "Bash(npx prisma*)",
+      "Bash(npx tsc*)",
+      "Bash(npx playwright*)",
+      "Bash(npx vitest*)",
+      "Bash(npx next*)",
+      "Bash(node *)",
+      "Bash(ls*)",
+      "Bash(mkdir*)",
+      "Bash(gh pr view*)",
+      "Bash(gh pr list*)"
+    ],
+    "deny": [
+      "mcp__e65b0064-2804-4785-8da8-24734f55560b__notion-delete-pages",
+      "mcp__e65b0064-2804-4785-8da8-24734f55560b__notion-delete-databases",
+      "mcp__e65b0064-2804-4785-8da8-24734f55560b__notion-delete-comment",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git reset --hard*)",
+      "Bash(rm -rf*)",
+      "Read(./.env)",
+      "Read(./.env.local)"
+    ]
+  }
+}
