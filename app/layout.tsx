@@ -3,7 +3,7 @@ import "./globals.css";
 import { getLocale } from "@/lib/i18n/server";
 import { I18nProvider } from "@/lib/i18n/client";
 import { getSession, isDemoMode } from "@/lib/session";
-import { themeVars } from "@/lib/theme";
+import { themeVars } from "@/lib/theme-ui";
 import { DemoSwitcher } from "@/components/DemoSwitcher";
 
 // Tab title is the business's own name (white-label), from the tenant theme.
