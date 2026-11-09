@@ -33,6 +33,7 @@ model Tenant {
   memberLevels MemberLevel[]
   goals        Goal[]
   achievements Achievement[]
+  theme        TenantTheme?
 
   @@map("tenants")
 }
@@ -475,4 +476,29 @@ model Achievement {
   @@unique([tenantId, memberId, code, measureUnit, earnedAt])
   @@index([tenantId, memberId, earnedAt])
   @@map("achievements")
+}
+
+// ---------------------------------------------------------------------------
+// White-label theme (one row per tenant)
+// ---------------------------------------------------------------------------
+
+// Brand name, logo and colours a tenant sets for itself. Zero builder branding:
+// the UI reads everything visible from here. Colours are "#RRGGBB" hex strings.
+model TenantTheme {
+  id           String   @id @default(cuid())
+  tenantId     String   @map("tenant_id")
+  brandName    String   @map("brand_name")
+  logoUrl      String?  @map("logo_url") // path or URL to a pre-sized logo image
+  primaryHex   String   @map("primary_hex")
+  secondaryHex String   @map("secondary_hex")
+  accentHex    String   @map("accent_hex")
+  surfaceHex   String   @default("#FFFFFF") @map("surface_hex")
+  textHex      String   @default("#111111") @map("text_hex")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId])
+  @@map("tenant_themes")
 }

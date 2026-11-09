@@ -19,6 +19,7 @@ Policy: MIT, Apache-2.0, BSD, Unlicense or CC0 only (see CLAUDE.md). Update this
 | eslint | ^9.39.5 | MIT | Linting |
 | eslint-config-next | ^16.4.5 | MIT | Lint rules |
 | vitest | ^3.2.7 | MIT | Tests |
+| tsx | see package.json | MIT | Runs the TypeScript seed and import scripts (`npm run db:seed`) |
 | @types/node, @types/react, @types/react-dom | see package.json | MIT | Type definitions |
 
 ## Self-written code (no dependency)

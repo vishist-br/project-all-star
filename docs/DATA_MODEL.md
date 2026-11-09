@@ -31,3 +31,11 @@ supports last-write-wins reconciliation. `photoRef` is nullable: one-tap roll ca
 
 The schema stores a measurement unit and value so both hours and daily streaks can be
 derived. Which one the product shows is undecided (see the Proposed entry in Decisions & Docs).
+
+## Tenant theme and demo seed
+
+`TenantTheme` (one row per tenant, table `tenant_themes`) holds brand name, logo URL and
+`#RRGGBB` colours. `npm run db:seed` (needs a migrated local DB) upserts three synthetic
+tenants (`demo-karate`, `demo-gym`, `demo-studio`) with owner, coaches, batches, members,
+past sessions and attendance. It is idempotent (deterministic ids, upserts) and refuses a
+non-local `DATABASE_URL` unless `SEED_ALLOW_REMOTE=1`. Demo logins use `*.example.test` emails.
