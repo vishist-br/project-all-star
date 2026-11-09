@@ -11,14 +11,39 @@ export type MockTheme = {
   accentColor: string | null;
 };
 
-export const MOCK_THEME: MockTheme = {
-  tenantSlug: "demo-academy",
-  displayName: "Demo Academy",
-  logoUrl: null,
-  primaryColor: "#1f6feb",
-  secondaryColor: "#0b1f3a",
-  accentColor: "#f2a900",
-};
+/** Three demo tenants with different branding (karate academy, gym, group classes). */
+export const MOCK_TENANTS: readonly MockTheme[] = [
+  {
+    tenantSlug: "demo-karate",
+    displayName: "Demo Karate Academy",
+    logoUrl: "/demo-logos/karate.svg",
+    primaryColor: "#b3261e",
+    secondaryColor: "#2b0d0b",
+    accentColor: "#f2c200",
+  },
+  {
+    tenantSlug: "demo-gym",
+    displayName: "Demo Iron Gym",
+    logoUrl: "/demo-logos/gym.svg",
+    primaryColor: "#0f766e",
+    secondaryColor: "#0b2b29",
+    accentColor: "#f97316",
+  },
+  {
+    tenantSlug: "demo-classes",
+    displayName: "Demo Group Classes Studio",
+    logoUrl: "/demo-logos/classes.svg",
+    primaryColor: "#6d28d9",
+    secondaryColor: "#1e1038",
+    accentColor: "#22c55e",
+  },
+];
+
+export const DEFAULT_TENANT_SLUG = MOCK_TENANTS[0].tenantSlug;
+
+export function resolveTheme(slug: string | undefined | null): MockTheme {
+  return MOCK_TENANTS.find((t) => t.tenantSlug === slug) ?? MOCK_TENANTS[0];
+}
 
 export const MOCK_USERS: Record<Role, { name: string }> = {
   owner: { name: "Demo Owner" },

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getT } from "@/lib/i18n/server";
 import { findNavItem, isRole } from "@/lib/nav";
@@ -16,6 +17,11 @@ export default async function SectionPage({
   return (
     <section>
       <h1>{t(item.label)}</h1>
+      {role === "owner" && section === "members" && (
+        <p>
+          <Link href="/owner/members/import" className="btn">{t("import.title")}</Link>
+        </p>
+      )}
       <p className="muted">{t("shell.placeholder")}</p>
     </section>
   );

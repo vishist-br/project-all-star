@@ -32,3 +32,35 @@ h1 { font-size: 1.4rem; margin: .5rem 0; overflow-wrap: anywhere; }
   .nav-link[aria-current="page"] { box-shadow: inset 3px 0 0 var(--primary); }
   .shell-header { margin-left: -200px; padding-left: calc(200px + 1rem); }
 }
+
+/* Tenant theme, about page, footer, demo switcher */
+.logo-img { border-radius: 8px; flex: none; display: block; }
+.about { max-width: 40rem; }
+.site-footer { display: flex; flex-wrap: wrap; gap: .5rem 1rem; justify-content: space-between; padding: 1rem; font-size: .85rem; color: var(--muted); border-top: 1px solid var(--line); }
+.site-footer a { color: var(--primary); min-height: 44px; display: inline-flex; align-items: center; }
+.demo-switcher { position: fixed; top: 0; right: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .5rem; max-width: 100%; padding: .25rem .5rem; background: #111; color: #fff; font-size: .7rem; opacity: .92; }
+.demo-switcher label { display: flex; align-items: center; gap: .25rem; }
+.demo-switcher select { font: inherit; max-width: 11rem; min-height: 28px; }
+body { padding-top: 2.25rem; }
+@media (min-width: 768px) { body { padding-top: 0; padding-bottom: 2.25rem; } .demo-switcher { top: auto; bottom: 0; right: 0; left: 0; } }
+.shell-title { color: inherit; text-decoration: none; }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: .75rem 1rem; overflow-wrap: anywhere; }
+.card-list { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .75rem; }
+
+/* CSV import */
+.small { font-size: .85rem; }
+.btn { border: 0; font: inherit; font-weight: 600; cursor: pointer; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+.file-pick { display: block; margin: 1rem 0; }
+.file-pick span { display: block; font-weight: 600; margin-bottom: .25rem; }
+.file-pick input { width: 100%; min-height: 48px; font: inherit; }
+.import h2 { font-size: 1.1rem; margin: 1.25rem 0 .5rem; }
+.msg-error { color: #9b1c1c; }
+.msg-ok { color: #166534; font-weight: 600; }
+.msg-error-card { border-color: #e5a3a3; }
+.table-wrap { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+.table-wrap table { border-collapse: collapse; font-size: .85rem; white-space: nowrap; }
+.table-wrap th, .table-wrap td { padding: .4rem .6rem; border-bottom: 1px solid var(--line); text-align: left; }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.25rem 0; }

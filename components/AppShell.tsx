@@ -1,38 +1,37 @@
-import type { CSSProperties, ReactNode } from "react";
+import Link from "next/link";
+import type { ReactNode } from "react";
 import { getT } from "@/lib/i18n/server";
 import { NEEDS_REVIEW } from "@/lib/i18n";
 import { NAV, type Role } from "@/lib/nav";
-import { MOCK_THEME, MOCK_USERS } from "@/lib/mock-session";
+import { getSession } from "@/lib/session";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { NavLink } from "./NavLink";
+import { Footer } from "./Footer";
 
+/** Shell for the signed-in user's own role. Theme variables come from the document root. */
 export async function AppShell({ role, children }: { role: Role; children: ReactNode }) {
   const { t, locale } = await getT();
-  const theme = MOCK_THEME;
-  const style = {
-    "--primary": theme.primaryColor,
-    "--secondary": theme.secondaryColor,
-    "--accent": theme.accentColor ?? theme.primaryColor,
-  } as CSSProperties;
+  const { theme, name } = await getSession();
 
   return (
-    <div className="shell" style={style}>
+    <div className="shell">
       <header className="shell-header">
         {/* Only the business's own name/logo is shown. No builder branding. */}
         {theme.logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={theme.logoUrl} alt="" width={32} height={32} />
+          <img src={theme.logoUrl} alt="" width={32} height={32} className="logo-img" />
         ) : (
           <span className="logo-mark" aria-hidden="true">{theme.displayName.slice(0, 1)}</span>
         )}
-        <div className="shell-title">
+        <Link href={`/${role}`} className="shell-title">
           <strong>{theme.displayName}</strong>
-          <small>{t(`role.${role}`)} · {MOCK_USERS[role].name}</small>
-        </div>
+          <small>{t(`role.${role}`)} · {name}</small>
+        </Link>
         <LanguageSwitcher />
       </header>
       {NEEDS_REVIEW.includes(locale) && <p className="review-banner">{t("review.banner")}</p>}
       <main className="shell-main">{children}</main>
+      <Footer />
       <nav className="shell-nav" aria-label={t("nav.label")}>
         {NAV[role].map((item) => (
           <NavLink key={item.section} href={`/${role}/${item.section}`} icon={item.icon}>
