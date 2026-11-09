@@ -21,6 +21,12 @@ Policy: MIT, Apache-2.0, BSD, Unlicense or CC0 only (see CLAUDE.md). Update this
 | vitest | ^3.2.7 | MIT | Tests |
 | @types/node, @types/react, @types/react-dom | see package.json | MIT | Type definitions |
 
+## Self-written code (no dependency)
+
+| Item | License | Purpose |
+| --- | --- | --- |
+| lib/i18n (en/hi/kn) | Own code | Small i18n layer; no i18n library added, so no new dependency or licence. Hindi and Kannada strings are our own drafts, marked "needs native-speaker review". |
+
 ## Infrastructure (not bundled in the repo)
 
 | Item | License | Purpose |

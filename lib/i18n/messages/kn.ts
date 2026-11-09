@@ -1,0 +1,30 @@
+// DRAFT Kannada translation: needs native-speaker review.
+import type { MessageKey } from "./en";
+
+export const kn: Record<MessageKey, string> = {
+  "app.loading": "ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
+  "lang.label": "ಭಾಷೆ",
+  "lang.en": "English",
+  "lang.hi": "हिन्दी",
+  "lang.kn": "ಕನ್ನಡ",
+  "review.marker": "ಸ್ಥಳೀಯ ಭಾಷಿಕರ ಪರಿಶೀಲನೆ ಅಗತ್ಯ (needs native-speaker review)",
+  "review.banner": "ಈ ಅನುವಾದ ಕರಡು ಆಗಿದ್ದು ಸ್ಥಳೀಯ ಭಾಷಿಕರ ಪರಿಶೀಲನೆ ಬೇಕಿದೆ (needs native-speaker review).",
+  "home.title": "{business} ಗೆ ಸ್ವಾಗತ",
+  "home.tagline": "ಸೆಷನ್‌ಗಳು, ಹಾಜರಾತಿ ಮತ್ತು ಪ್ರಗತಿಯ ಒಂದು ಹಂಚಿಕೆಯ ನೋಟ.",
+  "home.pickRole": "ಒಂದು ನೋಟವನ್ನು ಆರಿಸಿ (ಸೈನ್-ಇನ್ ಸಿದ್ಧವಾಗುವವರೆಗೆ ತಾತ್ಕಾಲಿಕ):",
+  "role.owner": "ಮಾಲೀಕ",
+  "role.coach": "ಕೋಚ್",
+  "role.customer": "ಸದಸ್ಯ / ಪೋಷಕ",
+  "nav.label": "ಮುಖ್ಯ ನ್ಯಾವಿಗೇಶನ್",
+  "nav.dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+  "nav.members": "ಸದಸ್ಯರು",
+  "nav.batches": "ಬ್ಯಾಚ್‌ಗಳು",
+  "nav.coaches": "ಕೋಚ್‌ಗಳು",
+  "nav.settings": "ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+  "nav.today": "ಇಂದು",
+  "nav.myRecord": "ನನ್ನ ದಾಖಲೆ",
+  "nav.progress": "ಪ್ರಗತಿ",
+  "nav.schedule": "ವೇಳಾಪಟ್ಟಿ",
+  "nav.profile": "ಪ್ರೊಫೈಲ್",
+  "shell.placeholder": "ಈ ಪರದೆ ತಾತ್ಕಾಲಿಕವಾಗಿದ್ದು ನಂತರದ ಕಾರ್ಯದಲ್ಲಿ ನಿರ್ಮಿಸಲಾಗುತ್ತದೆ.",
+};

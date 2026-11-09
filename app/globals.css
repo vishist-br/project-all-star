@@ -1,0 +1,34 @@
+:root { --primary:#1f6feb; --secondary:#0b1f3a; --accent:#f2a900; --bg:#f7f8fa; --fg:#14181f; --muted:#5b6472; --card:#fff; --line:#e1e4ea; --nav-h:60px; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari", "Noto Sans Kannada", sans-serif; background: var(--bg); color: var(--fg); line-height: 1.5; overflow-x: hidden; }
+h1 { font-size: 1.4rem; margin: .5rem 0; overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+.page-pad { padding: 1rem; }
+.sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.lang-switcher select { font: inherit; min-height: 44px; padding: 0 .5rem; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); max-width: 100%; }
+.review-banner { margin: 0; padding: .5rem 1rem; background: #fff4d6; color: #5a4300; font-size: .85rem; }
+.btn { display: inline-flex; align-items: center; min-height: 48px; padding: 0 1.25rem; border-radius: 10px; background: var(--primary); color: #fff; text-decoration: none; font-weight: 600; }
+.role-list { list-style: none; padding: 0; display: grid; gap: .75rem; }
+
+/* App shell: mobile first. Bottom tab bar on phones, side rail from 768px. */
+.shell { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: var(--nav-h); }
+.shell-header { display: flex; align-items: center; gap: .75rem; padding: .5rem 1rem; background: var(--secondary); color: #fff; }
+.shell-header .lang-switcher { margin-left: auto; }
+.shell-title { display: flex; flex-direction: column; min-width: 0; }
+.shell-title strong, .shell-title small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shell-title small { opacity: .8; }
+.logo-mark { flex: none; width: 32px; height: 32px; border-radius: 8px; background: var(--accent); color: var(--secondary); display: grid; place-items: center; font-weight: 700; }
+.shell-main { flex: 1; padding: 1rem; min-width: 0; }
+.shell-nav { position: fixed; inset: auto 0 0 0; height: var(--nav-h); display: flex; background: var(--card); border-top: 1px solid var(--line); }
+.nav-link { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: .75rem; color: var(--muted); text-decoration: none; padding: 0 2px; text-align: center; }
+.nav-link span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-link[aria-current="page"] { color: var(--primary); font-weight: 600; box-shadow: inset 0 3px 0 var(--primary); }
+.nav-icon { font-size: 1.1rem; }
+@media (min-width: 768px) {
+  .shell { padding-bottom: 0; padding-left: 200px; }
+  .shell-nav { inset: 0 auto 0 0; width: 200px; height: auto; flex-direction: column; padding-top: 72px; }
+  .nav-link { flex: none; flex-direction: row; justify-content: flex-start; gap: .75rem; padding: .75rem 1rem; font-size: .95rem; }
+  .nav-link[aria-current="page"] { box-shadow: inset 3px 0 0 var(--primary); }
+  .shell-header { margin-left: -200px; padding-left: calc(200px + 1rem); }
+}
