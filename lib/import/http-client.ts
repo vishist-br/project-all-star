@@ -1,7 +1,7 @@
 import { ImportFailure, type ImportClient, type ImportResult } from "./types";
 
 /** Real client for POST /members/import (docs/api/openapi.yaml). Not used until the endpoint exists. */
-export function createHttpImportClient(baseUrl = "/api/v1", getToken?: () => string | null): ImportClient {
+export function createHttpImportClient(baseUrl = "/api/v1", getToken?: () => string | null, path = "/members/import"): ImportClient {
   return {
     async importCsv(file, { dryRun }) {
       const body = new FormData();
@@ -9,7 +9,7 @@ export function createHttpImportClient(baseUrl = "/api/v1", getToken?: () => str
       const token = getToken?.();
       let res: Response;
       try {
-        res = await fetch(`${baseUrl}/members/import?dryRun=${dryRun}`, {
+        res = await fetch(`${baseUrl}${path}?dryRun=${dryRun}`, {
           method: "POST",
           body,
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,

@@ -10,11 +10,11 @@ type State =
   | { kind: "done"; result: ImportResult }
   | { kind: "failed"; message: "import.err.tooLarge" | "import.err.badFile" | "import.err.network" };
 
-export function ImportMembers() {
+export function ImportMembers({ live = false }: { live?: boolean }) {
   const { t } = useI18n();
   const [state, setState] = useState<State>({ kind: "idle" });
   const input = useRef<HTMLInputElement>(null);
-  const client = getImportClient();
+  const client = getImportClient(live);
 
   async function run(file: File, dryRun: boolean) {
     setState({ kind: "busy" });

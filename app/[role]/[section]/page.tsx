@@ -2,8 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getT } from "@/lib/i18n/server";
 import { findNavItem, isRole } from "@/lib/nav";
+import {
+  BatchesScreen,
+  CoachesScreen,
+  DashboardScreen,
+  MembersScreen,
+  SettingsScreen,
+} from "@/components/owner/OwnerScreens";
 
-// Placeholder screen. Real content arrives with each feature task.
+// Owner screens show live data; coach and customer screens are still placeholders.
 export default async function SectionPage({
   params,
 }: {
@@ -22,7 +29,12 @@ export default async function SectionPage({
           <Link href="/owner/members/import" className="btn">{t("import.title")}</Link>
         </p>
       )}
-      <p className="muted">{t("shell.placeholder")}</p>
+      {role === "owner" && section === "dashboard" && <DashboardScreen />}
+      {role === "owner" && section === "members" && <MembersScreen />}
+      {role === "owner" && section === "batches" && <BatchesScreen />}
+      {role === "owner" && section === "coaches" && <CoachesScreen />}
+      {role === "owner" && section === "settings" && <SettingsScreen />}
+      {role !== "owner" && <p className="muted">{t("shell.placeholder")}</p>}
     </section>
   );
 }

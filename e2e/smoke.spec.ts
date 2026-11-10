@@ -240,3 +240,42 @@ test.describe("UI sign-in by magic link", () => {
     await noHorizontalScroll(page);
   });
 });
+
+test.describe("owner screens show the tenant's own data", () => {
+  test("members, batches, coaches, dashboard and settings are filled from the database", async ({ page, context }) => {
+    await context.clearCookies();
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    await pick(page, "Business", "demo-karate");
+    await page.goto("/owner/members");
+    await expect(page.locator("tbody tr").first()).toBeVisible();
+    expect(await page.locator("tbody tr").count()).toBeGreaterThan(3);
+    await expect(page.getByText("Sample Kid 01")).toBeVisible();
+    await page.goto("/owner/batches");
+    expect(await page.locator("ul.card-list li").count()).toBeGreaterThan(0);
+    await page.goto("/owner/coaches");
+    await expect(page.getByText("Sample Coach Alpha")).toBeVisible();
+    await page.goto("/owner/dashboard");
+    await expect(page.getByText("Active members")).toBeVisible();
+    await page.goto("/owner/settings");
+    await expect(page.locator("ul.card-list li").filter({ hasText: SEED_TENANTS.find((x) => x.slug === "demo-karate")!.name })).toBeVisible();
+    // Another tenant's people never appear.
+    await pick(page, "Business", "demo-gym");
+    await page.goto("/owner/members");
+    await expect(page.getByText("Sample Kid 01")).toHaveCount(0);
+  });
+});
+
+test.describe("live member import through the session cookie", () => {
+  test("a signed-in owner can check a CSV; without a session it is refused", async ({ page, request }) => {
+    const csv = Buffer.from("name,phone,email,guardian_name,guardian_phone,batch_name,sport,level,goal,join_date,fee_status\n");
+    const body = { multipart: { file: { name: "m.csv", mimeType: "text/csv", buffer: csv } } };
+    const anon = await request.post("/ui/members-import?dryRun=true", body);
+    expect(anon.status()).toBe(401);
+    await page.goto(await devLink(request, "demo-karate", EMAIL.owner("demo-karate")));
+    await expect(page).toHaveURL(/\/owner$/);
+    const res = await page.request.post("/ui/members-import?dryRun=true", body);
+    expect(res.status()).not.toBe(401);
+    expect(res.status()).not.toBe(403);
+  });
+});
