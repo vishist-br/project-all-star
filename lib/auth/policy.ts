@@ -18,6 +18,7 @@ export const OPERATION_ROLES = {
   updateTenantTheme: ["owner"],
   listMembers: ["owner", "coach"],
   getMember: ["owner", "coach", "customer"],
+  createMemberMagicLink: ["owner", "coach"],
   importMembersCsv: ["owner"],
   listBatches: ["owner", "coach", "customer"],
   listSessions: ["owner", "coach", "customer"],

@@ -262,6 +262,32 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
+  /members/{memberId}/magic-link:
+    post:
+      tags: [Members]
+      operationId: createMemberMagicLink
+      summary: Generate a shareable single-use sign-in link for a member or their parent
+      description: |
+        Owner for any member of the tenant; coach only for members in their own batches (403 otherwise);
+        customers are denied (403). The link signs in the member's own login (adults) or the
+        parent/guardian's login (kids). Single use, expires after 15 minutes; only a hash of the token is
+        stored, so the URL is shown once and cannot be retrieved again. The URL is built from the server's
+        APP_BASE_URL as `/auth/magic?token=...`; the page there calls `exchangeMagicLink`. Delivery stays
+        manual (the owner or coach copies and shares it); nothing is sent over WhatsApp or SMS.
+        404 when the member is not in the caller's tenant or has no linked login.
+      x-roles: [owner, coach]
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: Link created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberMagicLink'
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
   /members/import:
     post:
       tags: [Members]
@@ -613,6 +639,17 @@ components:
             recentSessions:
               type: array
               items: {$ref: '#/components/schemas/MemberSessionEntry'}
+    MemberMagicLink:
+      type: object
+      additionalProperties: false
+      required: [url, expiresAt, recipient]
+      properties:
+        url: {type: string, description: 'Shareable link, APP_BASE_URL + /auth/magic?token=...'}
+        expiresAt: {type: string, format: date-time}
+        recipient:
+          type: string
+          enum: [member, guardian]
+          description: Whose login the link signs in (guardian for kids).
     MemberPage:
       type: object
       required: [items]
