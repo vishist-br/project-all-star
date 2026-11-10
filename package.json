@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:isolation": "vitest run tests/isolation.test.ts tests/read-endpoints.test.ts tests/auth-access.test.ts tests/auth-policy.test.ts tests/theme.test.ts tests/members-import-api.test.ts tests/magic-link.test.ts tests/tenant-scope.test.ts",
+    "test:e2e": "playwright test",
     "db:up": "docker compose up -d --wait db",
     "db:down": "docker compose down",
     "db:generate": "prisma generate",
@@ -28,6 +29,7 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.19.0",
     "@types/react": "^19.3.0",
