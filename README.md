@@ -68,7 +68,7 @@ The contract is ahead of the code in places and the code is ahead of the contrac
 
 - In the contract but not implemented: `POST /auth/otp/request` and `POST /auth/otp/verify` (phone OTP).
 - Implemented but not in the contract: `POST /api/v1/dev/magic-link` (development only, returns 404 when `NODE_ENV=production`).
-- Missing from both, tracked in the Tasks database as Backlog: a venues endpoint, and an endpoint for an owner or coach to generate a magic link for a member or parent.
+- Missing from both, tracked in the Tasks database as Backlog: a venues endpoint. The owner or coach magic-link endpoint is now in the contract: `POST /api/v1/members/{memberId}/magic-link` (URL built from `APP_BASE_URL`).
 
 ## What is real and what is mock
 
