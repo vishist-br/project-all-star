@@ -64,3 +64,8 @@ body { padding-top: 2.25rem; }
 .table-wrap table { border-collapse: collapse; font-size: .85rem; white-space: nowrap; }
 .table-wrap th, .table-wrap td { padding: .4rem .6rem; border-bottom: 1px solid var(--line); text-align: left; }
 .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.25rem 0; }
+
+/* Sign-in pages and sign-out button */
+.auth-card { max-width: 32rem; }
+.btn-small { min-height: 44px; padding: 0 .75rem; font-size: .85rem; background: transparent; color: #fff; border: 2px solid #fff; flex: none; }
+.shell-header form { flex: none; }

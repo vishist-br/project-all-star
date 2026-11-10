@@ -71,6 +71,17 @@ export const en = {
   "import.err.tooLarge": "This file is too large. Please split it into smaller files.",
   "import.err.badFile": "This file could not be read. Check that it is a CSV with a name column.",
   "import.err.network": "Network problem. Please try again.",
+  "signin.checking": "Signing you in...",
+  "signin.invalid.title": "This link cannot be used",
+  "signin.invalid.body": "It may have expired, or it may already have been used. Ask your coach or the front desk to send you a new link.",
+  "signin.missing.title": "This link is incomplete",
+  "signin.missing.body": "Open the full link you were sent, or ask your coach or the front desk to send it again.",
+  "signin.network.title": "Could not reach the server",
+  "signin.network.body": "Check your internet connection and try again.",
+  "signin.retry": "Try again",
+  "signin.needed.title": "Please sign in",
+  "signin.needed.body": "Open the sign-in link your business sent you, for example in WhatsApp. No password is needed.",
+  "signout.button": "Sign out",
 } as const;
 
 export type MessageKey = keyof typeof en;

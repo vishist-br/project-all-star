@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { ACCESS_COOKIE } from "@/lib/auth-cookies";
 import type { ReactNode } from "react";
 import { getT } from "@/lib/i18n/server";
 import { NEEDS_REVIEW } from "@/lib/i18n";
@@ -12,6 +14,7 @@ import { Footer } from "./Footer";
 export async function AppShell({ role, children }: { role: Role; children: ReactNode }) {
   const { t, locale } = await getT();
   const { theme, name } = await getSession();
+  const signedIn = (await cookies()).has(ACCESS_COOKIE);
 
   return (
     <div className="shell">
@@ -28,6 +31,11 @@ export async function AppShell({ role, children }: { role: Role; children: React
           <small>{t(`role.${role}`)} · {name}</small>
         </Link>
         <LanguageSwitcher />
+        {signedIn && (
+          <form method="post" action="/auth/sign-out">
+            <button type="submit" className="btn btn-outline btn-small">{t("signout.button")}</button>
+          </form>
+        )}
       </header>
       {NEEDS_REVIEW.includes(locale) && <p className="review-banner">{t("review.banner")}</p>}
       <main className="shell-main">{children}</main>
