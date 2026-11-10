@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:isolation": "vitest run tests/isolation.test.ts tests/read-endpoints.test.ts tests/auth-access.test.ts tests/auth-policy.test.ts tests/theme.test.ts tests/members-import-api.test.ts tests/magic-link.test.ts tests/tenant-scope.test.ts",
     "db:up": "docker compose up -d --wait db",
     "db:down": "docker compose down",
     "db:generate": "prisma generate",
