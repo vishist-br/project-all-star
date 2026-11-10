@@ -1,0 +1,9 @@
+{
+  "license": "Unlicense",
+  "commit": "0000000000000000000000000000000000000000",
+  "exercises": [
+    {"id": "Fixture_Squat", "name": "Fixture Squat", "category": "strength", "level": "beginner", "equipment": "body only", "force": "push", "mechanic": "compound", "primaryMuscles": ["quadriceps"], "secondaryMuscles": ["glutes"], "instructions": ["Stand tall.", "Sit back and down.", "Stand up."]},
+    {"id": "Fixture_Plank", "name": "Fixture Plank", "category": "stretching", "level": "beginner", "equipment": null, "force": null, "mechanic": null, "primaryMuscles": ["abdominals"], "secondaryMuscles": [], "instructions": ["Hold a straight line."]},
+    {"id": "Fixture_Row", "name": "Fixture Row", "category": "strength", "level": "intermediate", "equipment": "dumbbell", "force": "pull", "mechanic": "compound", "primaryMuscles": ["middle back"], "secondaryMuscles": ["biceps"], "instructions": ["Hinge forward.", "Pull to hip."]}
+  ]
+}
