@@ -1,7 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n/client";
-import { MOCK_TENANTS } from "@/lib/mock-session";
 import { ROLES, type Role } from "@/lib/nav";
 import { DEMO_ROLE_COOKIE, DEMO_TENANT_COOKIE } from "@/lib/demo";
 
@@ -10,7 +9,15 @@ function setCookie(name: string, value: string) {
 }
 
 /** Dev/demo only. The server renders this only when isDemoMode() is true. */
-export function DemoSwitcher({ tenantSlug, role }: { tenantSlug: string; role: Role }) {
+export function DemoSwitcher({
+  tenants,
+  tenantSlug,
+  role,
+}: {
+  tenants: { tenantSlug: string; displayName: string }[];
+  tenantSlug: string;
+  role: Role;
+}) {
   const { t } = useI18n();
   const router = useRouter();
 
@@ -26,7 +33,7 @@ export function DemoSwitcher({ tenantSlug, role }: { tenantSlug: string; role: R
             router.refresh();
           }}
         >
-          {MOCK_TENANTS.map((x) => (
+          {tenants.map((x) => (
             <option key={x.tenantSlug} value={x.tenantSlug}>{x.displayName}</option>
           ))}
         </select>

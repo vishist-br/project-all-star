@@ -58,7 +58,7 @@ Whole tree (production and dev, 417 packages incl. the project itself): MIT 353,
 
 ## Own media and fixtures (no third-party material)
 
-`public/demo-logos/*.svg`, `public/tenants/*.svg` (demo tenant logos), `public/sample-members.csv` and `tests/fixtures/` are written in this repo with invented names and `example.test` / `example.invalid` contact details. No stock images, fonts or icons are bundled (the nav icons are Unicode characters).
+`public/tenants/*.svg` (demo tenant logos), `public/sample-members.csv` and `tests/fixtures/` are written in this repo with invented names and `example.test` / `example.invalid` contact details. No stock images, fonts or icons are bundled (the nav icons are Unicode characters).
 
 ## Datasets
 

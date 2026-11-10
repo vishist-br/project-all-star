@@ -2,7 +2,7 @@
 
 White-label visibility tool for gyms, arenas and coaching academies. It gives owners, coaches and customers (members, and parents for kids) a shared view of sessions, attendance and progress. See `CLAUDE.md` for the standing project rules.
 
-Status: Sprint 1 first vertical slice. The API and database are real; the screens are placeholders that run on a mock session. Read "What is real and what is mock" before demoing. Demo walkthrough: `docs/DEMO.md`. Dependency licences: `docs/THIRD_PARTY.md`.
+Status: Sprint 1 first vertical slice. The API and database are real; the screens are placeholders; sign-in by magic link is real. Read "What is real and what is mock" before demoing. Demo walkthrough: `docs/DEMO.md`. Dependency licences: `docs/THIRD_PARTY.md`.
 
 ## Run locally from a clean checkout
 
@@ -73,7 +73,7 @@ The contract is ahead of the code in places and the code is ahead of the contrac
 ## What is real and what is mock
 
 - Real: the Postgres schema and migrations, tenant scoping, the seed, the exercise catalog, and the API under `/api/v1` (magic-link exchange, refresh, sign-out, `/me`, tenant and theme, members, member detail, CSV import, batches, sessions), with role and tenant checks enforced on the server.
-- Mock: the screens. The UI does not sign in. `lib/session.ts` reads two demo cookies and fake data from `lib/mock-session.ts`; the tenant and role pickers at the top of the page set those cookies. The UI's mock tenant names do not match the seeded tenant names (see `docs/DEMO.md`). The owner CSV import screen uses a mock client unless `NEXT_PUBLIC_API_MODE=live`, and in live mode it would still have no bearer token to send.
+- Sign-in: opening a magic link (`/auth/magic?token=...`) signs the browser in. The session lives in httpOnly cookies (`as_access`, `as_refresh`), `lib/session.ts` resolves it against the database, and the shell has a Sign out button. With no session and demo mode off, visitors are sent to `/sign-in`. Outside production (or with `DEMO_MODE=true`) the Business / View as picker still works when nobody is signed in, and shows the seeded tenants (name, logo and colours from the database). The owner CSV import screen uses a mock client unless `NEXT_PUBLIC_API_MODE=live`, and in live mode it would still have no bearer token to send.
 
 ## Hosting (dev deployment)
 

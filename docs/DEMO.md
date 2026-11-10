@@ -6,7 +6,7 @@ Read this first. The app has two halves that are not yet joined:
 
 | Half | What it is | Status |
 | --- | --- | --- |
-| Screens (the UI you click) | Placeholder pages per role. Who you are and which business you see come from two browser cookies and fake data in `lib/mock-session.ts`. | Mock. No sign-in happens. |
+| Screens (the UI you click) | Placeholder pages per role. Opening a magic link (Part 3) signs you in for real (httpOnly cookies). Without signing in, the pickers set two demo cookies. | Sign-in real; pages placeholder. |
 | API and database (`/api/v1`, Postgres) | Real sign-in by magic link, real role and tenant checks, real seeded data. | Real, but the screens do not call it yet (except nothing in this script). |
 
 So you demonstrate the look and the role separation on the screens, and the real sign-in and data isolation through API calls. Say this out loud in the demo; do not present the pickers as login.
@@ -27,15 +27,15 @@ Open http://localhost:3000 on a phone-sized window (about 390 px wide). The pick
 
 The "Business" picker has three demo businesses. Pick each one and watch the heading, logo and colours change.
 
-| Picker label | Mock slug | Brand colour |
+| Picker label (seeded name) | Slug | Brand colour |
 | --- | --- | --- |
-| Demo Karate Academy | `demo-karate` | red |
-| Demo Iron Gym | `demo-gym` | teal |
-| Demo Group Classes Studio | `demo-classes` | purple |
+| Sample Dojo (demo karate academy) | `demo-karate` | red |
+| Sample Iron Works (demo gym) | `demo-gym` | navy |
+| Sample Flow Studio (demo group classes) | `demo-studio` | green |
 
 What to point out: the business name, logo and colours change; no "Project All Star" branding appears anywhere (the app is white-label); the language picker offers English, Hindi and Kannada, and the Hindi and Kannada text shows a "needs native-speaker review" banner.
 
-Known mismatch: the database seed names the businesses differently ("Sample Dojo", "Sample Iron Works", "Sample Flow Studio") and the third slug is `demo-studio`, not `demo-classes`. The screens show the mock names above; the API returns the seeded names. This is a tracked bug (Tasks database: UI demo tenants do not match seeded tenants).
+The names, logos and colours come from the database seed, the same source as the API.
 
 ## Part 2: each role sees only its own view (screens, mock)
 

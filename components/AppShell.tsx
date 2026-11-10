@@ -11,7 +11,8 @@ import { Footer } from "./Footer";
 /** Shell for the signed-in user's own role. Theme variables come from the document root. */
 export async function AppShell({ role, children }: { role: Role; children: ReactNode }) {
   const { t, locale } = await getT();
-  const { theme, name } = await getSession();
+  const { theme, name, source } = await getSession();
+  const signedIn = source === "real";
 
   return (
     <div className="shell">
@@ -28,6 +29,11 @@ export async function AppShell({ role, children }: { role: Role; children: React
           <small>{t(`role.${role}`)} · {name}</small>
         </Link>
         <LanguageSwitcher />
+        {signedIn && (
+          <form method="post" action="/auth/sign-out">
+            <button type="submit" className="btn btn-outline btn-small">{t("signout.button")}</button>
+          </form>
+        )}
       </header>
       {NEEDS_REVIEW.includes(locale) && <p className="review-banner">{t("review.banner")}</p>}
       <main className="shell-main">{children}</main>
