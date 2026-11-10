@@ -1,0 +1,6 @@
+{
+  "exercises": [
+    {"id": "fixture-karate-stance", "sport": "karate", "name": "Fixture front stance", "category": "technique", "level": "beginner", "primaryMuscles": ["quadriceps"], "instructions": ["Step forward.", "Bend front knee.", "Keep back leg straight."]},
+    {"id": "fixture-yoga-tree", "sport": "yoga", "name": "Fixture tree pose", "category": "balance", "level": "beginner", "primaryMuscles": ["glutes"], "instructions": ["Stand on one leg.", "Place foot on calf.", "Hold and breathe."]}
+  ]
+}

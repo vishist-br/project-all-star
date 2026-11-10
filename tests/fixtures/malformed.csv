@@ -1,0 +1,9 @@
+name,phone,email,guardian_name,guardian_phone,batch_name,sport,level,goal,join_date,fee_status
+Fixture Good Row,+919000001010,,,,,,,,2026-01-01,paid
+,+919000001011,,,,,,,,2026-01-02,paid
+Bad Date,+919000001012,,,,,,,,2026-13-40,paid
+Bad Phone,12,,,,,,,,,due
+Bad Email,+919000001013,not-an-email,,,,,,,,due
+Bad Fee,+919000001014,,,,,,,,,maybe
+Guardian Phone Only,,,,+919000001015,,,,,,due
+Kid With Phone,+919000001016,,Fixture Guardian,+919000001017,,,,,,due

@@ -1,0 +1,5 @@
+name,phone,email,guardian_name,guardian_phone,batch_name,sport,level,goal,join_date,fee_status
+Fixture Adult One,+919000001001,fixture.one@example.invalid,,,,,,Build routine,2026-01-05,paid
+Fixture Kid Two,,,Fixture Guardian Two,+919000001002,,,,Yellow belt by June,2026-02-10,due
+Fixture Adult Three,+919000001003,,,,,,,,,overdue
+Fixture Name Only,,,,,,,,,,
