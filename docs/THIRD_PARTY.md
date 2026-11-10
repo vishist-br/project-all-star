@@ -19,6 +19,7 @@ Policy: MIT, Apache-2.0, BSD, Unlicense or CC0 only (see CLAUDE.md). Update this
 | eslint | ^9.39.5 | MIT | Linting |
 | eslint-config-next | ^16.4.5 | MIT | Lint rules |
 | vitest | ^3.2.7 | MIT | Tests |
+| @playwright/test | 1.65.0 | Apache-2.0 | End-to-end smoke test (`npm run test:e2e`, folder `e2e/`). Browser binaries are not vendored: runs on system Google Chrome (`E2E_BROWSER_CHANNEL=chrome`, default) or on Playwright's Chromium after `npx playwright install chromium` (Apache-2.0 build of Chromium, BSD-3 upstream; set `E2E_BROWSER_CHANNEL=chromium`). Playwright 1.65 could not download browsers on macOS 13 arm64. |
 | js-yaml, @types/js-yaml | ^4.3.2 / latest | MIT | Tests only: load docs/api/openapi.yaml to validate response shapes |
 | tsx | see package.json | MIT | Runs the TypeScript seed and import scripts (`npm run db:seed`) |
 | @types/node, @types/react, @types/react-dom | see package.json | MIT | Type definitions |
