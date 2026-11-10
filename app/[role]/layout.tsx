@@ -9,7 +9,8 @@ import { getSession } from "@/lib/session";
 /**
  * Route guard: a user sees only their own role's screens. Another role's URL shows the
  * not-allowed page inside the user's own shell (their nav, never the other role's).
- * Swap getSession() for the real session later; this file does not change.
+ * getSession() resolves the real session (or the demo switcher in demo mode) and sends visitors
+ * with no session to /sign-in.
  */
 export default async function RoleLayout({
   children,

@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { ACCESS_COOKIE } from "@/lib/auth-cookies";
 import type { ReactNode } from "react";
 import { getT } from "@/lib/i18n/server";
 import { NEEDS_REVIEW } from "@/lib/i18n";
@@ -13,8 +11,8 @@ import { Footer } from "./Footer";
 /** Shell for the signed-in user's own role. Theme variables come from the document root. */
 export async function AppShell({ role, children }: { role: Role; children: ReactNode }) {
   const { t, locale } = await getT();
-  const { theme, name } = await getSession();
-  const signedIn = (await cookies()).has(ACCESS_COOKIE);
+  const { theme, name, source } = await getSession();
+  const signedIn = source === "real";
 
   return (
     <div className="shell">
