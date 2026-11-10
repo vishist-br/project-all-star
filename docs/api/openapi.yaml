@@ -273,7 +273,15 @@ paths:
         (YYYY-MM-DD), fee_status (paid|due|overdue). With `dryRun=true`
         nothing is saved and a preview plus row errors are returned. With
         `dryRun=false` rows are saved only if there are no row errors
-        (all or nothing).
+        (all or nothing). Only `name` is required; every other column is
+        optional. A row whose name and contact phone (own phone for adults,
+        guardian phone for children) already exist in the caller's tenant is
+        skipped, so re-uploading the same file creates no duplicates. The same
+        member twice in one file is a row error. batch_name, sport and level
+        are linked only when they already exist; otherwise the row is still
+        imported and a warning is returned. Excel and PDF are not supported
+        (400); CSV only, up to 2 MB and 2000 rows. Members always go into the
+        caller's tenant.
       x-roles: [owner]
       parameters:
         - name: dryRun
@@ -622,7 +630,20 @@ components:
         validRows: {type: integer}
         importedRows:
           type: integer
-          description: Present only when dryRun is false and import succeeded
+          description: New members created. Present only when dryRun is false and import succeeded
+        skippedRows:
+          type: integer
+          description: Rows that already exist in this tenant (name and contact phone) and were not imported again
+        warnings:
+          type: array
+          description: Non-blocking notes, e.g. a batch name that does not exist yet. row 0 means a whole-file note.
+          items:
+            type: object
+            required: [row, message]
+            properties:
+              row: {type: integer}
+              column: {type: string, nullable: true}
+              message: {type: string}
         preview:
           type: array
           description: First rows as parsed (max 20)
