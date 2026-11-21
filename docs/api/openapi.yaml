@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Project All Star API
-  version: 0.1.0
+  version: 0.2.0
   description: |
     Contract for the white-label visibility tool (owner, coach, customer).
     Contract-first: Backend and Frontend build in parallel against this file.
@@ -36,6 +36,10 @@ tags:
   - name: Batches
   - name: Venues
   - name: Sessions
+  - name: Exercises
+  - name: Workouts
+  - name: Coaches
+  - name: Analytics
 paths:
   /auth/otp/request:
     post:
@@ -416,6 +420,807 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionPage'
         '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      tags: [Sessions]
+      operationId: createSession
+      x-roles: [owner, coach]
+      summary: Schedule a training session (extra group-class session or one-on-one with a member)
+      description: |
+        Give `batchId` for a session of an existing batch, or `memberId` for a
+        one-on-one: the server reuses (or creates) the coach's ONE_ON_ONE batch for that
+        member. Coach only for own batches or members in own batches; `coachId` is forced
+        to self for coaches (owner may pick any coach). Warns (not blocks) when outside
+        the coach's availability; 409 conflict when it overlaps another scheduled session
+        of the same coach. Writes `session_scheduled` updates for one-on-one members.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SessionInput'}
+      responses:
+        '201':
+          description: Created session
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SessionDetail'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  # ---------------------------------------------------------------------------
+  # Sprint 2 (POC completion). See docs/PLAN-POC.md for the data model, the
+  # row-level rules behind each x-roles entry and the analytics formulas.
+  # ---------------------------------------------------------------------------
+  /tenant/settings:
+    put:
+      tags: [Tenants]
+      operationId: updateTenantSettings
+      x-roles: [owner]
+      summary: Update per-tenant settings (booking cancellation window, waitlist, missed-session cost display)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TenantSettingsInput'}
+      responses:
+        '200':
+          description: Updated tenant
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Tenant'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /exercises:
+    get:
+      tags: [Exercises]
+      operationId: listExercises
+      x-roles: [owner, coach, customer]
+      summary: Search the tenant's exercise catalog (used by the plan builder picker)
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - {name: q, in: query, description: Name contains (case-insensitive), schema: {type: string}}
+        - {name: sport, in: query, description: Sport slug, schema: {type: string}}
+        - {name: muscle, in: query, schema: {type: string}}
+        - {name: equipment, in: query, schema: {type: string}}
+        - {name: level, in: query, schema: {type: string}}
+      responses:
+        '200':
+          description: Page of exercises
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExercisePage'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /exercises/{exerciseId}:
+    get:
+      tags: [Exercises]
+      operationId: getExercise
+      x-roles: [owner, coach, customer]
+      summary: Exercise detail (instructions, muscles, equipment)
+      parameters:
+        - $ref: '#/components/parameters/ExerciseId'
+      responses:
+        '200':
+          description: Exercise
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Exercise'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /coaches:
+    get:
+      tags: [Coaches]
+      operationId: listCoaches
+      x-roles: [owner]
+      summary: Coaches of the tenant with a short workload summary (Coach Insight Directory)
+      responses:
+        '200':
+          description: Coaches
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/CoachSummary'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /coaches/{coachId}/stats:
+    get:
+      tags: [Coaches]
+      operationId: getCoachStats
+      x-roles: [owner, coach]
+      summary: A coach's record (sessions delivered, consistency, member outcomes). Coach only for self.
+      parameters:
+        - $ref: '#/components/parameters/CoachId'
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Coach stats
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CoachStats'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /coaches/{coachId}/availability:
+    get:
+      tags: [Coaches]
+      operationId: listCoachAvailability
+      x-roles: [owner, coach]
+      summary: Weekly availability slots of a coach. Coach only for self.
+      parameters:
+        - $ref: '#/components/parameters/CoachId'
+      responses:
+        '200':
+          description: Availability
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CoachAvailability'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    put:
+      tags: [Coaches]
+      operationId: replaceCoachAvailability
+      x-roles: [owner, coach]
+      summary: Replace all weekly availability slots of a coach. Coach only for self.
+      description: Slots must not overlap on the same weekday (400 validation_failed with details).
+      parameters:
+        - $ref: '#/components/parameters/CoachId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CoachAvailabilityInput'}
+      responses:
+        '200':
+          description: Saved availability
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CoachAvailability'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /workout-plans:
+    get:
+      tags: [Workouts]
+      operationId: listWorkoutPlans
+      x-roles: [owner, coach]
+      summary: List workout plans. Owner all; coach only plans they created.
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - {name: status, in: query, schema: {$ref: '#/components/schemas/PlanStatus'}}
+        - {name: q, in: query, schema: {type: string}}
+      responses:
+        '200':
+          description: Page of plans
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/WorkoutPlanPage'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+    post:
+      tags: [Workouts]
+      operationId: createWorkoutPlan
+      x-roles: [owner, coach]
+      summary: Create a workout plan (daily, weekly or monthly routine) from catalog exercises
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/WorkoutPlanInput'}
+      responses:
+        '201':
+          description: Created plan
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/WorkoutPlan'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /workout-plans/{planId}:
+    get:
+      tags: [Workouts]
+      operationId: getWorkoutPlan
+      x-roles: [owner, coach, customer]
+      summary: Plan with days and items. Coach own plans; customer only plans assigned to self or child.
+      parameters:
+        - $ref: '#/components/parameters/PlanId'
+      responses:
+        '200':
+          description: Plan
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/WorkoutPlan'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    put:
+      tags: [Workouts]
+      operationId: updateWorkoutPlan
+      x-roles: [owner, coach]
+      summary: Replace a plan's title, cadence, days and items
+      description: |
+        Full replace. Increments `version`. Items that already have workout logs are
+        archived (kept for history) instead of removed. Writes a `plan_updated` member
+        update for every member with an active assignment of this plan, so customers
+        see the change. 409 conflict when `expectedVersion` does not match.
+      parameters:
+        - $ref: '#/components/parameters/PlanId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/WorkoutPlanInput'
+                - type: object
+                  required: [expectedVersion]
+                  properties:
+                    expectedVersion: {type: integer, minimum: 1}
+      responses:
+        '200':
+          description: Updated plan
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/WorkoutPlan'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /workout-plans/{planId}/archive:
+    post:
+      tags: [Workouts]
+      operationId: archiveWorkoutPlan
+      x-roles: [owner, coach]
+      summary: Archive a plan (never deleted). Ends its active assignments and notifies those members.
+      parameters:
+        - $ref: '#/components/parameters/PlanId'
+      responses:
+        '200':
+          description: Archived plan
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/WorkoutPlan'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /plan-assignments:
+    get:
+      tags: [Workouts]
+      operationId: listPlanAssignments
+      x-roles: [owner, coach, customer]
+      summary: List plan assignments. Owner all; coach assignments to members in own batches or of own plans; customer self or child.
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - {name: memberId, in: query, schema: {type: string}}
+        - {name: planId, in: query, schema: {type: string}}
+        - {name: status, in: query, schema: {$ref: '#/components/schemas/AssignmentStatus'}}
+      responses:
+        '200':
+          description: Page of assignments
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PlanAssignmentPage'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      tags: [Workouts]
+      operationId: createPlanAssignments
+      x-roles: [owner, coach]
+      summary: Assign a plan to one or more members
+      description: |
+        Coach may assign only to members in their own batches (403 otherwise) and only
+        plans they can see. A member may hold several active assignments of different
+        plans; assigning the same plan twice while active is 409 conflict. Writes a
+        `plan_assigned` member update per member. All or nothing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PlanAssignmentInput'}
+      responses:
+        '201':
+          description: Created assignments
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/PlanAssignment'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /plan-assignments/{assignmentId}:
+    patch:
+      tags: [Workouts]
+      operationId: updatePlanAssignment
+      x-roles: [owner, coach]
+      summary: Pause, resume, end or change the dates of an assignment
+      description: Writes a `plan_updated` (or `plan_ended`) member update.
+      parameters:
+        - $ref: '#/components/parameters/AssignmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PlanAssignmentPatch'}
+      responses:
+        '200':
+          description: Updated assignment
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PlanAssignment'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /members/{memberId}/schedule:
+    get:
+      tags: [Members]
+      operationId: getMemberSchedule
+      x-roles: [owner, coach, customer]
+      summary: Day-by-day schedule for a member (assigned workout items and sessions)
+      description: |
+        Expands active assignments into dated items (see docs/PLAN-POC.md "Schedule
+        expansion") and merges the member's sessions and bookings. Range max 62 days;
+        default today .. today+6 in the tenant timezone. Same visibility as getMember.
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Schedule
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MemberSchedule'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /members/{memberId}/workout-logs:
+    get:
+      tags: [Members]
+      operationId: listWorkoutLogs
+      x-roles: [owner, coach, customer]
+      summary: Workout history for a member (started, stopped, completed, skipped items)
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Page of logs, newest first
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/WorkoutLogPage'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /workout-logs:
+    put:
+      tags: [Workouts]
+      operationId: recordWorkoutLog
+      x-roles: [coach, customer]
+      summary: Start, stop, complete or skip an assigned workout item (idempotent by clientId)
+      description: |
+        Customer only for self or child; coach only for members in own batches.
+        Upsert by (assignmentId, planItemId, scheduledFor); `clientId` makes offline
+        retries idempotent. `scheduledFor` must be a date on which the item is scheduled
+        (400 otherwise) and not in the future. Transitions: none -> started|completed|skipped,
+        started -> stopped|completed, stopped -> started|completed. Completed is final
+        except the same action repeated (idempotent 200).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/WorkoutLogInput'}
+      responses:
+        '200':
+          description: Saved log
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/WorkoutLog'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /members/{memberId}/stats:
+    get:
+      tags: [Members]
+      operationId: getMemberStats
+      x-roles: [owner, coach, customer]
+      summary: Member stats (attendance, workouts completed vs pending, streaks, weekly series, goals)
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Stats
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MemberStats'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /members/{memberId}/goals:
+    get:
+      tags: [Members]
+      operationId: listGoals
+      x-roles: [owner, coach, customer]
+      summary: Goals of a member with computed progress
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - {name: status, in: query, schema: {$ref: '#/components/schemas/GoalStatus'}}
+      responses:
+        '200':
+          description: Goals
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/Goal'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    post:
+      tags: [Members]
+      operationId: createGoal
+      x-roles: [owner, coach]
+      summary: Set a goal for a member. Coach only for members in own batches. Writes a `goal_set` update.
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GoalInput'}
+      responses:
+        '201':
+          description: Created goal
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Goal'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /goals/{goalId}:
+    patch:
+      tags: [Members]
+      operationId: updateGoal
+      x-roles: [owner, coach]
+      summary: Edit a goal or change its status (active, achieved, dropped). Writes a `goal_updated` update.
+      parameters:
+        - $ref: '#/components/parameters/GoalId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GoalPatch'}
+      responses:
+        '200':
+          description: Updated goal
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Goal'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /goals/{goalId}/check-ins:
+    post:
+      tags: [Members]
+      operationId: addGoalCheckIn
+      x-roles: [owner, coach]
+      summary: Record a progress value for a goal with metric `custom` (e.g. a timed run)
+      parameters:
+        - $ref: '#/components/parameters/GoalId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GoalCheckInInput'}
+      responses:
+        '201':
+          description: Updated goal including the new check-in
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Goal'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /members/{memberId}/updates:
+    get:
+      tags: [Members]
+      operationId: listMemberUpdates
+      x-roles: [owner, coach, customer]
+      summary: Change feed for a member (coach changed a plan, set a goal, session booked or cancelled)
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Page of updates, newest first, with the unread count
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MemberUpdatePage'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /members/{memberId}/updates/read:
+    post:
+      tags: [Members]
+      operationId: markMemberUpdatesRead
+      x-roles: [customer]
+      summary: Mark updates as read up to a timestamp (customer, self or child only)
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [upTo]
+              properties:
+                upTo: {type: string, format: date-time}
+      responses:
+        '204': {description: Marked read}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /sessions/{sessionId}:
+    get:
+      tags: [Sessions]
+      operationId: getSession
+      x-roles: [owner, coach, customer]
+      summary: Session detail. Owner and coach get the roster; customer gets only their own booking and attendance plus counts.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Session detail
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SessionDetail'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    patch:
+      tags: [Sessions]
+      operationId: updateSession
+      x-roles: [owner, coach]
+      summary: Reschedule, cancel or add a coach note. Coach only own sessions.
+      description: |
+        Cancelling sets status cancelled and cancels all bookings, writing a
+        `session_cancelled` update per booked or waitlisted member. Rescheduling writes
+        `session_rescheduled`. A completed session can only change `coachNote`.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SessionPatch'}
+      responses:
+        '200':
+          description: Updated session
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SessionDetail'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /sessions/{sessionId}/attendance:
+    put:
+      tags: [Sessions]
+      operationId: recordAttendance
+      x-roles: [owner, coach]
+      summary: One-tap roll call. Upserts attendance rows (idempotent by clientId) and optionally completes the session.
+      description: |
+        Coach only own sessions. Members must be on the roster (enrolled in the batch
+        on the session date, or holding a booking). `reason` required when status is
+        excused, forbidden otherwise. Last write wins on `markedAt`. Offline clients
+        replay the same body; the result is identical.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AttendanceInput'}
+      responses:
+        '200':
+          description: Session with updated roster
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SessionDetail'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /sessions/{sessionId}/bookings:
+    post:
+      tags: [Sessions]
+      operationId: bookSession
+      x-roles: [owner, coach, customer]
+      summary: Book a member into a scheduled group-class session (waitlisted when full)
+      description: |
+        Customer only for self or child, and only sessions of batches the member is
+        enrolled in. Coach only own sessions. 409 conflict when the session is not
+        scheduled, already started, or the member already holds an active booking.
+        When the session is full the booking is `waitlisted` with a position (or 409
+        when the tenant disabled the waitlist).
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [memberId]
+              properties:
+                memberId: {type: string}
+      responses:
+        '201':
+          description: Booking
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Booking'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /bookings/{bookingId}/cancel:
+    post:
+      tags: [Sessions]
+      operationId: cancelBooking
+      x-roles: [owner, coach, customer]
+      summary: Cancel a booking. Customers only before the tenant's cancellation window closes.
+      description: |
+        Customer only own (or child's) booking, and only until startsAt minus
+        bookingCancelWindowMinutes (409 conflict with details field `cancelWindow`
+        after that). Owner and coach (own sessions) can cancel any time before start.
+        Cancelling a booked place promotes the first waitlisted member and writes a
+        `waitlist_promoted` update for them.
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+      responses:
+        '200':
+          description: Cancelled booking
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Booking'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /analytics/overview:
+    get:
+      tags: [Analytics]
+      operationId: getOwnerOverview
+      x-roles: [owner]
+      summary: Owner KPIs for a period (members, attendance, sessions, engagement, workouts, retention)
+      description: Formulas in docs/PLAN-POC.md "Owner analytics". Default period is the last 30 days ending today.
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Overview
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OwnerOverview'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /analytics/trends:
+    get:
+      tags: [Analytics]
+      operationId: getOwnerTrends
+      x-roles: [owner]
+      summary: Weekly or monthly series for charts (attendance, sessions, members, workouts)
+      parameters:
+        - name: granularity
+          in: query
+          schema: {type: string, enum: [week, month], default: week}
+        - name: periods
+          in: query
+          description: Number of buckets ending with the current one
+          schema: {type: integer, minimum: 2, maximum: 24, default: 12}
+      responses:
+        '200':
+          description: Trends
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OwnerTrends'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /analytics/coaches:
+    get:
+      tags: [Analytics]
+      operationId: getCoachWorkload
+      x-roles: [owner]
+      summary: Per-coach performance and workload for a period
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Coach workload
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [from, to, items]
+                properties:
+                  from: {type: string, format: date}
+                  to: {type: string, format: date}
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/CoachStats'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /analytics/fees:
+    get:
+      tags: [Analytics]
+      operationId: getFeeStats
+      x-roles: [owner]
+      summary: Fee status counts (display only; no amounts, no payment processing)
+      responses:
+        '200':
+          description: Fee stats
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FeeStats'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /analytics/insights:
+    get:
+      tags: [Analytics]
+      operationId: getOwnerInsights
+      x-roles: [owner]
+      summary: Follow-up flags, renewal alerts with recent attendance, unlogged sessions and rule-based insight cards
+      responses:
+        '200':
+          description: Insights
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OwnerInsights'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
 components:
   securitySchemes:
     bearerAuth:
@@ -441,6 +1246,52 @@ components:
       name: cursor
       in: query
       schema: {type: string}
+    ExerciseId:
+      name: exerciseId
+      in: path
+      required: true
+      schema: {type: string}
+    CoachId:
+      name: coachId
+      in: path
+      required: true
+      description: User id of a user with role coach
+      schema: {type: string}
+    PlanId:
+      name: planId
+      in: path
+      required: true
+      schema: {type: string}
+    AssignmentId:
+      name: assignmentId
+      in: path
+      required: true
+      schema: {type: string}
+    GoalId:
+      name: goalId
+      in: path
+      required: true
+      schema: {type: string}
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema: {type: string}
+    BookingId:
+      name: bookingId
+      in: path
+      required: true
+      schema: {type: string}
+    From:
+      name: from
+      in: query
+      description: Inclusive start date (YYYY-MM-DD, tenant timezone)
+      schema: {type: string, format: date}
+    To:
+      name: to
+      in: query
+      description: Inclusive end date (YYYY-MM-DD, tenant timezone)
+      schema: {type: string, format: date}
   responses:
     BadRequest:
       description: Invalid request
@@ -467,6 +1318,11 @@ components:
       content:
         application/json:
           schema: {$ref: '#/components/schemas/Error'}
+    Conflict:
+      description: The request conflicts with the current state (version mismatch, full, window closed, duplicate)
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
   schemas:
     Error:
       type: object
@@ -480,7 +1336,7 @@ components:
               type: string
               description: Stable machine-readable code
               example: validation_failed
-              enum: [validation_failed, unauthorized, forbidden, not_found, rate_limited, payload_too_large, internal_error]
+              enum: [validation_failed, unauthorized, forbidden, not_found, conflict, rate_limited, payload_too_large, internal_error]
             message:
               type: string
               description: Human-readable, English
@@ -596,6 +1452,13 @@ components:
           type: boolean
           default: false
           description: Per-tenant display toggle, off by default
+        bookingCancelWindowMinutes:
+          type: integer
+          default: 120
+          description: Customers may cancel a booking until this many minutes before the session starts
+        waitlistEnabled:
+          type: boolean
+          default: true
     MemberStatus:
       type: string
       enum: [active, paused, ended]
@@ -792,6 +1655,17 @@ components:
             excused: {type: integer}
             total: {type: integer}
         coachNote: {type: string, nullable: true}
+        kind:
+          type: string
+          enum: [group_class, one_on_one]
+        capacity: {type: integer, nullable: true}
+        bookedCount: {type: integer}
+        waitlistCount: {type: integer}
+        myBookingStatus:
+          type: string
+          nullable: true
+          enum: [booked, waitlisted, cancelled]
+          description: Customer only; status of the caller's (or child's) booking, when one exists
     SessionPage:
       type: object
       required: [items]
@@ -800,3 +1674,828 @@ components:
           type: array
           items: {$ref: '#/components/schemas/Session'}
         nextCursor: {type: string, nullable: true}
+    # ---- Sprint 2 schemas -------------------------------------------------
+    Percent:
+      type: number
+      minimum: 0
+      maximum: 100
+      nullable: true
+      description: Rounded to one decimal; null when the denominator is 0
+    TenantSettingsInput:
+      type: object
+      properties:
+        bookingCancelWindowMinutes: {type: integer, minimum: 0, maximum: 2880}
+        waitlistEnabled: {type: boolean}
+        showMissedSessionCost: {type: boolean}
+    Exercise:
+      type: object
+      required: [id, name, sportSlug, needsTrainerReview]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        sportSlug: {type: string}
+        category: {type: string, nullable: true}
+        level: {type: string, nullable: true}
+        equipment: {type: string, nullable: true}
+        primaryMuscles: {type: array, items: {type: string}}
+        secondaryMuscles: {type: array, items: {type: string}}
+        instructions: {type: array, items: {type: string}}
+        needsTrainerReview: {type: boolean}
+        licence: {type: string}
+    ExerciseSummary:
+      type: object
+      required: [id, name, sportSlug]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        sportSlug: {type: string}
+        equipment: {type: string, nullable: true}
+        primaryMuscles: {type: array, items: {type: string}}
+        needsTrainerReview: {type: boolean}
+    ExercisePage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseSummary'}
+        nextCursor: {type: string, nullable: true}
+    CoachSummary:
+      type: object
+      required: [id, name, batchCount, memberCount]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        batchCount: {type: integer}
+        memberCount: {type: integer}
+        upcomingSessions7d: {type: integer}
+        activeAssignments: {type: integer}
+    CoachStats:
+      type: object
+      required: [coachId, coachName, from, to, sessions]
+      properties:
+        coachId: {type: string}
+        coachName: {type: string}
+        from: {type: string, format: date}
+        to: {type: string, format: date}
+        batchCount: {type: integer}
+        memberCount: {type: integer}
+        sessions:
+          type: object
+          required: [scheduled, completed, cancelled, unlogged]
+          properties:
+            scheduled: {type: integer, description: Past non-cancelled sessions in the period}
+            completed: {type: integer}
+            cancelled: {type: integer}
+            unlogged: {type: integer, description: Past sessions still `scheduled` more than 2 hours after endsAt}
+            upcoming7d: {type: integer}
+        consistencyPercent: {$ref: '#/components/schemas/Percent'}
+        attendancePercent: {$ref: '#/components/schemas/Percent'}
+        workoutAdherencePercent: {$ref: '#/components/schemas/Percent'}
+        activeAssignments: {type: integer}
+        activePlans: {type: integer}
+        availabilityHoursPerWeek: {type: number}
+        bookedHoursNext7d: {type: number}
+        loadPercent:
+          $ref: '#/components/schemas/Percent'
+        memberOutcomes:
+          type: object
+          properties:
+            goalsAchieved: {type: integer}
+            goalsActive: {type: integer}
+            levelPromotions: {type: integer}
+        weekly:
+          type: array
+          description: Last 8 weeks, oldest first
+          items:
+            type: object
+            required: [weekStart, scheduled, completed]
+            properties:
+              weekStart: {type: string, format: date}
+              scheduled: {type: integer}
+              completed: {type: integer}
+              attendancePercent: {$ref: '#/components/schemas/Percent'}
+    AvailabilitySlot:
+      type: object
+      required: [weekday, startTime, endTime]
+      properties:
+        id: {type: string, readOnly: true}
+        weekday: {type: integer, minimum: 1, maximum: 7, description: '1 = Monday'}
+        startTime: {type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$', example: '06:00'}
+        endTime: {type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$', example: '09:00'}
+        venueId: {type: string, nullable: true}
+    CoachAvailability:
+      type: object
+      required: [coachId, slots]
+      properties:
+        coachId: {type: string}
+        slots:
+          type: array
+          items: {$ref: '#/components/schemas/AvailabilitySlot'}
+    CoachAvailabilityInput:
+      type: object
+      required: [slots]
+      properties:
+        slots:
+          type: array
+          maxItems: 50
+          items: {$ref: '#/components/schemas/AvailabilitySlot'}
+    PlanCadence:
+      type: string
+      enum: [daily, weekly, monthly]
+      description: |
+        daily: one day (dayIndex 1) repeated every day. weekly: dayIndex 1-7 = ISO
+        weekday. monthly: dayIndex 1-31 = day of month (29-31 skipped in shorter months).
+    PlanStatus:
+      type: string
+      enum: [draft, active, archived]
+    AssignmentStatus:
+      type: string
+      enum: [active, paused, ended]
+    PlanItem:
+      type: object
+      required: [exerciseId, position]
+      properties:
+        id: {type: string, readOnly: true}
+        exerciseId: {type: string}
+        exerciseName: {type: string, readOnly: true}
+        position: {type: integer, minimum: 1}
+        sets: {type: integer, minimum: 1, maximum: 20, nullable: true}
+        reps: {type: integer, minimum: 1, maximum: 200, nullable: true}
+        durationSeconds: {type: integer, minimum: 1, maximum: 7200, nullable: true}
+        restSeconds: {type: integer, minimum: 0, maximum: 900, nullable: true}
+        notes: {type: string, maxLength: 280, nullable: true}
+      description: At least one of reps or durationSeconds is required.
+    PlanDay:
+      type: object
+      required: [dayIndex, items]
+      properties:
+        id: {type: string, readOnly: true}
+        dayIndex: {type: integer, minimum: 1, maximum: 31}
+        title: {type: string, maxLength: 80, nullable: true, example: Legs and core}
+        notes: {type: string, maxLength: 500, nullable: true}
+        items:
+          type: array
+          maxItems: 30
+          items: {$ref: '#/components/schemas/PlanItem'}
+    WorkoutPlanInput:
+      type: object
+      required: [title, cadence, days]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 80}
+        description: {type: string, maxLength: 1000, nullable: true}
+        cadence: {$ref: '#/components/schemas/PlanCadence'}
+        sportSlug: {type: string, nullable: true}
+        status:
+          type: string
+          enum: [draft, active]
+          default: active
+        days:
+          type: array
+          minItems: 1
+          maxItems: 31
+          items: {$ref: '#/components/schemas/PlanDay'}
+    WorkoutPlan:
+      type: object
+      required: [id, title, cadence, status, version, coachId, days]
+      properties:
+        id: {type: string}
+        title: {type: string}
+        description: {type: string, nullable: true}
+        cadence: {$ref: '#/components/schemas/PlanCadence'}
+        sportSlug: {type: string, nullable: true}
+        status: {$ref: '#/components/schemas/PlanStatus'}
+        version: {type: integer}
+        coachId: {type: string, description: Creator}
+        coachName: {type: string}
+        activeAssignmentCount: {type: integer}
+        updatedAt: {type: string, format: date-time}
+        days:
+          type: array
+          items: {$ref: '#/components/schemas/PlanDay'}
+    WorkoutPlanSummary:
+      type: object
+      required: [id, title, cadence, status, version, coachId]
+      properties:
+        id: {type: string}
+        title: {type: string}
+        cadence: {$ref: '#/components/schemas/PlanCadence'}
+        status: {$ref: '#/components/schemas/PlanStatus'}
+        version: {type: integer}
+        coachId: {type: string}
+        coachName: {type: string}
+        dayCount: {type: integer}
+        itemCount: {type: integer}
+        activeAssignmentCount: {type: integer}
+        updatedAt: {type: string, format: date-time}
+    WorkoutPlanPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/WorkoutPlanSummary'}
+        nextCursor: {type: string, nullable: true}
+    PlanAssignmentInput:
+      type: object
+      required: [planId, memberIds, startsOn]
+      properties:
+        planId: {type: string}
+        memberIds:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items: {type: string}
+        startsOn: {type: string, format: date}
+        endsOn: {type: string, format: date, nullable: true}
+        note: {type: string, maxLength: 280, nullable: true, description: Shown to the member in the update}
+    PlanAssignmentPatch:
+      type: object
+      properties:
+        status: {$ref: '#/components/schemas/AssignmentStatus'}
+        startsOn: {type: string, format: date}
+        endsOn: {type: string, format: date, nullable: true}
+        note: {type: string, maxLength: 280, nullable: true}
+    PlanAssignment:
+      type: object
+      required: [id, planId, planTitle, memberId, status, startsOn]
+      properties:
+        id: {type: string}
+        planId: {type: string}
+        planTitle: {type: string}
+        planVersion: {type: integer, description: Plan version at the last change the member saw}
+        cadence: {$ref: '#/components/schemas/PlanCadence'}
+        memberId: {type: string}
+        memberName: {type: string}
+        assignedById: {type: string}
+        assignedByName: {type: string}
+        status: {$ref: '#/components/schemas/AssignmentStatus'}
+        startsOn: {type: string, format: date}
+        endsOn: {type: string, format: date, nullable: true}
+        note: {type: string, nullable: true}
+        adherencePercent: {$ref: '#/components/schemas/Percent'}
+        updatedAt: {type: string, format: date-time}
+    PlanAssignmentPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/PlanAssignment'}
+        nextCursor: {type: string, nullable: true}
+    WorkoutLogStatus:
+      type: string
+      enum: [started, stopped, completed, skipped]
+    WorkoutLogInput:
+      type: object
+      required: [clientId, assignmentId, planItemId, scheduledFor, action]
+      properties:
+        clientId: {type: string, minLength: 8, maxLength: 64, description: Generated on the device (UUID)}
+        assignmentId: {type: string}
+        planItemId: {type: string}
+        memberId: {type: string, description: Optional; must match the assignment's member}
+        scheduledFor: {type: string, format: date}
+        action:
+          type: string
+          enum: [start, stop, complete, skip]
+        actualSets: {type: integer, minimum: 0, maximum: 50, nullable: true}
+        actualReps: {type: integer, minimum: 0, maximum: 500, nullable: true}
+        actualDurationSeconds: {type: integer, minimum: 0, maximum: 14400, nullable: true}
+        note: {type: string, maxLength: 280, nullable: true}
+        occurredAt: {type: string, format: date-time, description: Device time of the action (offline replay); defaults to server time}
+    WorkoutLog:
+      type: object
+      required: [id, assignmentId, planItemId, memberId, scheduledFor, status]
+      properties:
+        id: {type: string}
+        clientId: {type: string}
+        assignmentId: {type: string}
+        planId: {type: string}
+        planTitle: {type: string}
+        planItemId: {type: string}
+        exerciseId: {type: string}
+        exerciseName: {type: string}
+        memberId: {type: string}
+        scheduledFor: {type: string, format: date}
+        status: {$ref: '#/components/schemas/WorkoutLogStatus'}
+        startedAt: {type: string, format: date-time, nullable: true}
+        completedAt: {type: string, format: date-time, nullable: true}
+        actualSets: {type: integer, nullable: true}
+        actualReps: {type: integer, nullable: true}
+        actualDurationSeconds: {type: integer, nullable: true}
+        note: {type: string, nullable: true}
+        recordedById: {type: string}
+    WorkoutLogPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/WorkoutLog'}
+        nextCursor: {type: string, nullable: true}
+    ScheduledItem:
+      type: object
+      required: [assignmentId, planItemId, exerciseId, exerciseName, status]
+      properties:
+        assignmentId: {type: string}
+        planId: {type: string}
+        planTitle: {type: string}
+        planItemId: {type: string}
+        exerciseId: {type: string}
+        exerciseName: {type: string}
+        position: {type: integer}
+        sets: {type: integer, nullable: true}
+        reps: {type: integer, nullable: true}
+        durationSeconds: {type: integer, nullable: true}
+        restSeconds: {type: integer, nullable: true}
+        notes: {type: string, nullable: true}
+        status:
+          type: string
+          enum: [pending, started, stopped, completed, skipped]
+          description: pending = no log yet
+        logId: {type: string, nullable: true}
+    ScheduleDay:
+      type: object
+      required: [date, items, sessions]
+      properties:
+        date: {type: string, format: date}
+        isHoliday: {type: boolean}
+        holidayName: {type: string, nullable: true}
+        dayTitle: {type: string, nullable: true}
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/ScheduledItem'}
+        sessions:
+          type: array
+          items: {$ref: '#/components/schemas/Session'}
+    MemberSchedule:
+      type: object
+      required: [memberId, from, to, days]
+      properties:
+        memberId: {type: string}
+        from: {type: string, format: date}
+        to: {type: string, format: date}
+        unreadUpdates: {type: integer}
+        days:
+          type: array
+          items: {$ref: '#/components/schemas/ScheduleDay'}
+    MemberStats:
+      type: object
+      required: [memberId, from, to, attendance, workouts]
+      properties:
+        memberId: {type: string}
+        from: {type: string, format: date}
+        to: {type: string, format: date}
+        attendance:
+          type: object
+          required: [attended, missed, excused]
+          properties:
+            attended: {type: integer}
+            missed: {type: integer}
+            excused: {type: integer}
+            percent: {$ref: '#/components/schemas/Percent'}
+            hoursAttended: {type: number, description: Sum of session durations attended (supports the hourly achievement option)}
+        workouts:
+          type: object
+          required: [scheduled, completed, pending, skipped]
+          properties:
+            scheduled: {type: integer, description: Expanded items scheduled on dates from..min(to, today)}
+            completed: {type: integer}
+            pending: {type: integer}
+            skipped: {type: integer}
+            adherencePercent: {$ref: '#/components/schemas/Percent'}
+            upcoming: {type: integer, description: Items scheduled after today up to `to`}
+        streaks:
+          type: object
+          description: Daily streak data (supports the daily-streak achievement option)
+          properties:
+            currentActiveDays: {type: integer}
+            longestActiveDays: {type: integer}
+        level:
+          type: object
+          nullable: true
+          properties:
+            name: {type: string}
+            rank: {type: integer}
+            nextName: {type: string, nullable: true}
+            progressPercent: {$ref: '#/components/schemas/Percent'}
+        goals:
+          type: object
+          properties:
+            active: {type: integer}
+            achieved: {type: integer}
+        weekly:
+          type: array
+          description: Weekly buckets from..to, oldest first
+          items:
+            type: object
+            required: [weekStart]
+            properties:
+              weekStart: {type: string, format: date}
+              attended: {type: integer}
+              missed: {type: integer}
+              workoutsCompleted: {type: integer}
+              workoutsScheduled: {type: integer}
+    GoalStatus:
+      type: string
+      enum: [active, achieved, dropped]
+    GoalMetric:
+      type: string
+      enum: [sessions_attended, workouts_completed, level, custom]
+    GoalInput:
+      type: object
+      required: [title, metric]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 120}
+        metric: {$ref: '#/components/schemas/GoalMetric'}
+        targetValue: {type: number, minimum: 0, nullable: true, description: Required for sessions_attended, workouts_completed and custom}
+        startValue: {type: number, nullable: true, description: custom only; baseline}
+        unit: {type: string, maxLength: 20, nullable: true, example: km}
+        targetLevelId: {type: string, nullable: true, description: Required for level}
+        targetDate: {type: string, format: date, nullable: true}
+        startsOn: {type: string, format: date, nullable: true, description: Counting starts here; defaults to today}
+    GoalPatch:
+      type: object
+      properties:
+        title: {type: string, minLength: 1, maxLength: 120}
+        targetValue: {type: number, minimum: 0, nullable: true}
+        unit: {type: string, maxLength: 20, nullable: true}
+        targetDate: {type: string, format: date, nullable: true}
+        status: {$ref: '#/components/schemas/GoalStatus'}
+    GoalCheckInInput:
+      type: object
+      required: [value]
+      properties:
+        value: {type: number}
+        note: {type: string, maxLength: 280, nullable: true}
+        recordedOn: {type: string, format: date, nullable: true}
+    Goal:
+      type: object
+      required: [id, memberId, title, metric, status, progressPercent]
+      properties:
+        id: {type: string}
+        memberId: {type: string}
+        title: {type: string}
+        metric: {$ref: '#/components/schemas/GoalMetric'}
+        status: {$ref: '#/components/schemas/GoalStatus'}
+        targetValue: {type: number, nullable: true}
+        startValue: {type: number, nullable: true}
+        currentValue: {type: number, nullable: true}
+        unit: {type: string, nullable: true}
+        targetLevelId: {type: string, nullable: true}
+        targetLevelName: {type: string, nullable: true}
+        targetDate: {type: string, format: date, nullable: true}
+        startsOn: {type: string, format: date}
+        progressPercent: {type: number, minimum: 0, maximum: 100}
+        createdById: {type: string, nullable: true}
+        createdByName: {type: string, nullable: true}
+        checkIns:
+          type: array
+          description: custom metric only, newest first, max 20
+          items:
+            type: object
+            required: [id, value, recordedOn]
+            properties:
+              id: {type: string}
+              value: {type: number}
+              note: {type: string, nullable: true}
+              recordedOn: {type: string, format: date}
+        updatedAt: {type: string, format: date-time}
+    MemberUpdateKind:
+      type: string
+      enum: [plan_assigned, plan_updated, plan_ended, goal_set, goal_updated, session_scheduled, session_rescheduled, session_cancelled, booking_confirmed, waitlist_promoted]
+    MemberUpdate:
+      type: object
+      required: [id, memberId, kind, createdAt, read]
+      properties:
+        id: {type: string}
+        memberId: {type: string}
+        kind: {$ref: '#/components/schemas/MemberUpdateKind'}
+        entityType:
+          type: string
+          enum: [plan, assignment, goal, session, booking]
+        entityId: {type: string}
+        actorName: {type: string, nullable: true}
+        title: {type: string, description: Short English fallback; UI renders from kind + params via i18n}
+        params:
+          type: object
+          additionalProperties: {type: string}
+        createdAt: {type: string, format: date-time}
+        read: {type: boolean}
+    MemberUpdatePage:
+      type: object
+      required: [items, unreadCount]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/MemberUpdate'}
+        unreadCount: {type: integer}
+        nextCursor: {type: string, nullable: true}
+    SessionInput:
+      type: object
+      required: [startsAt, endsAt]
+      properties:
+        batchId: {type: string, nullable: true, description: Either batchId or memberId}
+        memberId: {type: string, nullable: true, description: One-on-one session with this member}
+        coachId: {type: string, nullable: true, description: Owner only; forced to self for coaches}
+        startsAt: {type: string, format: date-time}
+        endsAt: {type: string, format: date-time}
+        capacity: {type: integer, minimum: 1, maximum: 500, nullable: true, description: Overrides the batch capacity for this session}
+        title: {type: string, maxLength: 80, nullable: true}
+        clientId: {type: string, nullable: true}
+    SessionPatch:
+      type: object
+      properties:
+        startsAt: {type: string, format: date-time}
+        endsAt: {type: string, format: date-time}
+        status:
+          type: string
+          enum: [cancelled]
+        cancelReason: {type: string, maxLength: 200, nullable: true}
+        coachNote: {type: string, maxLength: 1000, nullable: true}
+        capacity: {type: integer, minimum: 1, maximum: 500, nullable: true}
+    BookingStatus:
+      type: string
+      enum: [booked, waitlisted, cancelled]
+    Booking:
+      type: object
+      required: [id, sessionId, memberId, status]
+      properties:
+        id: {type: string}
+        sessionId: {type: string}
+        memberId: {type: string}
+        memberName: {type: string}
+        status: {$ref: '#/components/schemas/BookingStatus'}
+        waitlistPosition: {type: integer, nullable: true}
+        createdAt: {type: string, format: date-time}
+        cancelledAt: {type: string, format: date-time, nullable: true}
+        cancellableUntil: {type: string, format: date-time, nullable: true, description: For customers; startsAt minus the tenant cancellation window}
+    RosterEntry:
+      type: object
+      required: [memberId, memberName, source, attendance]
+      properties:
+        memberId: {type: string}
+        memberName: {type: string}
+        source:
+          type: string
+          enum: [enrolled, booked, waitlisted]
+        bookingId: {type: string, nullable: true}
+        attendance:
+          type: string
+          enum: [present, absent, excused, not_marked]
+        excusedReason:
+          type: string
+          nullable: true
+          enum: [exam, illness, festival, travel]
+        note: {type: string, nullable: true}
+        attendanceClientId: {type: string, nullable: true}
+    SessionDetail:
+      allOf:
+        - $ref: '#/components/schemas/Session'
+        - type: object
+          properties:
+            kind:
+              type: string
+              enum: [group_class, one_on_one]
+            title: {type: string, nullable: true}
+            venueName: {type: string}
+            capacity: {type: integer, nullable: true}
+            bookedCount: {type: integer}
+            waitlistCount: {type: integer}
+            isHoliday: {type: boolean}
+            cancelReason: {type: string, nullable: true}
+            warnings:
+              type: array
+              description: Non-blocking notes on create/update, e.g. outside_availability
+              items:
+                type: object
+                required: [code, message]
+                properties:
+                  code: {type: string, enum: [outside_availability, over_capacity, on_holiday]}
+                  message: {type: string}
+            roster:
+              type: array
+              description: Owner and coach only. Omitted for customers.
+              items: {$ref: '#/components/schemas/RosterEntry'}
+            myBookings:
+              type: array
+              description: Customer only; bookings of self or children for this session
+              items: {$ref: '#/components/schemas/Booking'}
+            myAttendance:
+              type: array
+              description: Customer only
+              items:
+                type: object
+                properties:
+                  memberId: {type: string}
+                  attendance: {type: string, enum: [present, absent, excused, not_marked]}
+    AttendanceInput:
+      type: object
+      required: [entries]
+      properties:
+        entries:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items:
+            type: object
+            required: [memberId, status, clientId]
+            properties:
+              memberId: {type: string}
+              status:
+                type: string
+                enum: [present, absent, excused]
+              reason:
+                type: string
+                nullable: true
+                enum: [exam, illness, festival, travel]
+              note: {type: string, maxLength: 280, nullable: true}
+              clientId: {type: string, minLength: 8, maxLength: 64}
+              markedAt: {type: string, format: date-time, nullable: true, description: Device time; used for last-write-wins}
+        complete: {type: boolean, default: false, description: Also set the session to completed}
+        coachNote: {type: string, maxLength: 1000, nullable: true}
+        sessionClientId: {type: string, nullable: true}
+    KpiValue:
+      type: object
+      required: [value]
+      properties:
+        value: {type: number, nullable: true}
+        previous: {type: number, nullable: true, description: Same-length period immediately before}
+        changePercent: {type: number, nullable: true}
+    OwnerOverview:
+      type: object
+      required: [from, to, members, sessions, attendance, engagement, workouts, retention]
+      properties:
+        from: {type: string, format: date}
+        to: {type: string, format: date}
+        members:
+          type: object
+          required: [active, new, left]
+          properties:
+            active: {$ref: '#/components/schemas/KpiValue'}
+            new: {$ref: '#/components/schemas/KpiValue'}
+            left: {$ref: '#/components/schemas/KpiValue'}
+            netGrowthPercent: {$ref: '#/components/schemas/KpiValue'}
+        sessions:
+          type: object
+          required: [scheduled, completed]
+          properties:
+            scheduled: {$ref: '#/components/schemas/KpiValue'}
+            completed: {$ref: '#/components/schemas/KpiValue'}
+            cancelled: {$ref: '#/components/schemas/KpiValue'}
+            unlogged: {$ref: '#/components/schemas/KpiValue'}
+            completionPercent: {$ref: '#/components/schemas/KpiValue'}
+        attendance:
+          type: object
+          required: [percent]
+          properties:
+            percent: {$ref: '#/components/schemas/KpiValue'}
+            noShowPercent: {$ref: '#/components/schemas/KpiValue'}
+            byWeekday:
+              type: array
+              description: ISO weekday 1-7
+              items:
+                type: object
+                properties:
+                  weekday: {type: integer}
+                  percent: {$ref: '#/components/schemas/Percent'}
+                  sessions: {type: integer}
+        engagement:
+          type: object
+          required: [engagedMembers, percent]
+          properties:
+            engagedMembers: {$ref: '#/components/schemas/KpiValue'}
+            percent: {$ref: '#/components/schemas/KpiValue'}
+        workouts:
+          type: object
+          required: [scheduled, completed]
+          properties:
+            scheduled: {$ref: '#/components/schemas/KpiValue'}
+            completed: {$ref: '#/components/schemas/KpiValue'}
+            adherencePercent: {$ref: '#/components/schemas/KpiValue'}
+            activeAssignments: {$ref: '#/components/schemas/KpiValue'}
+            membersWithPlan: {$ref: '#/components/schemas/KpiValue'}
+        retention:
+          type: object
+          required: [percent]
+          properties:
+            percent: {$ref: '#/components/schemas/KpiValue'}
+            cohorts:
+              type: array
+              description: Last 6 join months, oldest first
+              items:
+                type: object
+                required: [month, joined]
+                properties:
+                  month: {type: string, example: '2026-06'}
+                  joined: {type: integer}
+                  retained30: {$ref: '#/components/schemas/Percent'}
+                  retained60: {$ref: '#/components/schemas/Percent'}
+                  retained90: {$ref: '#/components/schemas/Percent'}
+        bookings:
+          type: object
+          properties:
+            booked: {type: integer}
+            waitlisted: {type: integer}
+            cancelled: {type: integer}
+            fillPercent: {$ref: '#/components/schemas/Percent'}
+    TrendPoint:
+      type: object
+      required: [periodStart]
+      properties:
+        periodStart: {type: string, format: date}
+        activeMembers: {type: integer}
+        newMembers: {type: integer}
+        leftMembers: {type: integer}
+        sessionsScheduled: {type: integer}
+        sessionsCompleted: {type: integer}
+        attendancePercent: {$ref: '#/components/schemas/Percent'}
+        workoutsCompleted: {type: integer}
+        workoutsScheduled: {type: integer}
+        engagedMembers: {type: integer}
+    OwnerTrends:
+      type: object
+      required: [granularity, points]
+      properties:
+        granularity: {type: string, enum: [week, month]}
+        points:
+          type: array
+          items: {$ref: '#/components/schemas/TrendPoint'}
+    FeeStats:
+      type: object
+      required: [asOf, counts, activeMembers]
+      description: Counts only. No amounts are stored or shown; payments processing is out of scope.
+      properties:
+        asOf: {type: string, format: date}
+        activeMembers: {type: integer}
+        counts:
+          type: object
+          required: [paid, due, overdue, waived]
+          properties:
+            paid: {type: integer}
+            due: {type: integer}
+            overdue: {type: integer}
+            waived: {type: integer}
+        dueNext7Days: {type: integer}
+        paidThisMonth: {type: integer}
+        paidByMethod:
+          type: object
+          properties:
+            cash: {type: integer}
+            upi: {type: integer}
+            unknown: {type: integer}
+        paidPercent: {$ref: '#/components/schemas/Percent'}
+    OwnerInsights:
+      type: object
+      required: [generatedAt, followUps, renewals, unloggedSessions, cards]
+      properties:
+        generatedAt: {type: string, format: date-time}
+        followUps:
+          type: array
+          description: Members who may need a friendly check-in
+          items:
+            type: object
+            required: [memberId, memberName, reason]
+            properties:
+              memberId: {type: string}
+              memberName: {type: string}
+              reason: {type: string, enum: [consecutive_absences, inactive_14_days, workouts_pending]}
+              detail: {type: integer, description: e.g. number of consecutive absences or days inactive}
+              coachName: {type: string, nullable: true}
+        renewals:
+          type: array
+          description: Fee overdue or due within 7 days, with recent attendance
+          items:
+            type: object
+            required: [memberId, memberName, feeStatus]
+            properties:
+              memberId: {type: string}
+              memberName: {type: string}
+              feeStatus: {type: string, enum: [due, overdue]}
+              feeDueOn: {type: string, format: date, nullable: true}
+              attendancePercent30d: {$ref: '#/components/schemas/Percent'}
+        unloggedSessions:
+          type: array
+          description: Past sessions with no roll call logged 2 hours after they ended (owner alert)
+          items:
+            type: object
+            required: [sessionId, batchName, coachName, startsAt]
+            properties:
+              sessionId: {type: string}
+              batchName: {type: string}
+              coachName: {type: string}
+              startsAt: {type: string, format: date-time}
+              isGroupClass: {type: boolean}
+        cards:
+          type: array
+          description: Rule-based insight cards (see docs/PLAN-POC.md). Positive framing.
+          items:
+            type: object
+            required: [code, tone, title]
+            properties:
+              code: {type: string}
+              tone: {type: string, enum: [positive, neutral, attention]}
+              title: {type: string}
+              params:
+                type: object
+                additionalProperties: {type: string}
