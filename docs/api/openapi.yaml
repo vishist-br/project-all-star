@@ -2356,10 +2356,24 @@ components:
               description: ISO weekday 1-7
               items:
                 type: object
+                required: [weekday, sessions]
                 properties:
                   weekday: {type: integer}
                   percent: {$ref: '#/components/schemas/Percent'}
+                  noShowPercent: {$ref: '#/components/schemas/Percent'}
+                  sessions: {type: integer, description: Completed non-holiday sessions on that weekday in the period}
+            byBatch:
+              type: array
+              description: No-show pattern per batch (completed non-holiday sessions in the period), sorted by batch name
+              items:
+                type: object
+                required: [batchId, batchName, sessions]
+                properties:
+                  batchId: {type: string}
+                  batchName: {type: string}
                   sessions: {type: integer}
+                  percent: {$ref: '#/components/schemas/Percent'}
+                  noShowPercent: {$ref: '#/components/schemas/Percent'}
         engagement:
           type: object
           required: [engagedMembers, percent]
