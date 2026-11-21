@@ -150,7 +150,8 @@ test.describe("UI sign-in by magic link", () => {
         const url = await devLink(request, tenant, EMAIL[role](tenant));
         const token = new URL(url).searchParams.get("token")!;
         await page.goto(url);
-        await expect(page).toHaveURL(new RegExp(`/${role}$`));
+        // The customer's home is the Home screen (STAR-69); the other roles land on /<role>.
+        await expect(page).toHaveURL(role === "customer" ? /\/customer\/home$/ : new RegExp(`/${role}$`));
         // The one-time token is gone from the address bar and never stored in the page.
         expect(page.url()).not.toContain(token);
         expect(await page.evaluate(() => JSON.stringify([{ ...localStorage }, { ...sessionStorage }]))).not.toContain(token);
@@ -213,7 +214,7 @@ test.describe("UI sign-in by magic link", () => {
   test("sign out ends the session and clears the cookies", async ({ page, request, context }) => {
     await context.clearCookies();
     await page.goto(await devLink(request, "demo-karate", EMAIL.customer("demo-karate")));
-    await expect(page).toHaveURL(/\/customer$/);
+    await expect(page).toHaveURL(/\/customer\/home$/);
     const access = (await context.cookies()).find((c) => c.name === "as_access")!.value;
     await page.getByRole("button", { name: "Sign out" }).click();
     await expect(page).toHaveURL(/\/sign-in$/);
@@ -287,7 +288,7 @@ test.describe("live member import through the session cookie", () => {
 });
 
 test.describe("workouts library", () => {
-  test("the sample gym lists hundreds of exercises, searchable and filterable, for every role", async ({ page, context }) => {
+  test("the sample gym lists hundreds of exercises, searchable and filterable, for owner and coach", async ({ page, context }) => {
     await context.clearCookies();
     await page.goto("/");
     await page.waitForLoadState("networkidle");
@@ -300,10 +301,13 @@ test.describe("workouts library", () => {
     await expect(page.locator("ul.card-list > li").nth(2)).toBeVisible();
     await page.locator("ul.card-list li summary").first().click();
     await expect(page.getByText("How to do it").first()).toBeVisible();
-    for (const role of ["coach", "customer"] as const) {
-      await pick(page, "View as", role);
-      await page.goto(`/${role}/workouts`);
-      await expect(page.getByText(/\d{3} exercises/)).toBeVisible();
-    }
+    // Owner and coach share the library; the customer's Workouts is their own plans (customer-workouts.spec.ts).
+    await pick(page, "View as", "coach");
+    await page.goto("/coach/workouts");
+    await expect(page.getByText(/\d{3} exercises/)).toBeVisible();
+    await pick(page, "View as", "customer");
+    await page.goto("/customer/workouts");
+    await expect(page.getByText(/\d{3} exercises/)).toHaveCount(0);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("My workouts");
   });
 });

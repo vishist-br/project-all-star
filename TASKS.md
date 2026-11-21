@@ -24,7 +24,6 @@ Format: `ID | title | owner agent | depends on | wave`
 - STAR-66 | API: owner analytics, coaches list, coach stats | Backend | STAR-60, STAR-61, STAR-62 | 3
 - STAR-67 | Coach plans: list, builder with exercise picker, assign, edit, archive | Frontend | STAR-59, STAR-60 | 3
 - STAR-68 | Coach today, calendar, roll call with offline queue, schedule session, availability | Frontend | STAR-59, STAR-61, STAR-62 | 3
-- STAR-69 | Customer home and workouts: today's items, start/stop/complete, exercise detail, updates feed | Frontend | STAR-59, STAR-65 | 4
 - STAR-70 | Customer schedule and progress: booking and waitlist, goals, stats, history | Frontend | STAR-59, STAR-62, STAR-65 | 4
 - STAR-71 | Coach roster and member detail, owner member detail, coach My record | Frontend | STAR-59, STAR-65, STAR-66 | 4
 - STAR-72 | Owner dashboard with charts and insights | Frontend | STAR-59, STAR-66 | 4
@@ -45,6 +44,7 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Completed
 
+- STAR-69 | Customer home and workouts: today's items, start/stop/complete, exercise detail, updates feed | Frontend | STAR-59, STAR-65 | 4 | Notion In Review. Routes /customer/{home,workouts,updates,exercise/[id]}, POST-free bridge PUT /ui/workout-log, customer nav Home/Workouts/Schedule/Progress/Profile; lib/customer/*, components/customer/**; tests/customer-*.test.ts (25 tests), e2e/customer-workouts.spec.ts (7); full suite 558 passed, typecheck, lint, build, e2e 38 passed.
 - STAR-65 | API: workout logs, member schedule, member stats, goals with progress, updates feed | Backend | STAR-60, STAR-61, STAR-62 | 3 | Notion In Review. getMemberSchedule, listWorkoutLogs, recordWorkoutLog, getMemberStats, listGoals, createGoal, updateGoal, addGoalCheckIn, listMemberUpdates, markMemberUpdatesRead; lib/api/{schedule,workout-logs,member-stats,goals,member-updates}.ts; tests/progress-api.test.ts (20 tests); full suite 531 passed, typecheck and lint clean.
 - STAR-63 | Seed: plans, assignments, logs, goals, bookings, availability, join/leave history (3 tenants) | Backend | STAR-58 | 2 | Notion In Review. prisma/seed/{rich,rich-data,dates}.ts; `npm run db:seed` = base + rich layer (about 1-3 s); `seedDemo(prisma)` stays base-only and removes the rich layer, `seedDemo(prisma, { rich: true, today? })` adds it. tests/seed.test.ts extended; npm test 480 passed, typecheck, lint, test:e2e 31 passed.
 - STAR-61 | API: create/detail/update session and one-tap roll call attendance | Backend | STAR-57, STAR-58 | 2 | Notion In Review. createSession, getSession, updateSession, recordAttendance; lib/api/{session-detail,session-write,attendance}.ts; tests/sessions-write-api.test.ts (15 tests); full suite 461 passed, typecheck and lint clean.
