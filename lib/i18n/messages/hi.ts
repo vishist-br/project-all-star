@@ -134,4 +134,6 @@ export const hi: Record<MessageKey, string> = {
   "wk.next": "अगला",
   "wk.page": "पृष्ठ {n} / {total}",
   "wk.licence": "स्रोत लाइसेंस: {licence}",
+  "signin.already": "आप इस ब्राउज़र में पहले से साइन इन हैं।",
+  "signin.continue": "मेरे पेज पर जाएँ",
 };

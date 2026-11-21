@@ -10,7 +10,7 @@ type State = "working" | "invalid" | "missing" | "network";
  * at once, and exchanged through /auth/session, which sets httpOnly cookies. It is kept in
  * memory only so a network failure can be retried.
  */
-export function MagicLanding() {
+export function MagicLanding({ signedInRole = null }: { signedInRole?: string | null }) {
   const { t } = useI18n();
   const [state, setState] = useState<State>("working");
   const token = useRef<string | null>(null);
@@ -62,6 +62,11 @@ export function MagicLanding() {
         <section role="alert">
           <h1>{t("signin.invalid.title")}</h1>
           <p>{t("signin.invalid.body")}</p>
+          {isRole(signedInRole) && (
+            <p>
+              {t("signin.already")} <a className="btn" href={`/${signedInRole}`}>{t("signin.continue")}</a>
+            </p>
+          )}
         </section>
       )}
       {state === "missing" && (

@@ -133,6 +133,8 @@ export const en = {
   "wk.next": "Next",
   "wk.page": "Page {n} of {total}",
   "wk.licence": "Source licence: {licence}",
+  "signin.already": "You are already signed in on this browser.",
+  "signin.continue": "Continue to my page",
 } as const;
 
 export type MessageKey = keyof typeof en;

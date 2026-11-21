@@ -134,4 +134,6 @@ export const kn: Record<MessageKey, string> = {
   "wk.next": "ಮುಂದಿನ",
   "wk.page": "ಪುಟ {n} / {total}",
   "wk.licence": "ಮೂಲ ಪರವಾನಗಿ: {licence}",
+  "signin.already": "ನೀವು ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಈಗಾಗಲೇ ಸೈನ್ ಇನ್ ಆಗಿದ್ದೀರಿ.",
+  "signin.continue": "ನನ್ನ ಪುಟಕ್ಕೆ ಹೋಗಿ",
 };
