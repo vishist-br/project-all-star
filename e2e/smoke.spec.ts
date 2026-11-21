@@ -259,13 +259,13 @@ test.describe("owner screens show the tenant's own data", () => {
     expect(await page.locator("tbody tr").count()).toBeGreaterThan(3);
     await expect(page.getByText("Sample Kid 01")).toBeVisible();
     await page.goto("/owner/batches");
-    expect(await page.locator("ul.card-list li").count()).toBeGreaterThan(0);
+    await expect(page.getByRole("list", { name: "Batches" }).getByRole("listitem").first()).toBeVisible();
     await page.goto("/owner/dashboard");
     await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
     await expect(page.locator(".stat-tile").filter({ hasText: "Active members" })).toBeVisible();
     await expect(page.getByText("Sample Coach").first()).toBeVisible();
     await page.goto("/owner/settings");
-    await expect(page.locator("ul.card-list li").filter({ hasText: SEED_TENANTS.find((x) => x.slug === "demo-karate")!.name })).toBeVisible();
+    await expect(page.locator("main").getByText(SEED_TENANTS.find((x) => x.slug === "demo-karate")!.name, { exact: true })).toBeVisible();
     // Another tenant's people never appear.
     await pick(page, "Business", "demo-gym");
     await page.goto("/owner/members");

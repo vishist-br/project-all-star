@@ -1,12 +1,7 @@
 import { notFound } from "next/navigation";
 import { getT } from "@/lib/i18n/server";
 import { findNavItem, isRole } from "@/lib/nav";
-import {
-  BatchesScreen,
-  DashboardScreen,
-  MembersScreen,
-  SettingsScreen,
-} from "@/components/owner/OwnerScreens";
+import { MembersScreen } from "@/components/owner/OwnerScreens";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/States";
@@ -40,11 +35,8 @@ export default async function SectionPage({
           filters={{ q: one("q"), muscle: one("muscle"), equipment: one("equipment"), level: one("level"), sport: one("sport"), page: one("page") } satisfies WorkoutFilters}
         />
       )}
-      {role === "owner" && section === "dashboard" && <DashboardScreen />}
       {role === "owner" && section === "members" && <MembersScreen />}
-      {role === "owner" && section === "batches" && <BatchesScreen />}
-      {role === "owner" && section === "settings" && <SettingsScreen />}
-      {role !== "owner" && section !== "workouts" && <EmptyState title={t("shell.placeholder")} />}
+      {!(role === "owner" && section === "members") && section !== "workouts" && <EmptyState title={t("shell.placeholder")} />}
     </section>
   );
 }
