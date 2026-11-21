@@ -45,4 +45,5 @@ export async function createSeededDb() {
   const env = { ...process.env, DATABASE_URL: scratchUrl() };
   execFileSync("npx", ["prisma", "migrate", "deploy"], { env, stdio: "inherit" });
   execFileSync("npm", ["run", "db:seed"], { env, stdio: "inherit" });
+  execFileSync("npm", ["run", "db:import-exercises"], { env, stdio: "inherit" });
 }

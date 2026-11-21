@@ -118,11 +118,13 @@ export async function DashboardScreen() {
           ))}
         </ul>
       )}
+      <h2>{t("nav.coaches")}</h2>
+      <CoachesList />
     </>
   );
 }
 
-export async function CoachesScreen() {
+async function CoachesList() {
   const { t } = await getT();
   const { db } = await getViewer();
   const coaches = await db.user.findMany({

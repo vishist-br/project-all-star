@@ -69,3 +69,8 @@ body { padding-top: 2.25rem; }
 .auth-card { max-width: 32rem; }
 .btn-small { min-height: 44px; padding: 0 .75rem; font-size: .85rem; background: transparent; color: #fff; border: 2px solid #fff; flex: none; }
 .shell-header form { flex: none; }
+.filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: .75rem; align-items: end; margin: 1rem 0; }
+.filter { display: grid; gap: .25rem; min-width: 0; }
+.filter input, .filter select { font: inherit; min-height: 44px; padding: 0 .5rem; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); max-width: 100%; }
+.card summary { cursor: pointer; min-height: 44px; display: flex; flex-wrap: wrap; align-items: center; gap: .25rem; }
+.pager { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: center; margin: 1rem 0 2rem; }

@@ -15,17 +15,19 @@ export const NAV: Record<Role, readonly NavItem[]> = {
     { section: "dashboard", label: "nav.dashboard", icon: "▦" },
     { section: "members", label: "nav.members", icon: "☺" },
     { section: "batches", label: "nav.batches", icon: "◷" },
-    { section: "coaches", label: "nav.coaches", icon: "★" },
+    { section: "workouts", label: "nav.workouts", icon: "✚" },
     { section: "settings", label: "nav.settings", icon: "⚙" },
   ],
   coach: [
     { section: "today", label: "nav.today", icon: "◷" },
     { section: "members", label: "nav.members", icon: "☺" },
+    { section: "workouts", label: "nav.workouts", icon: "✚" },
     { section: "record", label: "nav.myRecord", icon: "✓" },
   ],
   customer: [
     { section: "progress", label: "nav.progress", icon: "▲" },
     { section: "schedule", label: "nav.schedule", icon: "◷" },
+    { section: "workouts", label: "nav.workouts", icon: "✚" },
     { section: "profile", label: "nav.profile", icon: "☺" },
   ],
 };

@@ -253,8 +253,8 @@ test.describe("owner screens show the tenant's own data", () => {
     await expect(page.getByText("Sample Kid 01")).toBeVisible();
     await page.goto("/owner/batches");
     expect(await page.locator("ul.card-list li").count()).toBeGreaterThan(0);
-    await page.goto("/owner/coaches");
-    await expect(page.getByText("Sample Coach Alpha")).toBeVisible();
+    await page.goto("/owner/dashboard");
+    await expect(page.getByText("Sample Coach Alpha").first()).toBeVisible();
     await page.goto("/owner/dashboard");
     await expect(page.getByText("Active members")).toBeVisible();
     await page.goto("/owner/settings");
@@ -277,5 +277,27 @@ test.describe("live member import through the session cookie", () => {
     const res = await page.request.post("/ui/members-import?dryRun=true", body);
     expect(res.status()).not.toBe(401);
     expect(res.status()).not.toBe(403);
+  });
+});
+
+test.describe("workouts library", () => {
+  test("the sample gym lists hundreds of exercises, searchable and filterable, for every role", async ({ page, context }) => {
+    await context.clearCookies();
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+    await pick(page, "Business", "demo-gym");
+    await page.goto("/owner/workouts");
+    await expect(page.getByText(/\d{3} exercises/)).toBeVisible();
+    await page.getByRole("searchbox").fill("squat");
+    await page.getByRole("button", { name: "Show" }).click();
+    await expect(page).toHaveURL(/q=squat/);
+    expect(await page.locator("ul.card-list li").count()).toBeGreaterThan(2);
+    await page.locator("ul.card-list li summary").first().click();
+    await expect(page.getByText("How to do it").first()).toBeVisible();
+    for (const role of ["coach", "customer"] as const) {
+      await pick(page, "View as", role);
+      await page.goto(`/${role}/workouts`);
+      await expect(page.getByText(/\d{3} exercises/)).toBeVisible();
+    }
   });
 });
