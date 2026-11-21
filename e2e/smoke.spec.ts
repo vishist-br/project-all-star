@@ -261,9 +261,9 @@ test.describe("owner screens show the tenant's own data", () => {
     await page.goto("/owner/batches");
     expect(await page.locator("ul.card-list li").count()).toBeGreaterThan(0);
     await page.goto("/owner/dashboard");
-    await expect(page.getByText("Sample Coach Alpha").first()).toBeVisible();
-    await page.goto("/owner/dashboard");
-    await expect(page.getByText("Active members")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
+    await expect(page.locator(".stat-tile").filter({ hasText: "Active members" })).toBeVisible();
+    await expect(page.getByText("Sample Coach").first()).toBeVisible();
     await page.goto("/owner/settings");
     await expect(page.locator("ul.card-list li").filter({ hasText: SEED_TENANTS.find((x) => x.slug === "demo-karate")!.name })).toBeVisible();
     // Another tenant's people never appear.
