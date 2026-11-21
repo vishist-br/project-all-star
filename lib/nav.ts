@@ -21,6 +21,7 @@ export const NAV: Record<Role, readonly NavItem[]> = {
   coach: [
     { section: "today", label: "nav.today", icon: "◷" },
     { section: "members", label: "nav.members", icon: "☺" },
+    { section: "plans", label: "nav.plans", icon: "☰" },
     { section: "workouts", label: "nav.workouts", icon: "✚" },
     { section: "record", label: "nav.myRecord", icon: "✓" },
   ],

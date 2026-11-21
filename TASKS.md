@@ -25,7 +25,6 @@ Format: `ID | title | owner agent | depends on | wave`
 - STAR-64 | Owner CSV import screen live in every mode, show skippedRows and warnings | Frontend | STAR-59 | 2
 - STAR-65 | API: workout logs, member schedule, member stats, goals with progress, updates feed | Backend | STAR-60, STAR-61, STAR-62 | 3
 - STAR-66 | API: owner analytics, coaches list, coach stats | Backend | STAR-60, STAR-61, STAR-62 | 3
-- STAR-67 | Coach plans: list, builder with exercise picker, assign, edit, archive | Frontend | STAR-59, STAR-60 | 3
 - STAR-68 | Coach today, calendar, roll call with offline queue, schedule session, availability | Frontend | STAR-59, STAR-61, STAR-62 | 3
 - STAR-69 | Customer home and workouts: today's items, start/stop/complete, exercise detail, updates feed | Frontend | STAR-59, STAR-65 | 4
 - STAR-70 | Customer schedule and progress: booking and waitlist, goals, stats, history | Frontend | STAR-59, STAR-62, STAR-65 | 4
@@ -48,6 +47,7 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Completed
 
+- STAR-67 | Coach plans: list, builder with exercise picker, assign, edit, archive | Frontend | STAR-59, STAR-60 | 3 | Notion In Review. Routes /[role]/plans, /plans/new, /plans/[planId]; app/[role]/_actions/plans.ts; components/plans/*; lib/plans/*; tests/plans-form.test.ts (20 tests) + e2e/coach-plans.spec.ts (2); typecheck, lint, vitest 515, build, e2e 33 pass.
 - STAR-61 | API: create/detail/update session and one-tap roll call attendance | Backend | STAR-57, STAR-58 | 2 | Notion In Review. createSession, getSession, updateSession, recordAttendance; lib/api/{session-detail,session-write,attendance}.ts; tests/sessions-write-api.test.ts (15 tests); full suite 461 passed, typecheck and lint clean.
 - STAR-56 | POC plan, TASKS.md and OpenAPI v0.2.0 extension (36 operations) | Planner | - | 0 | Notion In Review. Contract refs validated; tests/auth-policy.test.ts is expected red until STAR-57 lands.
 - STAR-57 | Sync lib/auth/policy.ts and error codes with contract v0.2.0 | Backend | STAR-56 | 1 | Notion In Review. 52 operations in policy.ts, `conflict` (409) added; tests/auth-policy.test.ts green.

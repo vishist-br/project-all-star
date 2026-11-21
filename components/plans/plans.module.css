@@ -1,0 +1,56 @@
+/* Styles for the coach plan screens (list, builder, picker, assign). Tokens come from globals.css. */
+.toolbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: var(--s3); align-items: end; margin: var(--s4) 0; }
+.planCard { display: grid; gap: var(--s3); }
+.planTop { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s2); min-width: 0; }
+.planTitle { font-size: var(--fs-md); margin: 0; min-width: 0; }
+.planTitle a { color: inherit; text-decoration: none; }
+.planTitle a:hover, .planTitle a:focus-visible { text-decoration: underline; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+.meta { margin: 0; color: var(--muted); font-size: var(--fs-sm); }
+.rowActions { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.pager { display: flex; justify-content: center; margin: var(--s4) 0; }
+
+.builder { display: grid; gap: var(--s4); min-width: 0; }
+.twoCol { display: grid; gap: var(--s3); grid-template-columns: minmax(0, 1fr); }
+.textarea { min-height: 5.5rem; resize: vertical; font: inherit; width: 100%; }
+.summaryError { margin: 0; padding: var(--s3) var(--s4); border: 1px solid var(--danger); border-radius: var(--r); background: var(--danger-soft); color: var(--danger); font-weight: 600; }
+.notice { display: grid; gap: var(--s2); padding: var(--s4); border: 1px solid var(--warn); border-radius: var(--r-lg); background: var(--warn-soft); }
+.notice h2 { font-size: var(--fs-md); margin: 0; }
+.notice p { margin: 0; }
+
+.day { display: grid; gap: var(--s3); }
+.dayHead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s3); }
+.dayName { font-size: var(--fs-md); font-weight: 700; margin: 0; }
+.itemList { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.item { display: grid; gap: var(--s3); padding: var(--s3); border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); min-width: 0; }
+.itemHead { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); min-width: 0; }
+.itemName { font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+.itemTools { display: flex; gap: var(--s1); flex: none; }
+.numbers { display: grid; gap: var(--s3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.emptyDay { margin: 0; color: var(--muted); font-size: var(--fs-sm); }
+.saveBar { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; }
+
+.pickerBody { display: grid; gap: var(--s3); max-height: min(70dvh, 38rem); overflow-y: auto; padding-bottom: var(--s2); }
+.pickerFilters { display: grid; gap: var(--s3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pickerSearch { grid-column: 1 / -1; }
+.results { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+.result { display: grid; gap: var(--s2); padding: var(--s3); border: 1px solid var(--line); border-radius: var(--r); min-width: 0; }
+.resultRow { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); min-width: 0; }
+.resultText { min-width: 0; display: grid; gap: 2px; }
+.resultName { font-weight: 600; overflow-wrap: anywhere; }
+.resultBtns { display: flex; gap: var(--s2); flex: none; }
+.details { font-size: var(--fs-sm); display: grid; gap: var(--s2); }
+.details ol { margin: 0; padding-inline-start: 1.25rem; }
+
+.memberList { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s1); max-height: 36dvh; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r); }
+.memberRow label { display: flex; align-items: center; gap: var(--s3); min-height: var(--tap); padding: 0 var(--s3); cursor: pointer; }
+.memberRow input { width: 20px; height: 20px; flex: none; }
+.memberBar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); }
+.assignBody { display: grid; gap: var(--s3); max-height: min(75dvh, 40rem); overflow-y: auto; }
+.outcomes { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+.outcome { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); padding: var(--s2) var(--s3); border: 1px solid var(--line); border-radius: var(--r); }
+
+@media (min-width: 640px) {
+  .twoCol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .numbers { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
