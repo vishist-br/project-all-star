@@ -22,7 +22,6 @@ Format: `ID | title | owner agent | depends on | wave`
 
 - STAR-59 | Design system, SVG chart kit and app shell v2 | Frontend | STAR-56 | 1
 - STAR-62 | API: bookings (capacity, waitlist, cancellation window), coach availability, tenant settings | Backend | STAR-57, STAR-58 | 2
-- STAR-63 | Seed: plans, assignments, logs, goals, bookings, availability, join/leave history (3 tenants) | Backend | STAR-58 | 2
 - STAR-64 | Owner CSV import screen live in every mode, show skippedRows and warnings | Frontend | STAR-59 | 2
 - STAR-65 | API: workout logs, member schedule, member stats, goals with progress, updates feed | Backend | STAR-60, STAR-61, STAR-62 | 3
 - STAR-66 | API: owner analytics, coaches list, coach stats | Backend | STAR-60, STAR-61, STAR-62 | 3
@@ -49,6 +48,7 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Completed
 
+- STAR-63 | Seed: plans, assignments, logs, goals, bookings, availability, join/leave history (3 tenants) | Backend | STAR-58 | 2 | Notion In Review. prisma/seed/{rich,rich-data,dates}.ts; `npm run db:seed` = base + rich layer (about 1-3 s); `seedDemo(prisma)` stays base-only and removes the rich layer, `seedDemo(prisma, { rich: true, today? })` adds it. tests/seed.test.ts extended; npm test 480 passed, typecheck, lint, test:e2e 31 passed.
 - STAR-61 | API: create/detail/update session and one-tap roll call attendance | Backend | STAR-57, STAR-58 | 2 | Notion In Review. createSession, getSession, updateSession, recordAttendance; lib/api/{session-detail,session-write,attendance}.ts; tests/sessions-write-api.test.ts (15 tests); full suite 461 passed, typecheck and lint clean.
 - STAR-56 | POC plan, TASKS.md and OpenAPI v0.2.0 extension (36 operations) | Planner | - | 0 | Notion In Review. Contract refs validated; tests/auth-policy.test.ts is expected red until STAR-57 lands.
 - STAR-57 | Sync lib/auth/policy.ts and error codes with contract v0.2.0 | Backend | STAR-56 | 1 | Notion In Review. 52 operations in policy.ts, `conflict` (409) added; tests/auth-policy.test.ts green.
