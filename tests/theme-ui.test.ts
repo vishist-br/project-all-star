@@ -23,8 +23,13 @@ describe("demo tenants and theme", () => {
 
   it("maps tenant config to CSS variables", () => {
     const t = { ...NEUTRAL_THEME, primaryColor: "#B3202A", secondaryColor: "#1A1A1A", accentColor: "#F2C94C" };
-    expect(themeVars(t)).toEqual({ "--primary": "#B3202A", "--secondary": "#1A1A1A", "--accent": "#F2C94C" });
+    expect(themeVars(t)).toEqual({ "--primary": "#B3202A", "--primary-contrast": "#FFFFFF", "--secondary": "#1A1A1A", "--accent": "#F2C94C" });
     expect(themeVars({ ...t, accentColor: null })["--accent" as never]).toBe("#B3202A");
+  });
+
+  it("picks a readable text colour for light and dark primaries", () => {
+    expect(themeVars({ ...NEUTRAL_THEME, primaryColor: "#F2C94C" })["--primary-contrast" as never]).toBe("#111111");
+    expect(themeVars({ ...NEUTRAL_THEME, primaryColor: "#0B1F3A" })["--primary-contrast" as never]).toBe("#FFFFFF");
   });
 
   it("About Us copy has no tenant placeholders (identical for all tenants)", () => {

@@ -236,8 +236,14 @@ test.describe("UI sign-in by magic link", () => {
     await page.goto(await devLink(request, "demo-studio", EMAIL.owner("demo-studio")));
     await expect(page).toHaveURL(/\/owner$/);
     await noHorizontalScroll(page);
+    for (const section of ["dashboard", "members", "batches", "workouts", "settings"]) {
+      await page.goto(`/owner/${section}`);
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await noHorizontalScroll(page);
+    }
+    // Tables collapse to cards on phones: no header row is shown.
     await page.goto("/owner/members");
-    await noHorizontalScroll(page);
+    await expect(page.locator("table.dt thead")).toHaveCSS("position", "absolute");
   });
 });
 
@@ -291,7 +297,7 @@ test.describe("workouts library", () => {
     await page.getByRole("searchbox").fill("squat");
     await page.getByRole("button", { name: "Show" }).click();
     await expect(page).toHaveURL(/q=squat/);
-    expect(await page.locator("ul.card-list li").count()).toBeGreaterThan(2);
+    await expect(page.locator("ul.card-list > li").nth(2)).toBeVisible();
     await page.locator("ul.card-list li summary").first().click();
     await expect(page.getByText("How to do it").first()).toBeVisible();
     for (const role of ["coach", "customer"] as const) {

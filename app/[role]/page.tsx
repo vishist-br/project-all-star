@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { getT } from "@/lib/i18n/server";
 import { isRole } from "@/lib/nav";
+import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { EmptyState } from "@/components/ui/States";
 
 // Placeholder home for each role. The layout guard has already ensured this is the user's own role.
 export default async function RoleHome({ params }: { params: Promise<{ role: string }> }) {
@@ -9,14 +12,13 @@ export default async function RoleHome({ params }: { params: Promise<{ role: str
   const { t } = await getT();
   return (
     <section>
-      <h1>{t(`home.${role}.title`)}</h1>
-      <p>{t(`home.${role}.body`)}</p>
-      <ul className="card-list">
-        <li className="card">{t(`home.${role}.item1`)}</li>
-        <li className="card">{t(`home.${role}.item2`)}</li>
-        <li className="card">{t(`home.${role}.item3`)}</li>
+      <PageHeader title={t(`home.${role}.title`)} subtitle={t(`home.${role}.body`)} />
+      <ul className="card-list card-grid">
+        <Card as="li">{t(`home.${role}.item1`)}</Card>
+        <Card as="li">{t(`home.${role}.item2`)}</Card>
+        <Card as="li">{t(`home.${role}.item3`)}</Card>
       </ul>
-      <p className="muted">{t("shell.placeholder")}</p>
+      <EmptyState title={t("shell.placeholder")} />
     </section>
   );
 }

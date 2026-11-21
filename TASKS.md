@@ -20,7 +20,6 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Pending
 
-- STAR-59 | Design system, SVG chart kit and app shell v2 | Frontend | STAR-56 | 1
 - STAR-62 | API: bookings (capacity, waitlist, cancellation window), coach availability, tenant settings | Backend | STAR-57, STAR-58 | 2
 - STAR-63 | Seed: plans, assignments, logs, goals, bookings, availability, join/leave history (3 tenants) | Backend | STAR-58 | 2
 - STAR-64 | Owner CSV import screen live in every mode, show skippedRows and warnings | Frontend | STAR-59 | 2
@@ -54,6 +53,7 @@ Format: `ID | title | owner agent | depends on | wave`
 - STAR-57 | Sync lib/auth/policy.ts and error codes with contract v0.2.0 | Backend | STAR-56 | 1 | Notion In Review. 52 operations in policy.ts, `conflict` (409) added; tests/auth-policy.test.ts green.
 - STAR-58 | Prisma schema and migration: plans, assignments, logs, updates, availability, bookings, settings, goal metrics | Backend | STAR-56 | 1 | Notion In Review. Migration 20261122000000_plans_bookings_analytics (+down.sql); tests/plans-schema.test.ts.
 - STAR-60 | API: exercises, workout plans, plan assignments, schedule expansion | Backend | STAR-57, STAR-58 | 2 | Notion In Review. 10 operations, lib/workouts/expand.ts; tests/plans-api.test.ts + tests/workout-expand.test.ts; typecheck, lint, npm test green (463 tests).
+- STAR-59 | Design system, SVG chart kit and app shell v2 | Frontend | STAR-56 | 1 | Notion In Review. Tokens and components in app/globals.css, components/ui, components/charts; shell rebuilt; i18n split per feature. lib/nav.ts left unchanged on purpose (see Notion comment). typecheck, lint, build, e2e (31) pass; vitest 253 pass, only tests/auth-policy.test.ts red (expected until STAR-57).
 
 ## Epics (for reference, not claimable)
 
