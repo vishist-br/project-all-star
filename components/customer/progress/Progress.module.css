@@ -1,0 +1,27 @@
+.stack { display: grid; gap: var(--s4); }
+.meta { margin: 0; color: var(--muted); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.levelRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s4); }
+.levelRing { width: 120px; flex: 0 0 120px; }
+.levelText { display: grid; gap: var(--s1); min-width: 0; flex: 1 1 10rem; }
+.big { margin: 0; font-size: var(--fs-lg); font-weight: 700; overflow-wrap: anywhere; }
+.small { font-size: var(--fs-sm); font-weight: 600; line-height: 1.3; display: block; }
+.goals { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.goal { display: grid; gap: var(--s2); padding: var(--s3); border: 1px solid var(--line); border-radius: var(--r); background: var(--card); min-width: 0; }
+.goalHead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s2); align-items: flex-start; }
+.goalTitle { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.checkins { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s1); font-size: var(--fs-sm); }
+.checkins li { display: flex; flex-wrap: wrap; gap: var(--s2); justify-content: space-between; }
+.summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; color: var(--primary); font-weight: 600; }
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s2); }
+.ach { padding: var(--s2) var(--s3); border-radius: 999px; background: var(--primary-soft); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; }
+.list li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--s2); min-height: var(--tap); border-bottom: 1px solid var(--line); }
+.list li:last-child { border-bottom: 0; }
+.twoCol { display: grid; gap: var(--s4); }
+.profile { display: grid; gap: 0; margin: 0; }
+.profile div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s2); padding: var(--s3) 0; border-bottom: 1px solid var(--line); min-height: var(--tap); align-items: center; }
+.profile div:last-child { border-bottom: 0; }
+.profile dt { color: var(--muted); }
+.profile dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.signout { display: grid; gap: var(--s2); }
+@media (min-width: 720px) { .twoCol { grid-template-columns: 1fr 1fr; } }

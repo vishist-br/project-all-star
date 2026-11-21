@@ -22,7 +22,6 @@ Format: `ID | title | owner agent | depends on | wave`
 
 - STAR-64 | Owner CSV import screen live in every mode, show skippedRows and warnings | Frontend | STAR-59 | 2
 - STAR-68 | Coach today, calendar, roll call with offline queue, schedule session, availability | Frontend | STAR-59, STAR-61, STAR-62 | 3
-- STAR-70 | Customer schedule and progress: booking and waitlist, goals, stats, history | Frontend | STAR-59, STAR-62, STAR-65 | 4
 - STAR-71 | Coach roster and member detail, owner member detail, coach My record | Frontend | STAR-59, STAR-65, STAR-66 | 4
 - STAR-72 | Owner dashboard with charts and insights | Frontend | STAR-59, STAR-66 | 4
 - STAR-73 | Owner coaches page, booking-rule settings, batches polish | Frontend | STAR-59, STAR-62, STAR-66 | 4
@@ -42,6 +41,7 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Completed
 
+- STAR-70 | Customer schedule and progress: booking and waitlist, goals, stats, history | Frontend | STAR-59, STAR-62, STAR-65 | 4 | Notion In Review. Routes /customer/{schedule,progress,profile} (other roles keep the generic section page); app/[role]/_actions/bookings.ts; components/customer/{schedule,progress}/*; lib/customer/{schedule,progress,bookings,achievements}.ts; demo viewer (lib/viewer.ts) now picks a customer with a linked member and an active plan. tests/customer-schedule.test.ts (13) + e2e/customer-schedule.spec.ts (9); vitest 618, typecheck, lint, build, e2e 49 pass.
 - STAR-66 | API: owner analytics, coaches list, coach stats | Backend | STAR-60, STAR-61, STAR-62 | 3 | Notion In Review. getOwnerOverview, getOwnerTrends, getCoachWorkload, getFeeStats, getOwnerInsights, listCoaches, getCoachStats; lib/analytics/{formulas,load}.ts, lib/api/{analytics,coaches}.ts; tests/analytics.test.ts (27 tests); contract adds attendance.byBatch and byWeekday.noShowPercent; full suite 558 passed, typecheck and lint clean.
 - STAR-69 | Customer home and workouts: today's items, start/stop/complete, exercise detail, updates feed | Frontend | STAR-59, STAR-65 | 4 | Notion In Review. Routes /customer/{home,workouts,updates,exercise/[id]}, POST-free bridge PUT /ui/workout-log, customer nav Home/Workouts/Schedule/Progress/Profile; lib/customer/*, components/customer/**; tests/customer-*.test.ts (25 tests), e2e/customer-workouts.spec.ts (7); full suite 558 passed, typecheck, lint, build, e2e 38 passed.
 - STAR-65 | API: workout logs, member schedule, member stats, goals with progress, updates feed | Backend | STAR-60, STAR-61, STAR-62 | 3 | Notion In Review. getMemberSchedule, listWorkoutLogs, recordWorkoutLog, getMemberStats, listGoals, createGoal, updateGoal, addGoalCheckIn, listMemberUpdates, markMemberUpdatesRead; lib/api/{schedule,workout-logs,member-stats,goals,member-updates}.ts; tests/progress-api.test.ts (20 tests); full suite 531 passed, typecheck and lint clean.
