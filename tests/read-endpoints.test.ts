@@ -9,6 +9,7 @@ import { GET as listMembers } from "../app/api/v1/members/route";
 import { GET as getMember } from "../app/api/v1/members/[memberId]/route";
 import { GET as listBatches } from "../app/api/v1/batches/route";
 import { GET as listSessions } from "../app/api/v1/sessions/route";
+import { GET as listVenues } from "../app/api/v1/venues/route";
 
 describe("contract validator sanity", () => {
   it("rejects unknown fields, missing required fields and bad enums", () => {
@@ -264,5 +265,19 @@ describe("read endpoints (local Postgres, seeded demo data)", () => {
       cursor = r.body.nextCursor;
     } while (cursor);
     expect(seen).toEqual(owner.body.items.map((s: { id: string }) => s.id));
+  });
+
+  it("GET /venues: needs a session, matches the contract, stays inside the tenant and the caller's own batches", async (ctx) => {
+    if (!prisma) return ctx.skip();
+    expect((await call(listVenues, "/venues")).status).toBe(401);
+    const owner = await call(listVenues, "/venues", "owner");
+    expect(owner.status).toBe(200);
+    expect(validateSchemaName(owner.body, "VenuePage")).toEqual([]);
+    expect(owner.body.items.map((v: { name: string }) => v.name)).toEqual(["Sample Dojo Main Hall"]);
+    expect(owner.body.items[0].batchCount).toBe(2);
+    expect((await call(listVenues, "/venues", "coach1")).body.items).toHaveLength(1);
+    expect((await call(listVenues, "/venues", "parent")).body.items).toHaveLength(1);
+    const gym = await call(listVenues, "/venues", "gymOwner");
+    expect(gym.body.items.map((v: { name: string }) => v.name)).toEqual(["Sample Iron Works Floor"]);
   });
 });

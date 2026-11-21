@@ -34,6 +34,7 @@ tags:
   - name: Tenants
   - name: Members
   - name: Batches
+  - name: Venues
   - name: Sessions
 paths:
   /auth/otp/request:
@@ -362,6 +363,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BatchPage'
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /venues:
+    get:
+      tags: [Venues]
+      operationId: listVenues
+      summary: List venues (the places where batches run)
+      description: Owner all; coach and customer only venues of batches they can see (their own).
+      x-roles: [owner, coach, customer]
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Page of venues
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VenuePage'
         '401': {$ref: '#/components/responses/Unauthorized'}
   /sessions:
     get:
@@ -721,6 +740,24 @@ components:
               weekday: {type: integer, minimum: 1, maximum: 7, description: '1 = Monday'}
               startTime: {type: string, example: '18:00'}
               endTime: {type: string, example: '19:00'}
+    Venue:
+      type: object
+      required: [id, name]
+      properties:
+        id: {type: string}
+        name: {type: string, example: Main hall}
+        address: {type: string, nullable: true}
+        city: {type: string, nullable: true}
+        timezone: {type: string, example: Asia/Kolkata}
+        batchCount: {type: integer}
+    VenuePage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/Venue'}
+        nextCursor: {type: string, nullable: true}
     BatchPage:
       type: object
       required: [items]

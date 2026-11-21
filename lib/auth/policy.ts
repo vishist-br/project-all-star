@@ -20,6 +20,7 @@ export const OPERATION_ROLES = {
   getMember: ["owner", "coach", "customer"],
   createMemberMagicLink: ["owner", "coach"],
   importMembersCsv: ["owner"],
+  listVenues: ["owner", "coach", "customer"],
   listBatches: ["owner", "coach", "customer"],
   listSessions: ["owner", "coach", "customer"],
 } as const satisfies Record<string, RoleRule>;
