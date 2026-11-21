@@ -20,8 +20,6 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Pending
 
-- STAR-57 | Sync lib/auth/policy.ts and error codes with contract v0.2.0 | Backend | STAR-56 | 1
-- STAR-58 | Prisma schema and migration: plans, assignments, logs, updates, availability, bookings, settings, goal metrics | Backend | STAR-56 | 1
 - STAR-59 | Design system, SVG chart kit and app shell v2 | Frontend | STAR-56 | 1
 - STAR-60 | API: exercises, workout plans, plan assignments, schedule expansion | Backend | STAR-57, STAR-58 | 2
 - STAR-61 | API: create/detail/update session and one-tap roll call attendance | Backend | STAR-57, STAR-58 | 2
@@ -54,6 +52,8 @@ Format: `ID | title | owner agent | depends on | wave`
 ## Completed
 
 - STAR-56 | POC plan, TASKS.md and OpenAPI v0.2.0 extension (36 operations) | Planner | - | 0 | Notion In Review. Contract refs validated; tests/auth-policy.test.ts is expected red until STAR-57 lands.
+- STAR-57 | Sync lib/auth/policy.ts and error codes with contract v0.2.0 | Backend | STAR-56 | 1 | Notion In Review. 52 operations in policy.ts, `conflict` (409) added; tests/auth-policy.test.ts green.
+- STAR-58 | Prisma schema and migration: plans, assignments, logs, updates, availability, bookings, settings, goal metrics | Backend | STAR-56 | 1 | Notion In Review. Migration 20261122000000_plans_bookings_analytics (+down.sql); tests/plans-schema.test.ts.
 
 ## Epics (for reference, not claimable)
 

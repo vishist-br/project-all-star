@@ -1,0 +1,21 @@
+-- Local rollback only (Prisma ignores this file).
+DROP TABLE IF EXISTS "goal_check_ins";
+DROP TABLE IF EXISTS "tenant_settings";
+DROP TABLE IF EXISTS "session_bookings";
+DROP TABLE IF EXISTS "coach_availability";
+DROP TABLE IF EXISTS "member_updates";
+DROP TABLE IF EXISTS "workout_logs";
+DROP TABLE IF EXISTS "plan_assignments";
+DROP TABLE IF EXISTS "workout_plan_items";
+DROP TABLE IF EXISTS "workout_plan_days";
+DROP TABLE IF EXISTS "workout_plans";
+ALTER TABLE "goals" DROP COLUMN "metric", DROP COLUMN "start_value", DROP COLUMN "starts_on", DROP COLUMN "target_value", DROP COLUMN "unit";
+ALTER TABLE "members" DROP COLUMN "leftOn";
+ALTER TABLE "sessions" DROP COLUMN "cancel_reason", DROP COLUMN "cancelled_at", DROP COLUMN "capacity", DROP COLUMN "title";
+DROP TYPE IF EXISTS "MemberUpdateKind";
+DROP TYPE IF EXISTS "GoalMetric";
+DROP TYPE IF EXISTS "BookingStatus";
+DROP TYPE IF EXISTS "WorkoutLogStatus";
+DROP TYPE IF EXISTS "AssignmentStatus";
+DROP TYPE IF EXISTS "PlanStatus";
+DROP TYPE IF EXISTS "PlanCadence";

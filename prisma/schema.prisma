@@ -18,22 +18,31 @@ model Tenant {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  users        User[]
-  venues       Venue[]
-  sports       Sport[]
-  batches      Batch[]
-  guardians    Guardian[]
-  members      Member[]
-  enrollments  BatchMember[]
-  sessions     Session[]
-  attendance   Attendance[]
-  excused      ExcusedAbsence[]
-  holidays     Holiday[]
-  levels       Level[]
-  memberLevels MemberLevel[]
-  goals        Goal[]
-  achievements Achievement[]
-  exercises    Exercise[]
+  users             User[]
+  venues            Venue[]
+  sports            Sport[]
+  batches           Batch[]
+  guardians         Guardian[]
+  members           Member[]
+  enrollments       BatchMember[]
+  sessions          Session[]
+  attendance        Attendance[]
+  excused           ExcusedAbsence[]
+  holidays          Holiday[]
+  levels            Level[]
+  memberLevels      MemberLevel[]
+  goals             Goal[]
+  achievements      Achievement[]
+  exercises         Exercise[]
+  workoutPlans      WorkoutPlan[]
+  planDays          WorkoutPlanDay[]
+  planItems         WorkoutPlanItem[]
+  planAssignments   PlanAssignment[]
+  workoutLogs       WorkoutLog[]
+  memberUpdates     MemberUpdate[]
+  coachAvailability CoachAvailability[]
+  sessionBookings   SessionBooking[]
+  goalCheckIns      GoalCheckIn[]
 
   @@map("tenants")
 }
@@ -54,15 +63,21 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  tenant    Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  batches   Batch[]          @relation("BatchCoach")
-  guardians Guardian[]
-  members   Member[]
-  sessions  Session[]        @relation("SessionCoach")
-  marked    Attendance[]     @relation("AttendanceMarkedBy")
-  excusedBy ExcusedAbsence[] @relation("ExcusedCreatedBy")
-  awarded   MemberLevel[]    @relation("LevelAwardedBy")
-  goalsSet  Goal[]           @relation("GoalCreatedBy")
+  tenant        Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  batches       Batch[]             @relation("BatchCoach")
+  guardians     Guardian[]
+  members       Member[]
+  sessions      Session[]           @relation("SessionCoach")
+  marked        Attendance[]        @relation("AttendanceMarkedBy")
+  excusedBy     ExcusedAbsence[]    @relation("ExcusedCreatedBy")
+  awarded       MemberLevel[]       @relation("LevelAwardedBy")
+  goalsSet      Goal[]              @relation("GoalCreatedBy")
+  plans         WorkoutPlan[]       @relation("PlanCoach")
+  assignmentsBy PlanAssignment[]    @relation("AssignmentBy")
+  workoutLogsBy WorkoutLog[]        @relation("WorkoutLogBy")
+  updatesActed  MemberUpdate[]      @relation("MemberUpdateActor")
+  availability  CoachAvailability[] @relation("CoachAvailability")
+  bookingsBy    SessionBooking[]    @relation("BookingBy")
 
   @@unique([tenantId, email])
   @@index([tenantId, role])
@@ -84,8 +99,9 @@ model Venue {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  batches Batch[]
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  batches      Batch[]
+  availability CoachAvailability[]
 
   @@unique([tenantId, name])
   @@index([tenantId, isActive])
@@ -199,6 +215,7 @@ model Member {
   feeDueOn      DateTime?      @db.Date
   feePaidOn     DateTime?      @db.Date
   feePaidMethod FeePaidMethod?
+  leftOn        DateTime?      @db.Date
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @default(now()) @updatedAt
 
@@ -211,6 +228,10 @@ model Member {
   levelHistory MemberLevel[]
   goals        Goal[]
   achievements Achievement[]
+  assignments  PlanAssignment[]
+  workoutLogs  WorkoutLog[]
+  updates      MemberUpdate[]
+  bookings     SessionBooking[]
 
   @@index([tenantId, isActive])
   @@index([tenantId, guardianId])
@@ -258,24 +279,29 @@ enum SessionStatus {
 }
 
 model Session {
-  id          String        @id @default(cuid())
-  tenantId    String        @map("tenant_id")
-  batchId     String        @map("batch_id")
-  coachId     String        @map("coach_id") // coach who actually ran (or was due to run) it
-  startsAt    DateTime
-  endsAt      DateTime
-  status      SessionStatus @default(SCHEDULED)
-  completedAt DateTime?
-  coachNote   String?
+  id           String        @id @default(cuid())
+  tenantId     String        @map("tenant_id")
+  batchId      String        @map("batch_id")
+  coachId      String        @map("coach_id") // coach who actually ran (or was due to run) it
+  startsAt     DateTime
+  endsAt       DateTime
+  status       SessionStatus @default(SCHEDULED)
+  completedAt  DateTime?
+  coachNote    String?
   // Offline-sync friendly: generated on the device, makes retried uploads idempotent.
-  clientId    String?       @map("client_id")
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @default(now()) @updatedAt
+  clientId     String?       @map("client_id")
+  capacity     Int?
+  title        String?
+  cancelledAt  DateTime?     @map("cancelled_at")
+  cancelReason String?       @map("cancel_reason")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @default(now()) @updatedAt
 
-  tenant     Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  batch      Batch        @relation(fields: [batchId], references: [id], onDelete: Restrict)
-  coach      User         @relation("SessionCoach", fields: [coachId], references: [id], onDelete: Restrict)
+  tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  batch      Batch            @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  coach      User             @relation("SessionCoach", fields: [coachId], references: [id], onDelete: Restrict)
   attendance Attendance[]
+  bookings   SessionBooking[]
 
   @@unique([tenantId, batchId, startsAt])
   @@unique([tenantId, clientId])
@@ -431,6 +457,11 @@ model Goal {
   targetSessions Int?
   targetDate     DateTime?  @db.Date
   status         GoalStatus @default(ACTIVE)
+  metric         GoalMetric @default(SESSIONS_ATTENDED)
+  targetValue    Decimal?   @map("target_value") @db.Decimal(10, 2)
+  startValue     Decimal?   @map("start_value") @db.Decimal(10, 2)
+  unit           String?
+  startsOn       DateTime   @default(now()) @map("starts_on") @db.Date
   createdById    String?    @map("created_by_id")
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @default(now()) @updatedAt
@@ -441,6 +472,7 @@ model Goal {
   targetLevel  Level?        @relation(fields: [targetLevelId], references: [id], onDelete: SetNull)
   createdBy    User?         @relation("GoalCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   achievements Achievement[]
+  checkIns     GoalCheckIn[]
 
   @@index([tenantId, memberId, status])
   @@map("goals")
@@ -522,15 +554,15 @@ model AuthSession {
 
 // One row per tenant. The display name lives on Tenant.name; no row means defaults.
 model TenantTheme {
-  id              String   @id @default(cuid())
-  tenantId        String   @map("tenant_id")
-  logoUrl         String?  @map("logo_url")
-  primaryColor    String   @map("primary_color") // #RRGGBB
-  secondaryColor  String   @map("secondary_color")
-  accentColor     String?  @map("accent_color")
-  defaultLocale   String   @default("en") @map("default_locale") // en | hi | kn
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @default(now()) @updatedAt
+  id             String   @id @default(cuid())
+  tenantId       String   @map("tenant_id")
+  logoUrl        String?  @map("logo_url")
+  primaryColor   String   @map("primary_color") // #RRGGBB
+  secondaryColor String   @map("secondary_color")
+  accentColor    String?  @map("accent_color")
+  defaultLocale  String   @default("en") @map("default_locale") // en | hi | kn
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
 
   @@unique([tenantId])
   @@map("tenant_themes")
@@ -574,8 +606,275 @@ model Exercise {
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  planItems WorkoutPlanItem[]
+
   @@unique([tenantId, source, sourceId])
   @@index([tenantId, sportSlug])
   @@index([tenantId, needsTrainerReview])
   @@map("exercises")
+}
+
+// ---------------------------------------------------------------------------
+// Sprint 2: workout plans, bookings, availability, updates feed, settings, goal check-ins
+// ---------------------------------------------------------------------------
+
+enum PlanCadence {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum PlanStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  PAUSED
+  ENDED
+}
+
+enum WorkoutLogStatus {
+  STARTED
+  STOPPED
+  COMPLETED
+  SKIPPED
+}
+
+enum BookingStatus {
+  BOOKED
+  WAITLISTED
+  CANCELLED
+}
+
+enum GoalMetric {
+  SESSIONS_ATTENDED
+  WORKOUTS_COMPLETED
+  LEVEL
+  CUSTOM
+}
+
+enum MemberUpdateKind {
+  PLAN_ASSIGNED
+  PLAN_UPDATED
+  PLAN_ENDED
+  GOAL_SET
+  GOAL_UPDATED
+  SESSION_SCHEDULED
+  SESSION_RESCHEDULED
+  SESSION_CANCELLED
+  BOOKING_CONFIRMED
+  WAITLIST_PROMOTED
+}
+
+model WorkoutPlan {
+  id          String           @id @default(cuid())
+  tenantId    String           @map("tenant_id")
+  coachId     String           @map("coach_id") // creator, User with role COACH or OWNER
+  title       String
+  description String?
+  cadence     PlanCadence
+  sportSlug   String?          @map("sport_slug")
+  status      PlanStatus       @default(ACTIVE)
+  version     Int              @default(1)
+  archivedAt  DateTime?        @map("archived_at")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @default(now()) @updatedAt
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  coach       User             @relation("PlanCoach", fields: [coachId], references: [id], onDelete: Restrict)
+  days        WorkoutPlanDay[]
+  assignments PlanAssignment[]
+
+  @@index([tenantId, coachId, status])
+  @@index([tenantId, status])
+  @@map("workout_plans")
+}
+
+model WorkoutPlanDay {
+  id        String            @id @default(cuid())
+  tenantId  String            @map("tenant_id")
+  planId    String            @map("plan_id")
+  dayIndex  Int               @map("day_index") // DAILY: 1; WEEKLY: 1-7 (ISO weekday); MONTHLY: 1-31
+  title     String?
+  notes     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @default(now()) @updatedAt
+  tenant    Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan      WorkoutPlan       @relation(fields: [planId], references: [id], onDelete: Cascade)
+  items     WorkoutPlanItem[]
+
+  @@unique([tenantId, planId, dayIndex])
+  @@map("workout_plan_days")
+}
+
+model WorkoutPlanItem {
+  id              String         @id @default(cuid())
+  tenantId        String         @map("tenant_id")
+  dayId           String         @map("day_id")
+  exerciseId      String         @map("exercise_id")
+  position        Int
+  sets            Int?
+  reps            Int?
+  durationSeconds Int?           @map("duration_seconds")
+  restSeconds     Int?           @map("rest_seconds")
+  notes           String?
+  archivedAt      DateTime?      @map("archived_at") // kept for history when edited away
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @default(now()) @updatedAt
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  day             WorkoutPlanDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  exercise        Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  logs            WorkoutLog[]
+
+  @@index([tenantId, dayId, position])
+  @@index([tenantId, exerciseId])
+  @@map("workout_plan_items")
+}
+
+model PlanAssignment {
+  id           String           @id @default(cuid())
+  tenantId     String           @map("tenant_id")
+  planId       String           @map("plan_id")
+  memberId     String           @map("member_id")
+  assignedById String           @map("assigned_by_id")
+  status       AssignmentStatus @default(ACTIVE)
+  startsOn     DateTime         @map("starts_on") @db.Date
+  endsOn       DateTime?        @map("ends_on") @db.Date
+  planVersion  Int              @map("plan_version")
+  note         String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @default(now()) @updatedAt
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan         WorkoutPlan      @relation(fields: [planId], references: [id], onDelete: Restrict)
+  member       Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  assignedBy   User             @relation("AssignmentBy", fields: [assignedById], references: [id], onDelete: Restrict)
+  logs         WorkoutLog[]
+
+  @@index([tenantId, memberId, status])
+  @@index([tenantId, planId, status])
+  @@map("plan_assignments")
+}
+
+model WorkoutLog {
+  id                    String           @id @default(cuid())
+  tenantId              String           @map("tenant_id")
+  assignmentId          String           @map("assignment_id")
+  planItemId            String           @map("plan_item_id")
+  memberId              String           @map("member_id")
+  scheduledFor          DateTime         @map("scheduled_for") @db.Date
+  status                WorkoutLogStatus
+  startedAt             DateTime?        @map("started_at")
+  completedAt           DateTime?        @map("completed_at")
+  actualSets            Int?             @map("actual_sets")
+  actualReps            Int?             @map("actual_reps")
+  actualDurationSeconds Int?             @map("actual_duration_seconds")
+  note                  String?
+  clientId              String           @map("client_id")
+  recordedById          String           @map("recorded_by_id")
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @default(now()) @updatedAt
+  tenant                Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assignment            PlanAssignment   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  planItem              WorkoutPlanItem  @relation(fields: [planItemId], references: [id], onDelete: Restrict)
+  member                Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  recordedBy            User             @relation("WorkoutLogBy", fields: [recordedById], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, assignmentId, planItemId, scheduledFor])
+  @@unique([tenantId, clientId])
+  @@index([tenantId, memberId, scheduledFor])
+  @@index([tenantId, status, scheduledFor])
+  @@map("workout_logs")
+}
+
+// Change feed so customers see coach updates. One row per affected member.
+model MemberUpdate {
+  id         String           @id @default(cuid())
+  tenantId   String           @map("tenant_id")
+  memberId   String           @map("member_id")
+  actorId    String?          @map("actor_id")
+  kind       MemberUpdateKind
+  entityType String           @map("entity_type") // plan | assignment | goal | session | booking
+  entityId   String           @map("entity_id")
+  params     Json             @default("{}") // i18n params, strings only, no personal data of others
+  readAt     DateTime?        @map("read_at")
+  createdAt  DateTime         @default(now())
+  tenant     Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member     Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  actor      User?            @relation("MemberUpdateActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, memberId, createdAt])
+  @@index([tenantId, memberId, readAt])
+  @@map("member_updates")
+}
+
+model CoachAvailability {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  coachId   String   @map("coach_id")
+  weekday   Int // 1-7 ISO
+  startTime String   @map("start_time") // "HH:mm" venue timezone
+  endTime   String   @map("end_time")
+  venueId   String?  @map("venue_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  coach     User     @relation("CoachAvailability", fields: [coachId], references: [id], onDelete: Cascade)
+  venue     Venue?   @relation(fields: [venueId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, coachId, weekday])
+  @@map("coach_availability")
+}
+
+model SessionBooking {
+  id               String        @id @default(cuid())
+  tenantId         String        @map("tenant_id")
+  sessionId        String        @map("session_id")
+  memberId         String        @map("member_id")
+  status           BookingStatus
+  waitlistPosition Int?          @map("waitlist_position")
+  bookedById       String        @map("booked_by_id")
+  cancelledAt      DateTime?     @map("cancelled_at")
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @default(now()) @updatedAt
+  tenant           Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  session          Session       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  member           Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  bookedBy         User          @relation("BookingBy", fields: [bookedById], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, sessionId, memberId]) // one row per member per session; re-booking reuses it
+  @@index([tenantId, sessionId, status])
+  @@index([tenantId, memberId, status])
+  @@map("session_bookings")
+}
+
+model TenantSettings {
+  id                         String   @id @default(cuid())
+  tenantId                   String   @map("tenant_id")
+  bookingCancelWindowMinutes Int      @default(120) @map("booking_cancel_window_minutes")
+  waitlistEnabled            Boolean  @default(true) @map("waitlist_enabled")
+  showMissedSessionCost      Boolean  @default(false) @map("show_missed_session_cost")
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @default(now()) @updatedAt
+
+  @@unique([tenantId])
+  @@map("tenant_settings")
+}
+// like TenantTheme: no row = defaults; plain tenantId column (no relation) is acceptable
+
+model GoalCheckIn {
+  id           String   @id @default(cuid())
+  tenantId     String   @map("tenant_id")
+  goalId       String   @map("goal_id")
+  value        Decimal  @db.Decimal(10, 2)
+  note         String?
+  recordedOn   DateTime @map("recorded_on") @db.Date
+  recordedById String?  @map("recorded_by_id")
+  createdAt    DateTime @default(now())
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  goal         Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, goalId, recordedOn])
+  @@map("goal_check_ins")
 }
