@@ -25,7 +25,6 @@ Format: `ID | title | owner agent | depends on | wave`
 - STAR-69 | Customer home and workouts: today's items, start/stop/complete, exercise detail, updates feed | Frontend | STAR-59, STAR-65 | 4
 - STAR-70 | Customer schedule and progress: booking and waitlist, goals, stats, history | Frontend | STAR-59, STAR-62, STAR-65 | 4
 - STAR-71 | Coach roster and member detail, owner member detail, coach My record | Frontend | STAR-59, STAR-65, STAR-66 | 4
-- STAR-72 | Owner dashboard with charts and insights | Frontend | STAR-59, STAR-66 | 4
 - STAR-73 | Owner coaches page, booking-rule settings, batches polish | Frontend | STAR-59, STAR-62, STAR-66 | 4
 - STAR-74 | API role matrix and tenant isolation tests for all new operations | QA | STAR-60, STAR-61, STAR-62, STAR-65, STAR-66 | 4
 - STAR-75 | Cross-role end-to-end Playwright scenarios | QA | STAR-63, STAR-64, STAR-67 to STAR-73 | 5
@@ -43,6 +42,7 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Completed
 
+- STAR-72 | Owner dashboard with charts and insights | Frontend | STAR-59, STAR-66 | 4 | Notion In Review. app/[role]/dashboard/{page,loading}.tsx, components/owner/dashboard/{Dashboard,view-model,dashboard.module.css}; analytics + owner strings in en/hi/kn; tests/dashboard-view.test.ts (21 tests), e2e/owner-dashboard.spec.ts (10); typecheck, lint, vitest 599, build, e2e 43 pass.
 - STAR-66 | API: owner analytics, coaches list, coach stats | Backend | STAR-60, STAR-61, STAR-62 | 3 | Notion In Review. getOwnerOverview, getOwnerTrends, getCoachWorkload, getFeeStats, getOwnerInsights, listCoaches, getCoachStats; lib/analytics/{formulas,load}.ts, lib/api/{analytics,coaches}.ts; tests/analytics.test.ts (27 tests); contract adds attendance.byBatch and byWeekday.noShowPercent; full suite 558 passed, typecheck and lint clean.
 - STAR-65 | API: workout logs, member schedule, member stats, goals with progress, updates feed | Backend | STAR-60, STAR-61, STAR-62 | 3 | Notion In Review. getMemberSchedule, listWorkoutLogs, recordWorkoutLog, getMemberStats, listGoals, createGoal, updateGoal, addGoalCheckIn, listMemberUpdates, markMemberUpdatesRead; lib/api/{schedule,workout-logs,member-stats,goals,member-updates}.ts; tests/progress-api.test.ts (20 tests); full suite 531 passed, typecheck and lint clean.
 - STAR-63 | Seed: plans, assignments, logs, goals, bookings, availability, join/leave history (3 tenants) | Backend | STAR-58 | 2 | Notion In Review. prisma/seed/{rich,rich-data,dates}.ts; `npm run db:seed` = base + rich layer (about 1-3 s); `seedDemo(prisma)` stays base-only and removes the rich layer, `seedDemo(prisma, { rich: true, today? })` adds it. tests/seed.test.ts extended; npm test 480 passed, typecheck, lint, test:e2e 31 passed.
