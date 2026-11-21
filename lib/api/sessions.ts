@@ -1,5 +1,5 @@
 import type { Prisma } from "@prisma/client";
-import { sessionWhere } from "../auth/access";
+import { memberWhere, sessionWhere } from "../auth/access";
 import type { Principal } from "../auth/principal";
 import type { TenantClient } from "../tenant-scope";
 import { dateParam, enumParam, pageArgs, toPage } from "./pagination";
@@ -16,6 +16,12 @@ export type SessionDto = {
   status: "scheduled" | "completed" | "cancelled";
   attendanceSummary: { present: number; absent: number; excused: number; total: number } | null;
   coachNote: string | null;
+  kind: "group_class" | "one_on_one";
+  capacity: number | null;
+  bookedCount: number;
+  waitlistCount: number;
+  /** Customers only: status of the caller's (or child's) booking, null when none. */
+  myBookingStatus?: "booked" | "waitlisted" | "cancelled" | null;
 };
 
 const STATUSES = ["scheduled", "completed", "cancelled"] as const;
@@ -41,7 +47,7 @@ export async function listSessions(db: TenantClient, p: Principal, params: URLSe
     where: { AND: and },
     orderBy: [{ startsAt: "desc" }, { id: "asc" }],
     include: {
-      batch: { select: { name: true, venueId: true } },
+      batch: { select: { name: true, venueId: true, kind: true, capacity: true } },
       coach: { select: { name: true } },
     },
     ...args,
@@ -66,6 +72,31 @@ export async function listSessions(db: TenantClient, p: Principal, params: URLSe
     summary.set(g.sessionId, s);
   }
 
+  const ids = page.rows.map((s) => s.id);
+  const counts = ids.length
+    ? await db.sessionBooking.groupBy({
+        by: ["sessionId", "status"],
+        where: { sessionId: { in: ids }, status: { in: ["BOOKED", "WAITLISTED"] } },
+        _count: { _all: true },
+      })
+    : [];
+  const booked = new Map<string, number>();
+  const waiting = new Map<string, number>();
+  for (const c of counts) (c.status === "BOOKED" ? booked : waiting).set(c.sessionId, c._count._all);
+  const mine = new Map<string, "booked" | "waitlisted" | "cancelled">();
+  if (p.role === "customer" && ids.length) {
+    const rows = await db.sessionBooking.findMany({
+      where: { sessionId: { in: ids }, member: memberWhere(p) },
+      select: { sessionId: true, status: true },
+    });
+    const rank = { booked: 0, waitlisted: 1, cancelled: 2 } as const;
+    for (const r of rows) {
+      const st = r.status.toLowerCase() as keyof typeof rank;
+      const cur = mine.get(r.sessionId);
+      if (!cur || rank[st] < rank[cur]) mine.set(r.sessionId, st);
+    }
+  }
+
   const items: SessionDto[] = page.rows.map((s) => ({
     id: s.id,
     batchId: s.batchId,
@@ -78,6 +109,11 @@ export async function listSessions(db: TenantClient, p: Principal, params: URLSe
     status: s.status.toLowerCase() as SessionDto["status"],
     attendanceSummary: summary.get(s.id) ?? null,
     coachNote: s.coachNote,
+    kind: s.batch.kind === "ONE_ON_ONE" ? "one_on_one" : "group_class",
+    capacity: s.capacity ?? s.batch.capacity,
+    bookedCount: booked.get(s.id) ?? 0,
+    waitlistCount: waiting.get(s.id) ?? 0,
+    ...(p.role === "customer" ? { myBookingStatus: mine.get(s.id) ?? null } : {}),
   }));
   return { items, nextCursor: page.nextCursor };
 }

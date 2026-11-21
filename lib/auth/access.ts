@@ -61,3 +61,15 @@ export async function assertCanViewBatch(db: TenantClient, p: Principal, batchId
   const visible = await db.batch.findFirst({ where: { id: batchId, ...batchWhere(p) }, select: { id: true } });
   if (!visible) throw new ApiError("forbidden", "This batch is outside your own view");
 }
+
+/** Bookings (STAR-62): owner all; coach bookings of their own sessions; customer their own or children's. */
+export function bookingWhere(p: Principal): Prisma.SessionBookingWhereInput {
+  switch (p.role) {
+    case "owner":
+      return {};
+    case "coach":
+      return { session: { coachId: p.userId } };
+    case "customer":
+      return { member: memberWhere(p) };
+  }
+}
