@@ -23,7 +23,6 @@ Format: `ID | title | owner agent | depends on | wave`
 - STAR-64 | Owner CSV import screen live in every mode, show skippedRows and warnings | Frontend | STAR-59 | 2
 - STAR-68 | Coach today, calendar, roll call with offline queue, schedule session, availability | Frontend | STAR-59, STAR-61, STAR-62 | 3
 - STAR-70 | Customer schedule and progress: booking and waitlist, goals, stats, history | Frontend | STAR-59, STAR-62, STAR-65 | 4
-- STAR-71 | Coach roster and member detail, owner member detail, coach My record | Frontend | STAR-59, STAR-65, STAR-66 | 4
 - STAR-72 | Owner dashboard with charts and insights | Frontend | STAR-59, STAR-66 | 4
 - STAR-73 | Owner coaches page, booking-rule settings, batches polish | Frontend | STAR-59, STAR-62, STAR-66 | 4
 - STAR-74 | API role matrix and tenant isolation tests for all new operations | QA | STAR-60, STAR-61, STAR-62, STAR-65, STAR-66 | 4
@@ -54,6 +53,7 @@ Format: `ID | title | owner agent | depends on | wave`
 - STAR-60 | API: exercises, workout plans, plan assignments, schedule expansion | Backend | STAR-57, STAR-58 | 2 | Notion In Review. 10 operations, lib/workouts/expand.ts; tests/plans-api.test.ts + tests/workout-expand.test.ts; typecheck, lint, npm test green (463 tests).
 - STAR-59 | Design system, SVG chart kit and app shell v2 | Frontend | STAR-56 | 1 | Notion In Review. Tokens and components in app/globals.css, components/ui, components/charts; shell rebuilt; i18n split per feature. lib/nav.ts left unchanged on purpose (see Notion comment). typecheck, lint, build, e2e (31) pass; vitest 253 pass, only tests/auth-policy.test.ts red (expected until STAR-57).
 - STAR-62 | API: bookings (capacity, waitlist, cancellation window), coach availability, tenant settings | Backend | STAR-57, STAR-58 | 2 | Notion In Review. bookSession, cancelBooking, list/replaceCoachAvailability, updateTenantSettings; GET /tenant now returns booking settings; listSessions adds kind/capacity/bookedCount/waitlistCount/myBookingStatus; lib/api/{bookings,availability,tenant-settings}.ts; tests/bookings-api.test.ts (16 tests); full suite 477 passed, typecheck and lint clean.
+- STAR-71 | Coach roster and member detail, owner member detail, coach My record | Frontend | STAR-59, STAR-65, STAR-66 | 4 | Notion In Review. Routes /[role]/members (coach roster, owner table), /[role]/members/[memberId], /coach/record; app/[role]/_actions/{goals,members}.ts; lib/members/*, components/member/*, components/coach/record/*; tests/members-view.test.ts (19), e2e/coach-members.spec.ts (5); vitest 624 passed, typecheck, lint, build, e2e 45 passed.
 
 ## Epics (for reference, not claimable)
 

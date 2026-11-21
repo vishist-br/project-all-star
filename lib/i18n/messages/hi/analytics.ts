@@ -1,4 +1,33 @@
 import type { analytics as en } from "../en/analytics";
 
 export const analytics: Record<keyof typeof en, string> = {
+  // STAR-71
+  "record.subtitle": "आपने जो सत्र दिए और आपके सदस्य कैसे आगे बढ़ रहे हैं, उसका प्रमाण।",
+  "record.loadError": "आपका रिकॉर्ड लोड नहीं हो सका। कृपया फिर कोशिश करें।",
+  "record.period.30": "पिछले 30 दिन",
+  "record.period.90": "पिछले 90 दिन",
+  "record.period.label": "अवधि",
+  "record.range": "{from} से {to}",
+  "record.scheduled": "निर्धारित सत्र",
+  "record.completed": "पूरे हुए सत्र",
+  "record.unlogged": "दर्ज होना बाकी",
+  "record.unloggedHint": "{n} बीते सत्र रोल कॉल के इंतज़ार में हैं। उन्हें दर्ज करने से आपका रिकॉर्ड पूरा होता है।",
+  "record.consistency": "निरंतरता",
+  "record.attendance": "सदस्य उपस्थिति",
+  "record.adherence": "सदस्य वर्कआउट पालन",
+  "record.members": "सदस्य",
+  "record.goalsAchieved": "प्राप्त लक्ष्य",
+  "record.goalsActive": "{n} लक्ष्य जारी",
+  "record.promotions": "स्तर प्रोन्नति",
+  "record.activePlans": "{n} सक्रिय योजनाएँ",
+  "record.chart.title": "पिछले 8 सप्ताह",
+  "record.chart.aria": "पिछले 8 सप्ताहों में हर सप्ताह निर्धारित और पूरे हुए सत्रों का बार चार्ट",
+  "record.chart.scheduled": "निर्धारित",
+  "record.chart.completed": "पूरे हुए",
+  "record.recent": "हाल के पूरे हुए सत्र",
+  "record.recent.empty": "इस अवधि में अभी कोई पूरा सत्र नहीं। रोल कॉल दर्ज करते ही वे यहाँ दिखेंगे।",
+  "record.session.counts": "{present} उपस्थित, {absent} अनुपस्थित, {excused} माफ़",
+  "record.session.noAttendance": "कोई उपस्थिति दर्ज नहीं",
+  "record.open": "रोल कॉल खोलें",
+  "record.note": "निरंतरता यानी निर्धारित सत्रों में से पूरे हुए सत्र। उपस्थिति यानी दर्ज सदस्यों में से उपस्थित सदस्य; माफ़ अनुपस्थिति और छुट्टियाँ छूटी हुई नहीं गिनी जातीं।",
 };
