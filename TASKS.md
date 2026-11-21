@@ -23,7 +23,6 @@ Format: `ID | title | owner agent | depends on | wave`
 - STAR-64 | Owner CSV import screen live in every mode, show skippedRows and warnings | Frontend | STAR-59 | 2
 - STAR-70 | Customer schedule and progress: booking and waitlist, goals, stats, history | Frontend | STAR-59, STAR-62, STAR-65 | 4
 - STAR-71 | Coach roster and member detail, owner member detail, coach My record | Frontend | STAR-59, STAR-65, STAR-66 | 4
-- STAR-74 | API role matrix and tenant isolation tests for all new operations | QA | STAR-60, STAR-61, STAR-62, STAR-65, STAR-66 | 4
 - STAR-75 | Cross-role end-to-end Playwright scenarios | QA | STAR-63, STAR-64, STAR-67 to STAR-73 | 5
 - STAR-76 | UX quality audit: placeholders, states, 360px, a11y, i18n, wording, seed privacy | QA | STAR-64, STAR-67 to STAR-73 | 5
 - STAR-77 | Update README, DEMO.md, DATA_MODEL.md, TESTING.md, THIRD_PARTY.md | Docs | STAR-75, all Backend and Frontend tasks | 5
@@ -39,6 +38,7 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Completed
 
+- STAR-74 | API role matrix and tenant isolation tests for all new operations | QA | STAR-60, STAR-61, STAR-62, STAR-65, STAR-66 | 4 | Notion In Review. tests/api-matrix.test.ts (55 tests; matrix generated from the contract for all 52 operations, 9 actors, both tenants, response leakage and cross-tenant write checks), tests/api-dataflow.test.ts (8 cross-role flows), tests/seed-rich-qa.test.ts (6: rich seed privacy, idempotency, N+1 guard), tests/helpers-api.ts; test:isolation script extended; no defects found; full suite 736 passed, typecheck and lint clean.
 - STAR-73 | Owner coaches page, booking-rule settings, batches polish | Frontend | STAR-59, STAR-62, STAR-66 | 4 | Notion In Review. Routes /[role]/coaches, /coaches/[coachId], /settings (editable booking rules via server action app/[role]/_actions/settings.ts), /batches (filters venueId, sportId); components/owner/{coaches,settings,batches}; old DashboardScreen, CoachesList, BatchesScreen, SettingsScreen removed from OwnerScreens.tsx; tests/owner-coaches-view.test.ts (13 tests), e2e/owner-coaches.spec.ts (8); full suite 636 passed, typecheck, lint, build, e2e 58 passed.
 - STAR-72 | Owner dashboard with charts and insights | Frontend | STAR-59, STAR-66 | 4 | Notion In Review. app/[role]/dashboard/{page,loading}.tsx, components/owner/dashboard/{Dashboard,view-model,dashboard.module.css}; analytics + owner strings in en/hi/kn; tests/dashboard-view.test.ts (21 tests), e2e/owner-dashboard.spec.ts (10); typecheck, lint, vitest 599, build, e2e 43 pass.
 - STAR-66 | API: owner analytics, coaches list, coach stats | Backend | STAR-60, STAR-61, STAR-62 | 3 | Notion In Review. getOwnerOverview, getOwnerTrends, getCoachWorkload, getFeeStats, getOwnerInsights, listCoaches, getCoachStats; lib/analytics/{formulas,load}.ts, lib/api/{analytics,coaches}.ts; tests/analytics.test.ts (27 tests); contract adds attendance.byBatch and byWeekday.noShowPercent; full suite 558 passed, typecheck and lint clean.
