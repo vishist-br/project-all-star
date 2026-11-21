@@ -9,6 +9,30 @@ import { getSession, type Session } from "./session";
 import { forTenant } from "./tenant-scope";
 
 /**
+ * The seeded user a demo role stands in as. Owners and coaches: the oldest user of that role.
+ * Customers: a user whose own member profile, or whose children's, is active, preferring one with
+ * an active plan assignment, so the demo shows real data instead of "no profile linked".
+ */
+export async function demoUserFor(tenantId: string, role: Principal["role"]): Promise<{ id: string } | null> {
+  const dbRole = toDbRole(role);
+  if (role === "customer") {
+    const linked = { tenantId, isActive: true, OR: [{ user: { role: dbRole } }, { guardian: { user: { role: dbRole } } }] };
+    const pick = async (extra: object) => {
+      const m = await prisma.member.findFirst({
+        where: { ...linked, ...extra },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        select: { userId: true, guardian: { select: { userId: true } } },
+      });
+      const id = m?.userId ?? m?.guardian?.userId ?? null;
+      return id ? { id } : null;
+    };
+    const found = (await pick({ assignments: { some: { status: "ACTIVE" } } })) ?? (await pick({}));
+    if (found) return found;
+  }
+  return prisma.user.findFirst({ where: { tenantId, role: dbRole }, orderBy: { createdAt: "asc" }, select: { id: true } });
+}
+
+/**
  * The signed-in caller as the API sees them: principal (tenant and role from the session) and a
  * tenant-scoped client. Server screens use this to call the same lib/api functions as the
  * /api/v1 routes. In demo mode with no real session, the seeded user for the demo role stands in.
@@ -25,13 +49,7 @@ export const getViewer = cache(async (): Promise<{ session: Session; principal: 
     }
   } else {
     const tenant = await prisma.tenant.findUnique({ where: { slug: session.tenantSlug }, select: { id: true } });
-    const user = tenant
-      ? await prisma.user.findFirst({
-          where: { tenantId: tenant.id, role: toDbRole(session.role) },
-          orderBy: { createdAt: "asc" },
-          select: { id: true },
-        })
-      : null;
+    const user = tenant ? await demoUserFor(tenant.id, session.role) : null;
     if (tenant && user) principal = { userId: user.id, tenantId: tenant.id, role: session.role };
   }
   if (!principal) throw new Error("No viewer for this session");
