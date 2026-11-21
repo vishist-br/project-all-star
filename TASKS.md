@@ -22,7 +22,6 @@ Format: `ID | title | owner agent | depends on | wave`
 
 - STAR-64 | Owner CSV import screen live in every mode, show skippedRows and warnings | Frontend | STAR-59 | 2
 - STAR-66 | API: owner analytics, coaches list, coach stats | Backend | STAR-60, STAR-61, STAR-62 | 3
-- STAR-68 | Coach today, calendar, roll call with offline queue, schedule session, availability | Frontend | STAR-59, STAR-61, STAR-62 | 3
 - STAR-69 | Customer home and workouts: today's items, start/stop/complete, exercise detail, updates feed | Frontend | STAR-59, STAR-65 | 4
 - STAR-70 | Customer schedule and progress: booking and waitlist, goals, stats, history | Frontend | STAR-59, STAR-62, STAR-65 | 4
 - STAR-71 | Coach roster and member detail, owner member detail, coach My record | Frontend | STAR-59, STAR-65, STAR-66 | 4
@@ -44,6 +43,7 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Completed
 
+- STAR-68 | Coach today, calendar, roll call with offline queue, schedule session, availability | Frontend | STAR-59, STAR-61, STAR-62 | 3 | Notion In Review. Routes /[role]/today (+ /week, /availability tabs), /[role]/sessions/[sessionId], /[role]/sessions/new, /[role]/calendar (redirect); app/[role]/_actions/sessions.ts; components/sessions/*; lib/offline/*, lib/sessions/*; tests/rollcall-offline.test.ts (17) + tests/sessions-form.test.ts (14) + e2e/coach-sessions.spec.ts (1); typecheck, lint, vitest 584, build, e2e 33/34 (coach-plans cold-compile timing flake passes alone; Turbopack dev HMR loop locally, E2E_WEBPACK=1 used).
 - STAR-65 | API: workout logs, member schedule, member stats, goals with progress, updates feed | Backend | STAR-60, STAR-61, STAR-62 | 3 | Notion In Review. getMemberSchedule, listWorkoutLogs, recordWorkoutLog, getMemberStats, listGoals, createGoal, updateGoal, addGoalCheckIn, listMemberUpdates, markMemberUpdatesRead; lib/api/{schedule,workout-logs,member-stats,goals,member-updates}.ts; tests/progress-api.test.ts (20 tests); full suite 531 passed, typecheck and lint clean.
 - STAR-63 | Seed: plans, assignments, logs, goals, bookings, availability, join/leave history (3 tenants) | Backend | STAR-58 | 2 | Notion In Review. prisma/seed/{rich,rich-data,dates}.ts; `npm run db:seed` = base + rich layer (about 1-3 s); `seedDemo(prisma)` stays base-only and removes the rich layer, `seedDemo(prisma, { rich: true, today? })` adds it. tests/seed.test.ts extended; npm test 480 passed, typecheck, lint, test:e2e 31 passed.
 - STAR-67 | Coach plans: list, builder with exercise picker, assign, edit, archive | Frontend | STAR-59, STAR-60 | 3 | Notion In Review. Routes /[role]/plans, /plans/new, /plans/[planId]; app/[role]/_actions/plans.ts; components/plans/*; lib/plans/*; tests/plans-form.test.ts (20 tests) + e2e/coach-plans.spec.ts (2); typecheck, lint, vitest 515, build, e2e 33 pass.

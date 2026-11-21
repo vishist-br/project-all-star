@@ -9,7 +9,7 @@ import { createSeededDb, dropScratchDb, E2E_PORT, scratchUrl } from "./db";
  */
 async function main() {
   await createSeededDb();
-  const child = spawn("npx", ["next", "dev", "--port", String(E2E_PORT), "--hostname", "127.0.0.1"], {
+  const child = spawn("npx", ["next", "dev", ...(process.env.E2E_WEBPACK ? ["--webpack"] : []), "--port", String(E2E_PORT), "--hostname", "127.0.0.1"], {
     stdio: "inherit",
     env: {
       ...process.env,

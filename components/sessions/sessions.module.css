@@ -1,0 +1,83 @@
+/* Styles for the coach session screens (today, week, roll call, schedule, availability). Tokens come from globals.css. */
+.stack { display: grid; gap: var(--s4); min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+.meta { margin: 0; color: var(--muted); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.rowActions { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.textarea { min-height: 5rem; resize: vertical; font: inherit; width: 100%; }
+
+/* Session cards */
+.sessionCard { display: grid; gap: var(--s3); }
+.sessionTop { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s2); min-width: 0; }
+.sessionTime { font-weight: 700; font-variant-numeric: tabular-nums; }
+.sessionName { font-size: var(--fs-md); margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.sectionTitle { font-size: var(--fs-md); margin: var(--s5) 0 var(--s2); }
+
+.pendingBox { display: grid; gap: var(--s3); padding: var(--s4); border: 1px solid var(--info); border-radius: var(--r-lg); background: var(--info-soft); margin-bottom: var(--s4); }
+.pendingBox h2 { font-size: var(--fs-md); }
+.pendingBox p { margin: 0; }
+.pendingList { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+.pendingItem { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); }
+
+/* Week */
+.weekNav { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); margin-bottom: var(--s4); }
+.weekTitle { font-weight: 700; margin: 0; }
+.dayList { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.day { display: grid; gap: var(--s2); padding: var(--s3) var(--s4); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); }
+.dayToday { border-color: var(--primary); }
+.dayHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); }
+.dayName { font-weight: 700; margin: 0; }
+.dayEmpty { margin: 0; color: var(--muted); font-size: var(--fs-sm); }
+.dayItems { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+.dayItem { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); justify-content: space-between; min-height: var(--tap); }
+.dayItemText { min-width: 0; display: grid; gap: 2px; }
+.dayItemName { font-weight: 600; overflow-wrap: anywhere; }
+
+/* Roll call */
+.sessionHead { display: grid; gap: var(--s2); margin-bottom: var(--s4); }
+.countBar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s2); }
+.count { display: grid; gap: 0; padding: var(--s2); border: 1px solid var(--line); border-radius: var(--r); background: var(--card); text-align: center; }
+.countNum { font-size: var(--fs-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
+.countLabel { font-size: var(--fs-xs); color: var(--muted); }
+.syncBar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); padding: var(--s2) var(--s3); border-radius: var(--r); background: var(--ok-soft); color: var(--ok); font-size: var(--fs-sm); font-weight: 600; }
+.syncWaiting { background: var(--warn-soft); color: var(--warn); }
+.syncBox { display: grid; gap: var(--s2); padding: var(--s3) var(--s4); border: 1px solid var(--danger); border-radius: var(--r); background: var(--danger-soft); color: var(--danger); }
+.syncBox p, .syncBox ul { margin: 0; }
+.syncBox ul { padding-inline-start: var(--s4); }
+.rollList { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+.rollRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s2); align-items: stretch; }
+.rollMain { display: flex; align-items: center; gap: var(--s3); min-height: 60px; padding: var(--s2) var(--s3); border: 1px solid var(--line-strong); border-radius: var(--r); background: var(--card); color: var(--fg); font: inherit; text-align: start; cursor: pointer; min-width: 0; width: 100%; }
+.rollMain[data-status="present"] { border-color: var(--ok); background: var(--ok-soft); }
+.rollMain[data-status="absent"] { border-color: var(--warn); background: var(--warn-soft); }
+.rollMain[data-status="excused"] { border-color: var(--info); background: var(--info-soft); }
+.rollMain:disabled { cursor: default; opacity: .75; }
+.rollText { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.rollName { font-weight: 600; overflow-wrap: anywhere; }
+.rollSub { font-size: var(--fs-xs); color: var(--muted); overflow-wrap: anywhere; }
+.rollNote { font-size: var(--fs-xs); color: var(--muted); font-style: italic; overflow-wrap: anywhere; }
+.moreBtn { min-width: var(--tap); min-height: 60px; font-size: var(--fs-sm); padding: 0 var(--s2); }
+.waitlistTitle { font-size: var(--fs-md); margin: var(--s5) 0 var(--s2); }
+.bar { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+.completeBar { display: grid; gap: var(--s2); }
+.choice { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s2); }
+.choiceBtn[aria-pressed="true"] { background: var(--primary); color: var(--primary-contrast); }
+.reasons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2); }
+.sheetBody { display: grid; gap: var(--s3); }
+
+/* Warnings and notices */
+.warnList { list-style: none; margin: 0 0 var(--s4); padding: 0; display: grid; gap: var(--s2); }
+.warn { padding: var(--s3) var(--s4); border: 1px solid var(--warn); border-radius: var(--r); background: var(--warn-soft); color: var(--warn); font-weight: 600; overflow-wrap: anywhere; }
+.errorBox { margin: 0; padding: var(--s3) var(--s4); border: 1px solid var(--danger); border-radius: var(--r); background: var(--danger-soft); color: var(--danger); font-weight: 600; overflow-wrap: anywhere; }
+.okBox { display: grid; gap: var(--s3); padding: var(--s4); border: 1px solid var(--ok); border-radius: var(--r-lg); background: var(--ok-soft); }
+.okBox h2 { color: var(--ok); }
+.okBox p { margin: 0; }
+
+/* Forms */
+.form { display: grid; gap: var(--s4); min-width: 0; }
+.twoCol { display: grid; gap: var(--s3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* Availability */
+.availDay { display: grid; gap: var(--s3); }
+.slotList { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.slot { display: grid; gap: var(--s2); }
+.slotRow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: var(--s2); align-items: end; }
+.saveBar { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; }
