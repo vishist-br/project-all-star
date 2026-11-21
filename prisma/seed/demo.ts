@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { TENANTS, type SeedTenant } from "./data";
+import { clearRich, seedRich } from "./rich";
 
 // Idempotent demo seed. Every row has a deterministic id ("seed-<slug>-<thing>") and is
 // written with upsert, so running it twice changes nothing. Tenant rows are keyed by slug.
@@ -193,8 +194,18 @@ async function seedTenant(prisma: PrismaClient, t: SeedTenant) {
   return tenantId;
 }
 
-export async function seedDemo(prisma: PrismaClient): Promise<string[]> {
+/**
+ * Seeds the demo tenants and returns their ids in TENANTS order.
+ * - default (`rich` false): the small base seed only. It also removes the rich layer, so tests
+ *   that assert exact base counts work even on a database that was seeded with `npm run db:seed`.
+ * - `rich: true`: base seed plus the rich layer (STAR-63: exercise catalog, plans, assignments,
+ *   logs, goals, ~12 weeks of sessions, bookings, availability, settings, updates). Dates are
+ *   relative to SEED_TODAY (default: today in Asia/Kolkata).
+ */
+export async function seedDemo(prisma: PrismaClient, opts: { rich?: boolean; today?: string } = {}): Promise<string[]> {
+  await clearRich(prisma);
   const ids: string[] = [];
   for (const t of TENANTS) ids.push(await seedTenant(prisma, t));
+  if (opts.rich) await seedRich(prisma, opts.today);
   return ids;
 }
