@@ -274,11 +274,15 @@ test.describe("owner screens show the tenant's own data", () => {
 });
 
 test.describe("live member import through the session cookie", () => {
-  test("a signed-in owner can check a CSV; without a session it is refused", async ({ page, request }) => {
+  test("a signed-in owner can check a CSV; in demo mode the demo owner can too, the demo coach is refused", async ({ page, request }) => {
     const csv = Buffer.from("name,phone,email,guardian_name,guardian_phone,batch_name,sport,level,goal,join_date,fee_status\n");
     const body = { multipart: { file: { name: "m.csv", mimeType: "text/csv", buffer: csv } } };
+    // STAR-64: the import bridge uses the viewer principal in every mode. With no session in demo
+    // mode the viewer is the seeded demo owner, so a dry run is answered; a demo coach is refused.
     const anon = await request.post("/ui/members-import?dryRun=true", body);
-    expect(anon.status()).toBe(401);
+    expect(anon.status()).toBe(200);
+    const coach = await request.post("/ui/members-import?dryRun=true", { ...body, headers: { cookie: "demo_role=coach" } });
+    expect(coach.status()).toBe(403);
     await page.goto(await devLink(request, "demo-karate", EMAIL.owner("demo-karate")));
     await expect(page).toHaveURL(/\/owner$/);
     const res = await page.request.post("/ui/members-import?dryRun=true", body);

@@ -20,7 +20,6 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Pending
 
-- STAR-64 | Owner CSV import screen live in every mode, show skippedRows and warnings | Frontend | STAR-59 | 2
 - STAR-70 | Customer schedule and progress: booking and waitlist, goals, stats, history | Frontend | STAR-59, STAR-62, STAR-65 | 4
 - STAR-71 | Coach roster and member detail, owner member detail, coach My record | Frontend | STAR-59, STAR-65, STAR-66 | 4
 - STAR-74 | API role matrix and tenant isolation tests for all new operations | QA | STAR-60, STAR-61, STAR-62, STAR-65, STAR-66 | 4
@@ -39,6 +38,7 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Completed
 
+- STAR-64 | Owner CSV import screen live in every mode, show skippedRows and warnings | Frontend | STAR-59 | 2 | Notion In Review. Screen always uses the real import: bridge app/ui/members-import/route.ts now resolves the viewer principal (real session or seeded demo owner), checks role importMembersCsv, runs importMembers(); mock client deleted; stepper, drag and drop, errors table, skippedRows, warnings, confirm dialog, success state; lib/import/view.ts; owner.ts imp.* strings (en/hi/kn); tests/import.test.ts (rewritten), e2e/owner-import.spec.ts (7), e2e/smoke.spec.ts import test updated for demo mode.
 - STAR-73 | Owner coaches page, booking-rule settings, batches polish | Frontend | STAR-59, STAR-62, STAR-66 | 4 | Notion In Review. Routes /[role]/coaches, /coaches/[coachId], /settings (editable booking rules via server action app/[role]/_actions/settings.ts), /batches (filters venueId, sportId); components/owner/{coaches,settings,batches}; old DashboardScreen, CoachesList, BatchesScreen, SettingsScreen removed from OwnerScreens.tsx; tests/owner-coaches-view.test.ts (13 tests), e2e/owner-coaches.spec.ts (8); full suite 636 passed, typecheck, lint, build, e2e 58 passed.
 - STAR-72 | Owner dashboard with charts and insights | Frontend | STAR-59, STAR-66 | 4 | Notion In Review. app/[role]/dashboard/{page,loading}.tsx, components/owner/dashboard/{Dashboard,view-model,dashboard.module.css}; analytics + owner strings in en/hi/kn; tests/dashboard-view.test.ts (21 tests), e2e/owner-dashboard.spec.ts (10); typecheck, lint, vitest 599, build, e2e 43 pass.
 - STAR-66 | API: owner analytics, coaches list, coach stats | Backend | STAR-60, STAR-61, STAR-62 | 3 | Notion In Review. getOwnerOverview, getOwnerTrends, getCoachWorkload, getFeeStats, getOwnerInsights, listCoaches, getCoachStats; lib/analytics/{formulas,load}.ts, lib/api/{analytics,coaches}.ts; tests/analytics.test.ts (27 tests); contract adds attendance.byBatch and byWeekday.noShowPercent; full suite 558 passed, typecheck and lint clean.
