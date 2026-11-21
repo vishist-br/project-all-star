@@ -20,7 +20,6 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Pending
 
-- STAR-62 | API: bookings (capacity, waitlist, cancellation window), coach availability, tenant settings | Backend | STAR-57, STAR-58 | 2
 - STAR-63 | Seed: plans, assignments, logs, goals, bookings, availability, join/leave history (3 tenants) | Backend | STAR-58 | 2
 - STAR-64 | Owner CSV import screen live in every mode, show skippedRows and warnings | Frontend | STAR-59 | 2
 - STAR-65 | API: workout logs, member schedule, member stats, goals with progress, updates feed | Backend | STAR-60, STAR-61, STAR-62 | 3
@@ -54,6 +53,7 @@ Format: `ID | title | owner agent | depends on | wave`
 - STAR-58 | Prisma schema and migration: plans, assignments, logs, updates, availability, bookings, settings, goal metrics | Backend | STAR-56 | 1 | Notion In Review. Migration 20261122000000_plans_bookings_analytics (+down.sql); tests/plans-schema.test.ts.
 - STAR-60 | API: exercises, workout plans, plan assignments, schedule expansion | Backend | STAR-57, STAR-58 | 2 | Notion In Review. 10 operations, lib/workouts/expand.ts; tests/plans-api.test.ts + tests/workout-expand.test.ts; typecheck, lint, npm test green (463 tests).
 - STAR-59 | Design system, SVG chart kit and app shell v2 | Frontend | STAR-56 | 1 | Notion In Review. Tokens and components in app/globals.css, components/ui, components/charts; shell rebuilt; i18n split per feature. lib/nav.ts left unchanged on purpose (see Notion comment). typecheck, lint, build, e2e (31) pass; vitest 253 pass, only tests/auth-policy.test.ts red (expected until STAR-57).
+- STAR-62 | API: bookings (capacity, waitlist, cancellation window), coach availability, tenant settings | Backend | STAR-57, STAR-58 | 2 | Notion In Review. bookSession, cancelBooking, list/replaceCoachAvailability, updateTenantSettings; GET /tenant now returns booking settings; listSessions adds kind/capacity/bookedCount/waitlistCount/myBookingStatus; lib/api/{bookings,availability,tenant-settings}.ts; tests/bookings-api.test.ts (16 tests); full suite 477 passed, typecheck and lint clean.
 
 ## Epics (for reference, not claimable)
 

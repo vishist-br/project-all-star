@@ -123,3 +123,15 @@ export async function assertCanEditPlan(db: TenantClient, p: Principal, planId: 
   const ok = await db.workoutPlan.findFirst({ where: { id: planId, ...planWhere(p) }, select: { id: true } });
   if (!ok) throw new ApiError("forbidden", "This plan is not yours");
 }
+
+/** Bookings (STAR-62): owner all; coach bookings of their own sessions; customer their own or children's. */
+export function bookingWhere(p: Principal): Prisma.SessionBookingWhereInput {
+  switch (p.role) {
+    case "owner":
+      return {};
+    case "coach":
+      return { session: { coachId: p.userId } };
+    case "customer":
+      return { member: memberWhere(p) };
+  }
+}
