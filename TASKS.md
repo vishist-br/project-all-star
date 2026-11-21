@@ -22,7 +22,6 @@ Format: `ID | title | owner agent | depends on | wave`
 
 - STAR-57 | Sync lib/auth/policy.ts and error codes with contract v0.2.0 | Backend | STAR-56 | 1
 - STAR-58 | Prisma schema and migration: plans, assignments, logs, updates, availability, bookings, settings, goal metrics | Backend | STAR-56 | 1
-- STAR-59 | Design system, SVG chart kit and app shell v2 | Frontend | STAR-56 | 1
 - STAR-60 | API: exercises, workout plans, plan assignments, schedule expansion | Backend | STAR-57, STAR-58 | 2
 - STAR-61 | API: create/detail/update session and one-tap roll call attendance | Backend | STAR-57, STAR-58 | 2
 - STAR-62 | API: bookings (capacity, waitlist, cancellation window), coach availability, tenant settings | Backend | STAR-57, STAR-58 | 2
@@ -54,6 +53,7 @@ Format: `ID | title | owner agent | depends on | wave`
 ## Completed
 
 - STAR-56 | POC plan, TASKS.md and OpenAPI v0.2.0 extension (36 operations) | Planner | - | 0 | Notion In Review. Contract refs validated; tests/auth-policy.test.ts is expected red until STAR-57 lands.
+- STAR-59 | Design system, SVG chart kit and app shell v2 | Frontend | STAR-56 | 1 | Notion In Review. Tokens and components in app/globals.css, components/ui, components/charts; shell rebuilt; i18n split per feature. lib/nav.ts left unchanged on purpose (see Notion comment). typecheck, lint, build, e2e (31) pass; vitest 253 pass, only tests/auth-policy.test.ts red (expected until STAR-57).
 
 ## Epics (for reference, not claimable)
 

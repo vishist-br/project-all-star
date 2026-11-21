@@ -1,6 +1,9 @@
 import type { Prisma } from "@prisma/client";
 import { getT } from "@/lib/i18n/server";
 import { getViewer } from "@/lib/viewer";
+import { Badge } from "@/components/ui/Badge";
+import { Button, ButtonLink } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/States";
 
 const PAGE_SIZE = 30;
 
@@ -60,7 +63,7 @@ export async function WorkoutsScreen({ filters }: { filters: WorkoutFilters }) {
         <Select name="muscle" label={t("wk.muscle")} value={filters.muscle} options={uniq(facets.flatMap((f) => f.primaryMuscles))} all={t("wk.all")} />
         <Select name="equipment" label={t("wk.equipment")} value={filters.equipment} options={uniq(facets.map((f) => f.equipment))} all={t("wk.all")} />
         <Select name="level" label={t("wk.level")} value={filters.level} options={uniq(facets.map((f) => f.level))} all={t("wk.all")} />
-        <button type="submit" className="btn">{t("wk.filter")}</button>
+        <Button type="submit">{t("wk.filter")}</Button>
       </form>
       <p className="muted">{t("wk.results", { n: total })}</p>
       <ul className="card-list">
@@ -69,9 +72,9 @@ export async function WorkoutsScreen({ filters }: { filters: WorkoutFilters }) {
             <details>
               <summary>
                 <strong>{e.name}</strong>
-                <span className="small muted"> · {[e.sportSlug, e.equipment, e.level].filter(Boolean).join(" · ")}</span>
+                <span className="small muted">&nbsp;· {[e.sportSlug, e.equipment, e.level].filter(Boolean).join(" · ")}</span>
               </summary>
-              {e.needsTrainerReview && <p className="small msg-error">{t("wk.draft")}</p>}
+              {e.needsTrainerReview && <p><Badge tone="warn">{t("wk.draft")}</Badge></p>}
               {e.primaryMuscles.length > 0 && <p className="small">{t("wk.primary")}: {e.primaryMuscles.join(", ")}</p>}
               {e.secondaryMuscles.length > 0 && <p className="small">{t("wk.secondary")}: {e.secondaryMuscles.join(", ")}</p>}
               {e.instructions.length > 0 && (
@@ -85,11 +88,11 @@ export async function WorkoutsScreen({ filters }: { filters: WorkoutFilters }) {
           </li>
         ))}
       </ul>
-      {rows.length === 0 && <p className="muted">{t("data.empty")}</p>}
+      {rows.length === 0 && <EmptyState title={t("data.empty")} />}
       <nav className="pager" aria-label={t("wk.page", { n: page, total: totalPages })}>
-        {page > 1 && <a className="btn btn-outline" href={href(filters, page - 1)}>{t("wk.prev")}</a>}
+        {page > 1 && <ButtonLink variant="secondary" href={href(filters, page - 1)}>{t("wk.prev")}</ButtonLink>}
         <span className="muted small">{t("wk.page", { n: page, total: totalPages })}</span>
-        {page < totalPages && <a className="btn btn-outline" href={href(filters, page + 1)}>{t("wk.next")}</a>}
+        {page < totalPages && <ButtonLink variant="secondary" href={href(filters, page + 1)}>{t("wk.next")}</ButtonLink>}
       </nav>
     </>
   );

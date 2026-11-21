@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { getT } from "@/lib/i18n/server";
 import { homePath } from "@/lib/guard";
 import type { Role } from "@/lib/nav";
+import { ButtonLink } from "@/components/ui/Button";
 
 export async function NotAllowed({ role }: { role: Role }) {
   const { t } = await getT();
@@ -9,7 +9,7 @@ export async function NotAllowed({ role }: { role: Role }) {
     <section role="alert" className="card">
       <h1>{t("notAllowed.title")}</h1>
       <p>{t("notAllowed.body")}</p>
-      <Link href={homePath(role)} className="btn">{t("notAllowed.back")}</Link>
+      <ButtonLink href={homePath(role)}>{t("notAllowed.back")}</ButtonLink>
     </section>
   );
 }

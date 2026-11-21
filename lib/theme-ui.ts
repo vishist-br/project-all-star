@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { TenantTheme } from "./theme";
+import { contrastRatio, type TenantTheme } from "./theme";
 
 /** What the UI needs of a tenant theme (the TenantTheme API shape without the locale). */
 export type UiTheme = Omit<TenantTheme, "defaultLocale">;
@@ -14,10 +14,16 @@ export const NEUTRAL_THEME: UiTheme = {
   accentColor: null,
 };
 
+/** White or near-black, whichever reads better on the colour (text on primary buttons and chips). */
+export function contrastColor(hex: string): string {
+  return contrastRatio(hex, "#FFFFFF") >= contrastRatio(hex, "#111111") ? "#FFFFFF" : "#111111";
+}
+
 /** Tenant theme as CSS variables. Applied once at the document root. */
 export function themeVars(theme: Pick<UiTheme, "primaryColor" | "secondaryColor" | "accentColor">) {
   return {
     "--primary": theme.primaryColor,
+    "--primary-contrast": contrastColor(theme.primaryColor),
     "--secondary": theme.secondaryColor,
     "--accent": theme.accentColor ?? theme.primaryColor,
   } as CSSProperties;
