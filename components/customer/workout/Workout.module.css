@@ -1,0 +1,27 @@
+.wrap { display: grid; gap: var(--s4); }
+.counts { display: flex; flex-wrap: wrap; gap: var(--s2); margin: 0; }
+.cheer { margin: 0; padding: var(--s3) var(--s4); border-radius: var(--r); background: var(--ok-soft); color: var(--ok); font-weight: 600; }
+.group { display: grid; gap: var(--s2); }
+.groupTitle { margin: 0; font-size: var(--fs-md); color: var(--muted); font-weight: 600; overflow-wrap: anywhere; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.item { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s4); box-shadow: var(--shadow-1); display: grid; gap: var(--s2); min-width: 0; }
+.item[data-status="completed"] { border-left: 4px solid var(--ok); }
+.item[data-status="started"] { border-left: 4px solid var(--info); }
+.item[data-status="stopped"] { border-left: 4px solid var(--warn); }
+.item[data-status="skipped"] { opacity: .85; }
+.head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: var(--s2); }
+.name { font-weight: 700; font-size: var(--fs-lg); color: var(--fg); text-decoration: none; min-height: var(--tap); display: inline-flex; align-items: center; overflow-wrap: anywhere; min-width: 0; flex: 1 1 10rem; }
+.name:hover { text-decoration: underline; }
+.badges { display: inline-flex; flex-wrap: wrap; gap: var(--s1); align-items: center; min-height: var(--tap); }
+.target { margin: 0; color: var(--muted); }
+.note { margin: 0; font-style: italic; }
+.actions { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.actions > button { flex: 1 1 7rem; }
+.sync { margin: 0; padding: var(--s2) var(--s4); border-radius: var(--r); font-size: var(--fs-sm); }
+.sync_info { background: var(--info-soft); color: var(--info); }
+.sync_ok { background: var(--ok-soft); color: var(--ok); }
+.sync_warn { background: var(--warn-soft); color: var(--warn); }
+.rest { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4); border-radius: var(--r); background: var(--primary-soft); border: 1px solid var(--primary); }
+.restTitle { font-size: var(--fs-md); }
+.restTime { font-size: var(--fs-kpi); font-weight: 700; font-variant-numeric: tabular-nums; min-width: 2ch; }
+.rest > button { margin-inline-start: auto; }

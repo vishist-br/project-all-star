@@ -26,9 +26,10 @@ export const NAV: Record<Role, readonly NavItem[]> = {
     { section: "record", label: "nav.myRecord", icon: "✓" },
   ],
   customer: [
-    { section: "progress", label: "nav.progress", icon: "▲" },
-    { section: "schedule", label: "nav.schedule", icon: "◷" },
+    { section: "home", label: "nav.home", icon: "⌂" },
     { section: "workouts", label: "nav.workouts", icon: "✚" },
+    { section: "schedule", label: "nav.schedule", icon: "◷" },
+    { section: "progress", label: "nav.progress", icon: "▲" },
     { section: "profile", label: "nav.profile", icon: "☺" },
   ],
 };

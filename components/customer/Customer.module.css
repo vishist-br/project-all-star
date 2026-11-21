@@ -1,0 +1,38 @@
+.switcher { display: flex; flex-wrap: wrap; gap: var(--s2); margin-bottom: var(--s4); }
+.chip { min-height: var(--tap); padding: 0 var(--s4); border-radius: 999px; border: 1px solid var(--line-strong); background: var(--card); color: var(--fg); font: inherit; font-weight: 600; cursor: pointer; max-width: 100%; overflow-wrap: anywhere; }
+.chip[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); }
+.chip:disabled { opacity: .6; cursor: progress; }
+
+.stack { display: grid; gap: var(--s4); }
+.row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); }
+.sectionTitle { margin: 0; }
+.big { font-size: var(--fs-lg); font-weight: 700; margin: 0; overflow-wrap: anywhere; }
+.meta { margin: 0; color: var(--muted); font-size: var(--fs-sm); }
+.updatesBar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3); }
+.sessionList { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.sessionList li { display: grid; gap: var(--s1); padding-bottom: var(--s3); border-bottom: 1px solid var(--line); }
+.sessionList li:last-child { border-bottom: 0; padding-bottom: 0; }
+
+/* Workouts screen */
+.planGrid { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.days { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.day { display: grid; gap: var(--s2); }
+.dayHead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s2); align-items: baseline; }
+.dayTitle { margin: 0; font-size: var(--fs-md); }
+.dayItems { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s1); }
+.dayItems li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s2); }
+.dayItems a { color: var(--fg); min-height: var(--tap); display: inline-flex; align-items: center; }
+
+/* Exercise detail */
+.facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: var(--s3); margin: 0; }
+.facts div { display: grid; gap: 2px; }
+.facts dt { color: var(--muted); font-size: var(--fs-sm); }
+.facts dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.steps { margin: 0; padding-inline-start: 1.4rem; display: grid; gap: var(--s2); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--s2); list-style: none; margin: 0; padding: 0; }
+
+/* Updates */
+.feed { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.feedItem { display: grid; gap: var(--s1); }
+.feedItem[data-new="true"] { border-left: 4px solid var(--primary); }
+.quote { margin: 0; padding-inline-start: var(--s3); border-inline-start: 3px solid var(--line-strong); color: var(--muted); font-style: italic; }
