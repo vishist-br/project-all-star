@@ -28,6 +28,9 @@ export function maxOf(rows: Num[][]): number {
   return m;
 }
 
+/** One decimal is plenty for SVG coordinates; unrounded floats bloat the HTML and the serialized payload. */
+export const r1 = (n: number): number => Math.round(n * 10) / 10;
+
 export const fmt = (n: Num): string => (n === null ? "–" : Number.isInteger(n) ? String(n) : n.toFixed(1));
 
 /** Split values into runs of non-null points so nulls render as gaps, never as 0. */

@@ -22,8 +22,6 @@ Format: `ID | title | owner agent | depends on | wave`
 
 Sprint 3 (speed and the unscheduled features). Wave 1 first; wave 2 starts after wave 1 is merged.
 
-STAR-91 | Speed: dashboard and workouts HTML is 166 KB and 96 KB; stream with Suspense, trim payload, cache catalog reads | Perf agent | none | wave 1
-STAR-92 | Speed: Prisma pool and `loading.tsx` skeletons on every role route, prefetch nav links | Perf agent | none | wave 1
 STAR-93 | Speed: add a timing check (server-timing header plus a Playwright budget per page) | QA agent | STAR-91 | wave 2
 STAR-94 | Holiday calendar editor for owners | Owner agent | none | wave 1
 STAR-95 | Pre-declared excused absences (member or parent declares, coach sees on roll call) | Coach agent | none | wave 1
@@ -42,6 +40,8 @@ STAR-98 | Parent OTP sign-in (needs a messaging provider decision first) | Auth 
 
 ## Completed
 
+- STAR-91 | Speed: dashboard and workouts HTML is 166 KB and 96 KB; stream with Suspense, trim payload, cache catalog reads | Perf agent | none | wave 1 - claimed by perf agent 2026-11-22 | Notion In Review pending (maintainer sets). Owner roster 270 to 25 queries (getRosterStats replaces a getMemberStats call per row), dashboard overview computed once per request (95 to 78 queries), workouts library HTML 95.5 to 59.3 KB (15 rows per page, filter options cached 1 h), chart coordinates rounded. Tests: tests/perf.test.ts; vitest 780 passed, typecheck and lint clean.
+- STAR-92 | Speed: Prisma pool and `loading.tsx` skeletons on every role route, prefetch nav links | Perf agent | none | wave 1 - claimed by perf agent 2026-11-22 | Notion In Review pending (maintainer sets). app/[role]/loading.tsx already covers every role route (guarded by tests/perf.test.ts), nav and buttons use next/link with default prefetch, db.ts warns (names only) on missing pooled host, connection_limit or pgbouncer=true, PERF_LOG=1 query counter.
 - STAR-78 | Sprint 2 handoff summary on the Sprint page | Docs | every other task In Review | 6 - claimed by Docs agent 2026-11-22 | Notion In Review. Handoff written on the Sprint page 'Sprint 2: POC completion' (done, blocked, Backlog STAR-79 to 82, proposed decisions, human actions, tests, demo, deployment).
 - STAR-83 to STAR-90 | UX audit fixes: role homes, theme text contrast, badge contrast, touch targets, Hindi hydration, a11y names, header wrap, members table at 768 (plus three Low items) | Frontend | STAR-76 | 6 | Notion In Review. See docs/UX-AUDIT.md Resolved; KNOWN list in e2e/ux-audit.spec.ts emptied.
 - STAR-77 | Update README, DEMO.md, DATA_MODEL.md, TESTING.md, THIRD_PARTY.md | Docs | STAR-75, all Backend and Frontend tasks | 5 - claimed by Docs agent 2026-11-22 | Notion In Review. README (run steps, env vars, sign-in, roles, hosting, tests, limitations), docs/DEMO.md (per-role click-through, accounts, cross-role story), DATA_MODEL.md (final model, ER summary, tenant_id rule), TESTING.md (manual guide, suites), THIRD_PARTY.md (re-check, no new dependency). Verified: fresh npm ci, migrate deploy, db:seed (8.7 s), one-off magic-link script, npm test 772 passed. Not re-run: e2e suite, npm run db:up.

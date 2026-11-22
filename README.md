@@ -49,7 +49,7 @@ docker compose down -v   # also delete the data, to start from an empty database
 
 | Variable | Used for | Notes |
 | --- | --- | --- |
-| `DATABASE_URL` | Prisma connection string | Local default in `.env.example`. On Vercel use the Neon pooled URL for the app. |
+| `DATABASE_URL` | Prisma connection string | Local default in `.env.example`. On Vercel use the Neon pooled (`-pooler`) URL for the app with `pgbouncer=true&connection_limit=5` appended (the app logs a names-only warning at start-up if these are missing). `PERF_LOG=1` prints one `PQ <ms>` line per query for counting queries per page. |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT` | The local Docker Postgres (`docker-compose.yml`) | Local only. |
 | `APP_BASE_URL` | Origin used to build magic links (`<APP_BASE_URL>/auth/magic?token=...`) | Defaults to `http://localhost:3000`. Set it to the public URL on a hosted environment, or links point at localhost. |
 | `DEMO_MODE` | `true` keeps the Business / View as demo pickers visible in production | Outside production the pickers are always on. Turn `DEMO_MODE` off before any real customer data is added. |

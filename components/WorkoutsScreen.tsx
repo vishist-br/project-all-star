@@ -1,11 +1,33 @@
+import { unstable_cache } from "next/cache";
 import type { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/db";
 import { getT } from "@/lib/i18n/server";
 import { getViewer } from "@/lib/viewer";
 import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/States";
 
-const PAGE_SIZE = 30;
+// 15 rows keeps the HTML (and the serialized payload that repeats it) small; each row carries its instructions.
+const PAGE_SIZE = 15;
+
+/**
+ * Filter options for a tenant's catalog. The catalog only changes on a re-import, so the options are
+ * cached for an hour per tenant instead of reading every exercise row on every request.
+ */
+const loadFacets = unstable_cache(
+  async (tenantId: string) => {
+    const rows = await prisma.exercise.findMany({ where: { tenantId }, select: { sportSlug: true, equipment: true, level: true, primaryMuscles: true } });
+    const uniq = (xs: (string | null)[]) => [...new Set(xs.filter((x): x is string => !!x))].sort();
+    return {
+      sports: uniq(rows.map((f) => f.sportSlug)),
+      muscles: uniq(rows.flatMap((f) => f.primaryMuscles)),
+      equipment: uniq(rows.map((f) => f.equipment)),
+      levels: uniq(rows.map((f) => f.level)),
+    };
+  },
+  ["exercise-facets"],
+  { revalidate: 3600 },
+);
 
 export type WorkoutFilters = { q?: string; muscle?: string; equipment?: string; level?: string; sport?: string; page?: string };
 
@@ -34,7 +56,7 @@ function Select({ name, label, value, options, all }: { name: string; label: str
 /** Read-only exercise library for the signed-in business (same catalog for every role). */
 export async function WorkoutsScreen({ filters }: { filters: WorkoutFilters }) {
   const { t } = await getT();
-  const { db } = await getViewer();
+  const { db, principal } = await getViewer();
 
   const where: Prisma.ExerciseWhereInput = {};
   if (filters.q) where.name = { contains: filters.q, mode: "insensitive" };
@@ -47,9 +69,8 @@ export async function WorkoutsScreen({ filters }: { filters: WorkoutFilters }) {
   const [total, rows, facets] = await Promise.all([
     db.exercise.count({ where }),
     db.exercise.findMany({ where, orderBy: [{ name: "asc" }, { id: "asc" }], skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
-    db.exercise.findMany({ select: { sportSlug: true, equipment: true, level: true, primaryMuscles: true } }),
+    loadFacets(principal.tenantId),
   ]);
-  const uniq = (xs: (string | null)[]) => [...new Set(xs.filter((x): x is string => !!x))].sort();
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
@@ -59,10 +80,10 @@ export async function WorkoutsScreen({ filters }: { filters: WorkoutFilters }) {
           <span className="small muted">{t("wk.search")}</span>
           <input type="search" name="q" defaultValue={filters.q ?? ""} />
         </label>
-        <Select name="sport" label={t("wk.sport")} value={filters.sport} options={uniq(facets.map((f) => f.sportSlug))} all={t("wk.all")} />
-        <Select name="muscle" label={t("wk.muscle")} value={filters.muscle} options={uniq(facets.flatMap((f) => f.primaryMuscles))} all={t("wk.all")} />
-        <Select name="equipment" label={t("wk.equipment")} value={filters.equipment} options={uniq(facets.map((f) => f.equipment))} all={t("wk.all")} />
-        <Select name="level" label={t("wk.level")} value={filters.level} options={uniq(facets.map((f) => f.level))} all={t("wk.all")} />
+        <Select name="sport" label={t("wk.sport")} value={filters.sport} options={facets.sports} all={t("wk.all")} />
+        <Select name="muscle" label={t("wk.muscle")} value={filters.muscle} options={facets.muscles} all={t("wk.all")} />
+        <Select name="equipment" label={t("wk.equipment")} value={filters.equipment} options={facets.equipment} all={t("wk.all")} />
+        <Select name="level" label={t("wk.level")} value={filters.level} options={facets.levels} all={t("wk.all")} />
         <Button type="submit">{t("wk.filter")}</Button>
       </form>
       <p className="muted">{t("wk.results", { n: total })}</p>

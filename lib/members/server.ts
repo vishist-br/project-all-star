@@ -8,11 +8,12 @@ import { listMemberUpdates } from "@/lib/api/member-updates";
 import { tenantDate } from "@/lib/api/pagination";
 import { addDays, getMemberSchedule } from "@/lib/api/schedule";
 import { getMemberStats } from "@/lib/api/member-stats";
+import { getRosterStats, type RosterStats } from "@/lib/api/roster-stats";
 import { listSessions } from "@/lib/api/sessions";
 import { listWorkoutPlans } from "@/lib/api/workout-plans";
 import type { Principal } from "@/lib/auth/principal";
 import type { TenantClient } from "@/lib/tenant-scope";
-import { buildRosterRow, mapLimit, memberQuery, periodRange, sortRoster, type RosterFilters, type RosterRow } from "./view";
+import { buildRosterRow, memberQuery, periodRange, sortRoster, type RosterFilters, type RosterRow } from "./view";
 
 /** Server-side loaders for the member screens. Everything goes through the same lib/api functions as the /api/v1 routes, with the viewer's principal. */
 
@@ -23,10 +24,12 @@ export async function loadRoster(db: TenantClient, p: Principal, filters: Roster
   const [members, batches] = await Promise.all([listMembers(db, p, memberQuery(filters)), listBatches(db, p, page(100))]);
   const ids = members.items.map((m) => m.id);
   const { from, to } = periodRange(today, 30);
-  const range = new URLSearchParams({ from, to });
 
-  const [stats, plans] = await Promise.all([
-    mapLimit(ids, 8, (id) => getMemberStats(db, p, id, range).catch(() => null)),
+  const [statsBy, plans] = await Promise.all([
+    getRosterStats(db, ids, from, to).catch((err) => {
+      console.error("roster stats failed", err instanceof Error ? err.message : err);
+      return new Map<string, RosterStats>();
+    }),
     ids.length
       ? db.planAssignment.findMany({
           where: { AND: [assignmentWhere(p), { memberId: { in: ids }, status: "ACTIVE" }] },
@@ -39,7 +42,7 @@ export async function loadRoster(db: TenantClient, p: Principal, filters: Roster
   const planBy = new Map<string, string>();
   for (const a of plans) if (!planBy.has(a.memberId)) planBy.set(a.memberId, a.plan.title);
 
-  let rows: RosterRow[] = members.items.map((m, i) => buildRosterRow(m, stats[i], batchNames, planBy.get(m.id) ?? null));
+  let rows: RosterRow[] = members.items.map((m) => buildRosterRow(m, statsBy.get(m.id) ?? null,batchNames, planBy.get(m.id) ?? null));
   if (filters.checkIn) rows = rows.filter((r) => r.reasons.length > 0);
   return {
     rows: sortRoster(rows),

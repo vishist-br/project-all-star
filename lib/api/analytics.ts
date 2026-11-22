@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { ApiError } from "../auth/errors";
 import {
   absenceRun,
@@ -105,7 +106,18 @@ function periodNumbers(f: Facts, from: string, to: string, today: string, now: D
 }
 
 /** Everything behind getOwnerOverview; the insights endpoint reuses the same numbers. */
-export async function computeOverview(db: TenantClient, from: string, to: string, now: Date) {
+/**
+ * Memoised per request (React cache, keyed by db client, range and instant): the dashboard asks for
+ * the overview and the insights, which both need the same 30-day overview, so it runs once. Outside
+ * a React render (API routes, tests) cache() is a pass-through.
+ */
+export function computeOverview(db: TenantClient, from: string, to: string, now: Date) {
+  return computeOverviewOnce(db, from, to, now.getTime());
+}
+
+const computeOverviewOnce = cache((db: TenantClient, from: string, to: string, nowMs: number) => computeOverviewUncached(db, from, to, new Date(nowMs)));
+
+async function computeOverviewUncached(db: TenantClient, from: string, to: string, now: Date) {
   const today = tenantDate(now);
   const prev = previousPeriod(from, to);
   const [members, sessions, att, holidays, batches] = await Promise.all([

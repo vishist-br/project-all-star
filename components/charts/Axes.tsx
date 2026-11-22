@@ -1,4 +1,4 @@
-import { fmt, ticks } from "./scale";
+import { fmt, r1, ticks } from "./scale";
 
 export const W = 320;
 export const H = 180;
@@ -6,7 +6,7 @@ export const PAD = { l: 30, r: 8, t: 8, b: 22 };
 export const PLOT_W = W - PAD.l - PAD.r;
 export const PLOT_H = H - PAD.t - PAD.b;
 
-export const yAt = (v: number, axisMax: number) => PAD.t + PLOT_H - (v / axisMax) * PLOT_H;
+export const yAt = (v: number, axisMax: number) => r1(PAD.t + PLOT_H - (v / axisMax) * PLOT_H);
 
 /** Gridlines with y labels (max 5) and x labels thinned so they never overlap. */
 export function Axes({ axisMax, labels, xAt, unit }: { axisMax: number; labels: string[]; xAt: (i: number) => number; unit?: string }) {

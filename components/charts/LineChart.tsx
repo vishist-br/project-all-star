@@ -1,6 +1,6 @@
 import { Axes, PAD, PLOT_W, W, H, yAt } from "./Axes";
 import { ChartFrame, legendOf, type Series } from "./ChartFrame";
-import { fmt, linePath, maxOf, niceMax, runs, seriesColor } from "./scale";
+import { fmt, linePath, maxOf, niceMax, r1, runs, seriesColor } from "./scale";
 
 /** 1 to 3 series over shared labels. Axis starts at 0; `percent` fixes it to 0-100. Nulls are gaps. */
 export function LineChart({
@@ -20,7 +20,7 @@ export function LineChart({
 }) {
   const shown = series.slice(0, 3);
   const axisMax = percent ? 100 : niceMax(maxOf(shown.map((s) => s.values)));
-  const xAt = (i: number) => PAD.l + (labels.length <= 1 ? PLOT_W / 2 : (i / (labels.length - 1)) * PLOT_W);
+  const xAt = (i: number) => r1(PAD.l + (labels.length <= 1 ? PLOT_W / 2 : (i / (labels.length - 1)) * PLOT_W));
   return (
     <ChartFrame
       ariaLabel={ariaLabel}
