@@ -2,7 +2,9 @@
 
 Policy: MIT, Apache-2.0, BSD, Unlicense or CC0 only (see CLAUDE.md). Update this file whenever a dependency or dataset is added.
 
-Last audited 2026-11-10 against `package.json` and `package-lock.json` from a fresh `npm ci` (installed versions below), using `npx license-checker` as a one-off read-only check (not added to the repo). Result: no AGPL, GPL or LGPL package is installed; the items that are not plain MIT/Apache/BSD/ISC/0BSD/CC0 are listed under "Items needing a human look".
+Re-checked 2026-11-22 (Sprint 2, task STAR-77): `package.json` has no new or changed dependency since the 2026-11-10 audit below (only an npm script changed), and a fresh `npm ci` installs the same versions (next 16.4.5, react 19.3.1, @prisma/client and prisma 6.19.3, typescript 6.0.3, vitest 3.2.7, @playwright/test 1.65.0). Sprint 2 added no dependency, dataset, font, icon or image: the design system, SVG chart kit, offline queues, CSV import, schedule expansion, analytics and the three-language layer are our own code. The `license` fields of all 501 entries in `package-lock.json` were tallied on that date (the lockfile also lists optional platform-specific packages that are not installed on every machine): MIT 435, Apache-2.0 32, ISC 16, BSD-2-Clause 8, BSD-3-Clause 3, 0BSD 1, CC0-1.0 1 (language-subtag-registry), BlueOak-1.0.0 1, Python-2.0 1, MPL-2.0 1, CC-BY-4.0 1, and one entry with no field (`sharp`, our own MIT stub, see below). No AGPL, GPL or LGPL entry. This was a read of lockfile metadata, not a re-run of `license-checker`.
+
+First full audit 2026-11-10 against `package.json` and `package-lock.json` from a fresh `npm ci` (installed versions below), using `npx license-checker` as a one-off read-only check (not added to the repo). Result: no AGPL, GPL or LGPL package is installed; the items that are not plain MIT/Apache/BSD/ISC/0BSD/CC0 are listed under "Items needing a human look".
 
 ## Runtime dependencies (direct)
 
@@ -21,7 +23,7 @@ Last audited 2026-11-10 against `package.json` and `package-lock.json` from a fr
 | eslint | ^9.39.5 | MIT | Linting |
 | eslint-config-next | ^16.4.5 | MIT | Lint rules |
 | vitest | ^3.2.7 | MIT | Tests |
-| @playwright/test | 1.65.0 (exact) | Apache-2.0 | End-to-end smoke test (`npm run test:e2e`, folder `e2e/`). Browser binaries are not vendored: runs on system Google Chrome (`E2E_BROWSER_CHANNEL=chrome`, default) or on Playwright's Chromium after `npx playwright install chromium` (Apache-2.0 build of Chromium, BSD-3 upstream; set `E2E_BROWSER_CHANNEL=chromium`). Playwright 1.65 could not download browsers on macOS 13 arm64. |
+| @playwright/test | ^1.65.0 (1.65.0 installed) | Apache-2.0 | End-to-end tests (`npm run test:e2e`, folder `e2e/`). Browser binaries are not vendored: runs on system Google Chrome (`E2E_BROWSER_CHANNEL=chrome`, default) or on Playwright's Chromium after `npx playwright install chromium` (Apache-2.0 build of Chromium, BSD-3 upstream; set `E2E_BROWSER_CHANNEL=chromium`). Playwright 1.65 could not download browsers on macOS 13 arm64. |
 | js-yaml, @types/js-yaml | ^4.3.2 / ^4.0.9 | MIT | Tests only: load docs/api/openapi.yaml to validate response shapes |
 | tsx | ^4.23.15 | MIT | Runs the TypeScript seed and import scripts (`npm run db:seed`) |
 | @types/node, @types/react, @types/react-dom | ^22.19.0 / ^19.3.0 / ^19.3.0 | MIT | Type definitions |
@@ -30,6 +32,7 @@ Last audited 2026-11-10 against `package.json` and `package-lock.json` from a fr
 
 | Item | License | Purpose |
 | --- | --- | --- |
+| Design system, SVG chart kit, offline queues, CSV import, schedule expansion, analytics (`app/globals.css`, `components/ui`, `components/charts`, `lib/offline`, `lib/import`, `lib/workouts`, `lib/analytics`) | Own code | Sprint 2 UI and logic. No chart, component, date, CSV or state library was added, so no new licence. |
 | lib/i18n (en/hi/kn) | Own code | Small i18n layer; no i18n library added, so no new dependency or licence. Hindi and Kannada strings are our own drafts, marked "needs native-speaker review". |
 | data/exercises/original-sports.json | Own content | Draft exercises for karate, yoga and dance fitness. All text self-written (no text, images or videos from Hevy, Cult.fit or any commercial app). Every entry is flagged "needs trainer review". |
 
@@ -38,6 +41,8 @@ Last audited 2026-11-10 against `package.json` and `package-lock.json` from a fr
 | Item | License | Purpose |
 | --- | --- | --- |
 | postgres:16-alpine Docker image | PostgreSQL License (BSD-style) | Local database via docker-compose |
+| Vercel (Hobby plan) | Service terms, not a licence | Hosting for the dev deployment. Hobby is for non-commercial use only: a commercial pilot needs another plan or host (human decision, open). |
+| Neon Postgres (Singapore) | Service terms, not a licence | Hosted database for the dev deployment, fake data only. |
 
 ## Transitive dependency scan (node_modules, license field)
 
@@ -56,9 +61,13 @@ Whole tree (production and dev, 417 packages incl. the project itself): MIT 353,
 
 `npm audit` on 2026-11-10 reports 14 findings: 2 critical, 3 high, 9 moderate. All sit in dev tooling, none in what ships to users: Vitest 3.x and its helper `tinypool` (critical, test runner), `@prisma/config` / `deepmerge-ts` (high, Prisma CLI), `minimatch` and the typescript-eslint chain (moderate, lint). The pins to Vitest 3 and Prisma 6 exist because of the Node version (see the Node/tooling note above). A human should decide when to move to Node 22 and the newer majors; `npm audit fix --force` was not run.
 
+## Flagged items still open (summary)
+
+None of these is copyleft code in the product. Each needs a human to confirm or accept: caniuse-lite (CC-BY-4.0, attribution given above, build-time data), minimatch (BlueOak-1.0.0, lint tooling), argparse (Python-2.0, dev), axe-core (MPL-2.0, dev only, not shipped), the `sharp` stub and `images.unoptimized` consequence, the unused-images decision for free-exercise-db (below), the dev-only npm audit advisories and the Node 22 / Prisma 7 / Vitest 4 upgrade timing, and Vercel Hobby's non-commercial terms. Nothing was added in Sprint 2 that changes this list.
+
 ## Own media and fixtures (no third-party material)
 
-`public/tenants/*.svg` (demo tenant logos), `public/sample-members.csv` and `tests/fixtures/` are written in this repo with invented names and `example.test` / `example.invalid` contact details. No stock images, fonts or icons are bundled (the nav icons are Unicode characters).
+`public/tenants/*.svg` (demo tenant logos), `public/sample-members.csv`, `tests/fixtures/` and the demo seed (`prisma/seed/*`, including the rich Sprint 2 layer: plans, goals, bookings, history) are written in this repo with invented names and `example.test` / `example.invalid` contact details. No stock images, fonts or icons are bundled (the nav icons are Unicode characters).
 
 ## Datasets
 

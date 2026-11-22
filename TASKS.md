@@ -21,7 +21,6 @@ Format: `ID | title | owner agent | depends on | wave`
 ## Pending
 
 - STAR-76 | UX quality audit: placeholders, states, 360px, a11y, i18n, wording, seed privacy | QA | STAR-64, STAR-67 to STAR-73 | 5
-- STAR-77 | Update README, DEMO.md, DATA_MODEL.md, TESTING.md, THIRD_PARTY.md | Docs | STAR-75, all Backend and Frontend tasks | 5
 - STAR-78 | Sprint 2 handoff summary on the Sprint page | Docs | every other task In Review | 6
 
 ## In Progress
@@ -34,6 +33,7 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Completed
 
+- STAR-77 | Update README, DEMO.md, DATA_MODEL.md, TESTING.md, THIRD_PARTY.md | Docs | STAR-75, all Backend and Frontend tasks | 5 - claimed by Docs agent 2026-11-22 | Notion In Review. README (run steps, env vars, sign-in, roles, hosting, tests, limitations), docs/DEMO.md (per-role click-through, accounts, cross-role story), DATA_MODEL.md (final model, ER summary, tenant_id rule), TESTING.md (manual guide, suites), THIRD_PARTY.md (re-check, no new dependency). Verified: fresh npm ci, migrate deploy, db:seed (8.7 s), one-off magic-link script, npm test 772 passed. Not re-run: e2e suite, npm run db:up.
 - STAR-75 | Cross-role end-to-end Playwright scenarios | QA | STAR-63, STAR-64, STAR-67 to STAR-73 | 5 | Notion In Review. e2e/cross-role.spec.ts (15 tests: scenarios 1-9, three real magic-link browser contexts, console and network hygiene asserted in every test) + e2e/helpers/cross-role.ts; run `E2E_WEBPACK=1 E2E_DB_NAME=allstar_e2e_qa75 E2E_PORT=3275 npx playwright test e2e/cross-role.spec.ts`; 15 passed, no test.fixme, no defects found; typecheck clean.
 - STAR-74 | API role matrix and tenant isolation tests for all new operations | QA | STAR-60, STAR-61, STAR-62, STAR-65, STAR-66 | 4 | Notion In Review. tests/api-matrix.test.ts (55 tests; matrix generated from the contract for all 52 operations, 9 actors, both tenants, response leakage and cross-tenant write checks), tests/api-dataflow.test.ts (8 cross-role flows), tests/seed-rich-qa.test.ts (6: rich seed privacy, idempotency, N+1 guard), tests/helpers-api.ts; test:isolation script extended; no defects found; full suite 736 passed, typecheck and lint clean.
 - STAR-64 | Owner CSV import screen live in every mode, show skippedRows and warnings | Frontend | STAR-59 | 2 | Notion In Review. Screen always uses the real import: bridge app/ui/members-import/route.ts now resolves the viewer principal (real session or seeded demo owner), checks role importMembersCsv, runs importMembers(); mock client deleted; stepper, drag and drop, errors table, skippedRows, warnings, confirm dialog, success state; lib/import/view.ts; owner.ts imp.* strings (en/hi/kn); tests/import.test.ts (rewritten), e2e/owner-import.spec.ts (7), e2e/smoke.spec.ts import test updated for demo mode.
