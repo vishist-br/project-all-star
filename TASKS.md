@@ -20,7 +20,16 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Pending
 
-(none)
+Sprint 3 (speed and the unscheduled features). Wave 1 first; wave 2 starts after wave 1 is merged.
+
+STAR-91 | Speed: dashboard and workouts HTML is 166 KB and 96 KB; stream with Suspense, trim payload, cache catalog reads | Perf agent | none | wave 1
+STAR-92 | Speed: Prisma pool and `loading.tsx` skeletons on every role route, prefetch nav links | Perf agent | none | wave 1
+STAR-93 | Speed: add a timing check (server-timing header plus a Playwright budget per page) | QA agent | STAR-91 | wave 2
+STAR-94 | Holiday calendar editor for owners | Owner agent | none | wave 1
+STAR-95 | Pre-declared excused absences (member or parent declares, coach sees on roll call) | Coach agent | none | wave 1
+STAR-96 | Parent weekly progress card (visibility summary, no surveillance wording) | Customer agent | none | wave 2
+STAR-97 | Coach credential badges | Coach agent | STAR-95 | wave 2
+STAR-98 | Parent OTP sign-in (needs a messaging provider decision first) | Auth agent | human decision | blocked
 
 ## In Progress
 
