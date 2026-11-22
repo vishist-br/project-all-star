@@ -42,14 +42,20 @@ function toUiTheme(t: UiTheme): UiTheme {
   };
 }
 
+/** Resolves the access token once per request, so the session and the viewer share one lookup. */
+export const principalForToken = cache(async (accessToken: string) =>
+  resolvePrincipal(new Request("http://internal.invalid/", { headers: { authorization: `Bearer ${accessToken}` } })),
+);
+
 async function realSession(accessToken: string): Promise<Session | null> {
-  const principal = await resolvePrincipal(
-    new Request("http://internal.invalid/", { headers: { authorization: `Bearer ${accessToken}` } }),
-  );
+  const principal = await principalForToken(accessToken);
   if (!principal) return null;
-  const me = await buildMe(prisma, principal.tenantId, principal.userId);
+  const [me, themeRow] = await Promise.all([
+    buildMe(prisma, principal.tenantId, principal.userId),
+    getThemeForTenant(prisma, principal.tenantId),
+  ]);
   if (!me) return null;
-  const theme = toUiTheme(await getThemeForTenant(prisma, principal.tenantId));
+  const theme = toUiTheme(themeRow);
   return { role: me.role, name: me.name, tenantSlug: me.tenantSlug, theme, source: "real" };
 }
 

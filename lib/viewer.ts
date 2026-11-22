@@ -4,8 +4,7 @@ import { prisma } from "./db";
 import { ACCESS_COOKIE } from "./auth-cookies";
 import type { Principal } from "./auth/principal";
 import { toDbRole } from "./auth/roles";
-import { resolvePrincipal } from "./auth/session";
-import { getSession, type Session } from "./session";
+import { getSession, principalForToken, type Session } from "./session";
 import { forTenant } from "./tenant-scope";
 
 /**
@@ -43,9 +42,7 @@ export const getViewer = cache(async (): Promise<{ session: Session; principal: 
   if (session.source === "real") {
     const access = (await cookies()).get(ACCESS_COOKIE)?.value;
     if (access) {
-      principal = await resolvePrincipal(
-        new Request("http://internal.invalid/", { headers: { authorization: `Bearer ${access}` } }),
-      );
+      principal = await principalForToken(access);
     }
   } else {
     const tenant = await prisma.tenant.findUnique({ where: { slug: session.tenantSlug }, select: { id: true } });
