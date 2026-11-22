@@ -17,7 +17,7 @@ import {
  * and at 360 px in Hindi and Kannada, collects facts and screenshots, then each test asserts one category.
  *
  * Known defects are listed in KNOWN with their Notion bug id: matching findings are reported as annotations
- * and a `test.fixme` case per bug holds the real assertion, so the suite is green but tracked.
+ * so the suite stays green but tracked. The list is empty now: every finding fails its check.
  * Run: E2E_WEBPACK=1 E2E_DB_NAME=allstar_e2e_qa76 E2E_PORT=3276 npx playwright test e2e/ux-audit.spec.ts
  */
 
@@ -32,17 +32,9 @@ const emptyFacts: F[] = [];
 const keyOf = (f: F) => `${f.tenant}/${f.role}${f.path}@${f.viewport}${f.locale === "en" ? "" : "[" + f.locale + "]"}`;
 
 // ---- Known defects: [bug id, check, regex matched against the finding string] -----------------------
-const KNOWN: { bug: string; check: string; match: RegExp; title: string }[] = [
-  { bug: "STAR-83", check: "placeholders", match: /placeholder/, title: "role home pages and message shell.placeholder still show placeholder text" },
-  { bug: "STAR-85", check: "axe", match: /color-contrast.*badge/, title: "status badges (ok, info, warn) meet colour contrast" },
-  { bug: "STAR-84", check: "axe", match: /^demo-studio.*color-contrast/, title: "tenant primary colour text meets colour contrast (demo-studio)" },
-  { bug: "STAR-88", check: "axe", match: /label-content-name-mismatch|scrollable-region-focusable/, title: "roll-call buttons label-in-name and focusable scroll region on dashboard" },
-  { bug: "STAR-86", check: "touch-targets", match: /a\.seg/, title: "period and view chips are at least 44px high" },
-  { bug: "STAR-89", check: "clipping", match: /strong "[^"]*" \(ellipsis\)|small "[^"]*" \(ellipsis\)/, title: "shell header shows the full business name and user line at 360px" },
-  { bug: "STAR-90", check: "clipping", match: /div\.dt-wrap/, title: "owner members table is not clipped at 768px" },
-  { bug: "LOW-1 (not filed)", check: "console", match: /Failed to load resource.*404/, title: "no 404 for the favicon on the first page load (app has no favicon; use the tenant logo)" },
-  { bug: "STAR-87", check: "console", match: /Hydration failed/, title: "no hydration mismatch on member detail in Hindi" },
-];
+// Every defect from the first audit (STAR-83 to STAR-90 and the three Low items) is fixed, so the list is empty and all
+// findings fail the checks. Add an entry only for a newly found, filed defect.
+const KNOWN: { bug: string; check: string; match: RegExp; title: string }[] = [];
 
 function report(check: string, findings: string[]) {
   const unknown: string[] = [];
@@ -59,7 +51,7 @@ function report(check: string, findings: string[]) {
 }
 
 const slugOf = (path: string) => path === "/" ? "root" : (path.replace(/^\/(?:owner|coach|customer)\/?/, "").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "home").slice(0, 40);
-const IGNORED_CONSOLE = /Download the React DevTools|favicon|\[Fast Refresh\]|HMR/i;
+const IGNORED_CONSOLE = /Download the React DevTools|\[Fast Refresh\]|HMR/i;
 
 async function visit(page: Page, ctx: { tenant: string; role: string }, path: string, locale: string, viewport: Viewport, level: "full" | "text", shot: boolean, errors: { c: string[]; r: string[] }): Promise<F> {
   errors.c.length = 0;
@@ -93,7 +85,7 @@ async function crawlContext(browser: Browser, tenant: string, role: Role | "publ
     page.setDefaultTimeout(60_000);
     page.on("console", (m) => { if (m.type() === "error" && !IGNORED_CONSOLE.test(m.text())) errors.c.push(m.text().slice(0, 200)); });
     page.on("pageerror", (e) => errors.c.push(`pageerror: ${e.message.slice(0, 200)}`));
-    page.on("response", (r) => { if (r.status() >= 400 && !/favicon/.test(r.url())) errors.r.push(`${r.status()} ${r.request().method()} ${r.url().replace(BASE, "")}`); });
+    page.on("response", (r) => { if (r.status() >= 400) errors.r.push(`${r.status()} ${r.request().method()} ${r.url().replace(BASE, "")}`); });
     page.on("requestfailed", (r) => { if (r.url().startsWith(BASE) && !/ERR_ABORTED/.test(r.failure()?.errorText ?? "")) errors.r.push(`FAILED ${r.url().replace(BASE, "")} ${r.failure()?.errorText}`); });
     return page;
   };
@@ -549,11 +541,3 @@ test("10 full-page screenshots saved for every page at 360 and 1280 for every ro
 test("11 every page loads and renders within the time budget (no hang)", () => {
   report("hangs", hangs);
 });
-
-// ---- Known defects, tracked: each fixme holds the real assertion --------------------------------------
-for (const k of KNOWN) {
-  test.fixme(`[${k.bug}] ${k.title}`, () => {
-    const all = JSON.parse(readFileSync(`${OUT}/findings/${k.check}.json`, "utf8")) as string[];
-    expect(all.filter((f) => k.match.test(f))).toEqual([]);
-  });
-}

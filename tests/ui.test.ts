@@ -71,11 +71,11 @@ describe("design system components", () => {
     expect(render(h(Card, { title: "Hello" }, "x"))).toContain("Hello");
   });
 
-  it("globals.css defines the plan's tokens and the 640px table collapse", () => {
+  it("globals.css defines the plan's tokens and the table collapse", () => {
     const css = readFileSync("app/globals.css", "utf8");
     for (const token of ["--primary-soft", "--ok", "--warn", "--danger", "--info", "--c1", "--c5", "--s6", "--r-lg", "--fs-kpi"])
       expect(css, token).toContain(`${token}:`);
-    expect(css).toContain("max-width: 639px");
+    expect(css).toContain("max-width: 1023px");
     expect(css).toContain("prefers-color-scheme: dark");
   });
 });

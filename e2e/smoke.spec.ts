@@ -150,8 +150,8 @@ test.describe("UI sign-in by magic link", () => {
         const url = await devLink(request, tenant, EMAIL[role](tenant));
         const token = new URL(url).searchParams.get("token")!;
         await page.goto(url);
-        // The customer's home is the Home screen (STAR-69); the other roles land on /<role>.
-        await expect(page).toHaveURL(role === "customer" ? /\/customer\/home$/ : new RegExp(`/${role}$`));
+        // Each role's home redirects to its real landing screen (STAR-83).
+        await expect(page).toHaveURL(new RegExp(`/${role}/${{ owner: "dashboard", coach: "today", customer: "home" }[role]}$`));
         // The one-time token is gone from the address bar and never stored in the page.
         expect(page.url()).not.toContain(token);
         expect(await page.evaluate(() => JSON.stringify([{ ...localStorage }, { ...sessionStorage }]))).not.toContain(token);

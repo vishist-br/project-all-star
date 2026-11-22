@@ -136,7 +136,20 @@ export function periodRange(today: string, days: number): { from: string; to: st
   return { from: d.toISOString().slice(0, 10), to: today };
 }
 
-/** Short day label, for example "3 Nov". Dates are plain calendar dates, so format in UTC. */
+// Fixed month abbreviations: server and browser ICU data differ (for example Hindi October), which broke hydration.
+const MONTHS: Record<string, readonly string[]> = {
+  en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  hi: ["जन॰", "फ़र॰", "मार्च", "अप्रैल", "मई", "जून", "जुल॰", "अग॰", "सित॰", "अक्तू॰", "नव॰", "दिस॰"],
+  kn: ["ಜನ", "ಫೆಬ್ರ", "ಮಾರ್ಚ್", "ಏಪ್ರಿ", "ಮೇ", "ಜೂನ್", "ಜುಲೈ", "ಆಗ", "ಸೆಪ್ಟೆಂ", "ಅಕ್ಟೋ", "ನವೆಂ", "ಡಿಸೆಂ"],
+};
+
+/**
+ * Short day label, for example "3 Nov". Plain calendar dates (YYYY-MM-DD) are used as they are; full timestamps are
+ * read in the tenant calendar (IST). No Intl, so the server and the browser always render the same text.
+ */
 export function shortDate(iso: string, locale: string): string {
-  return new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString(locale === "en" ? "en-IN" : locale, { day: "numeric", month: "short", timeZone: "UTC" });
+  const date = iso.length > 10 ? new Date(new Date(iso).getTime() + 330 * 60_000).toISOString().slice(0, 10) : iso;
+  const month = Number(date.slice(5, 7));
+  const names = MONTHS[locale] ?? MONTHS.en;
+  return `${Number(date.slice(8, 10))} ${names[month - 1]}`;
 }

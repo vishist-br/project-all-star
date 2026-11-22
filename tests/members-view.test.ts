@@ -91,7 +91,8 @@ describe("filters and ranges", () => {
     expect(periodRange("2026-11-22", 30)).toEqual({ from: "2026-10-24", to: "2026-11-22" });
   });
   it("formats short dates in UTC", () => {
-    expect(shortDate("2026-11-03T20:00:00.000Z", "en")).toMatch(/3/);
+    expect(shortDate("2026-11-03T20:00:00.000Z", "en")).toBe("4 Nov");
+    expect(shortDate("2026-10-27", "hi")).toBe("27 अक्तू॰");
   });
 });
 

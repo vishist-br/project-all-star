@@ -7,7 +7,7 @@ Automated by `e2e/ux-audit.spec.ts` (helpers in `e2e/helpers/ux-collect.ts`, `ux
 E2E_WEBPACK=1 E2E_DB_NAME=allstar_e2e_qa76 E2E_PORT=3276 npx playwright test e2e/ux-audit.spec.ts
 ```
 
-Result: 26 passed, 9 `test.fixme` (one per tracked defect, each holding the real assertion). The crawl takes about
+Result of the first run: 26 passed, 9 `test.fixme` (one per tracked defect). After the fixes below the `KNOWN` list is empty and every check is enforced (see Resolved). The crawl takes about
 6 minutes. Extra switches: `UX_REUSE=1` re-runs the checks on the last crawl (cache in `playwright-report/`, no screenshots),
 `UX_DISCOVER=1` writes `test-results/ux-audit/findings/<check>.json` without failing, `UX_TENANTS=demo-gym` limits tenants,
 `UX_DEBUG=1` logs each page.
@@ -96,4 +96,22 @@ top of the page at 360 px (demo mode only, excluded from the checks).
 
 - Empty tenant: all pages show friendly empty states with a next step ("Your dashboard will fill in as you go", "No member profile is linked to this sign-in yet").
 - Forced failures never leak technical text and keep the page usable (checks 7b to 7d).
-- When a defect is fixed, remove its entry from `KNOWN` in the spec; the matching `test.fixme` disappears and the check enforces it.
+- `KNOWN` in the spec is empty. Add an entry (with its Notion bug id) only for a newly found, filed defect; findings that match no entry fail the check.
+
+## Resolved (Frontend, branch `worktree-agent-a14547b0137a0ff24`)
+
+All findings are fixed and `KNOWN` in `e2e/ux-audit.spec.ts` is empty, so the nine former `test.fixme` cases are now enforced by the normal checks.
+
+| Finding | Fix |
+|---|---|
+| F1 STAR-83 | `/owner` redirects to `/owner/dashboard`, `/coach` to `/coach/today` (`/customer` already went to Home). `app/[role]/[section]` serves only the exercise catalog; any other section is a clean 404. Keys `shell.placeholder` and `home.*` removed in en, hi, kn. |
+| F2 STAR-84 | `lib/theme-ui.ts` derives `--primary-text-l` (on white) and `--primary-text-d` (on the dark card) from the tenant colour (4.5:1, also on its 12% tint); links, secondary and ghost buttons, tabs, nav and avatars use `--primary-text`. Brand fills still use `--primary`. |
+| F3 STAR-85 | Darker `--ok`, `--warn`, `--info` foregrounds on their soft backgrounds. |
+| F4 STAR-86 | `.seg` is `min-height: var(--tap)`. |
+| F5 STAR-87 | `shortDate` in `lib/members/view.ts` uses fixed hi/kn/en month tables (no Intl, IST for timestamps), identical on server and client. |
+| F6 STAR-88 | Roll-call buttons take their accessible name from the visible text plus a hidden "Tap to change to ..." hint (no aria-label); the dashboard tables sit in a focusable `role="region"` with a label. |
+| F7 STAR-89 | The header wraps and the business name and user line wrap instead of truncating. |
+| F8 STAR-90 | Data tables collapse to cards below 1024px (the side rail leaves too little room), and the wrapper scrolls instead of clipping. |
+| F9 | Neutral, non-branded `app/icon.svg`; no favicon 404. |
+| F10 | Table cells use `overflow-wrap: break-word`, so level names no longer split mid-word. |
+| F11 | Customer schedule Previous and Next share one row below the range label at 360px. |

@@ -16,7 +16,7 @@ export const sessions = {
   "sess.roster.label": "Members",
   "sess.roster.empty.title": "No members on this session yet",
   "sess.roster.empty.text": "Members appear here once they are in the batch or have booked.",
-  "sess.row.aria": "{name}: {status}. Tap to change to {next}.",
+  "sess.row.aria": "Tap to change to {next}.",
   "sess.row.more": "More options for {name}",
   "sess.row.queued": "Waiting to sync",
   "sess.row.notSaved": "Not saved",

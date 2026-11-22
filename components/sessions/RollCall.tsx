@@ -178,11 +178,6 @@ export function RollCall({ detail, userId }: { detail: SessionDetail; userId: st
               className={s.rollMain}
               data-status={r.attendance}
               onClick={() => tap(r)}
-              aria-label={t("sess.row.aria", {
-                name: r.memberName,
-                status: t(`sess.status.${r.attendance}` as MessageKey),
-                next: t(`sess.status.${nextStatus(r.attendance)}` as MessageKey),
-              })}
             >
               <Avatar name={r.memberName} />
               <span className={s.rollText}>
@@ -198,6 +193,7 @@ export function RollCall({ detail, userId }: { detail: SessionDetail; userId: st
                   {r.justSaved && <Badge tone="ok">{t("sess.row.saved")}</Badge>}
                 </span>
                 {r.note && <span className={s.rollNote}>{r.note}</span>}
+                <span className="sr-only">{t("sess.row.aria", { next: t(`sess.status.${nextStatus(r.attendance)}` as MessageKey) })}</span>
               </span>
             </button>
             <Button variant="secondary" className={s.moreBtn} onClick={() => setMoreFor(r)} aria-label={t("sess.row.more", { name: r.memberName })}>

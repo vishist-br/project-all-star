@@ -12,15 +12,10 @@ describe("role route guard", () => {
   });
 });
 
-describe("role home placeholders", () => {
-  it("have title, body and three items in every locale", () => {
+describe("role home", () => {
+  it("has no placeholder or home-card strings left in any locale", () => {
     for (const l of LOCALES)
-      for (const r of ROLES)
-        for (const k of ["title", "body", "item1", "item2", "item3"])
-          expect((messages[l] as Record<string, string>)[`home.${r}.${k}`], `${l}.${r}.${k}`).toBeTruthy();
-  });
-  it("English bodies use the word visibility", () => {
-    for (const r of ROLES) expect((messages.en as Record<string, string>)[`home.${r}.body`]).toMatch(/visibility/i);
+      for (const k of Object.keys(messages[l])) expect(k, `${l}.${k}`).not.toMatch(/^shell\.placeholder$|^home\.(owner|coach|customer)\./);
   });
   it("has not-allowed strings in every locale", () => {
     for (const l of LOCALES) expect(messages[l]["notAllowed.title"]).toBeTruthy();

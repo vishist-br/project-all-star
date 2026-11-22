@@ -325,7 +325,7 @@ function InsightCards({ cards, t, locale }: { cards: Insights["cards"]; t: Trans
 function BatchTable({ batches, t, locale }: { batches: Overview["attendance"]["byBatch"]; t: Translate; locale: Locale }) {
   if (batches.length === 0) return <p className={s.empty}>{t("an.chart.batch.empty")}</p>;
   return (
-    <div className={s.tableWrap}>
+    <div className={s.tableWrap} tabIndex={0} role="region" aria-label={t("an.chart.batch.title")}>
       <table className={s.table}>
         <caption className="sr-only">{t("an.chart.batch.title")}</caption>
         <thead>
@@ -371,7 +371,7 @@ function PercentCell({ value, t, locale, tint }: { value: number | null; t: Tran
 function CohortTable({ cohorts, t, locale }: { cohorts: Overview["retention"]["cohorts"]; t: Translate; locale: Locale }) {
   if (cohorts.every((c) => c.joined === 0)) return <p className={s.empty}>{t("an.chart.empty")}</p>;
   return (
-    <div className={s.tableWrap}>
+    <div className={s.tableWrap} tabIndex={0} role="region" aria-label={t("an.chart.cohorts.title")}>
       <table className={s.table}>
         <caption className="sr-only">{t("an.chart.cohorts.title")}</caption>
         <thead>

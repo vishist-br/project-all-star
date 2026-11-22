@@ -2,7 +2,8 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DEMO_TENANT_SLUGS } from "../lib/demo";
-import { NEUTRAL_THEME, themeVars } from "../lib/theme-ui";
+import { NEUTRAL_THEME, accessibleTextColor, themeVars } from "../lib/theme-ui";
+import { contrastRatio } from "../lib/theme";
 import { messages } from "../lib/i18n";
 
 const SEED = readFileSync("prisma/seed/data.ts", "utf8");
@@ -23,8 +24,19 @@ describe("demo tenants and theme", () => {
 
   it("maps tenant config to CSS variables", () => {
     const t = { ...NEUTRAL_THEME, primaryColor: "#B3202A", secondaryColor: "#1A1A1A", accentColor: "#F2C94C" };
-    expect(themeVars(t)).toEqual({ "--primary": "#B3202A", "--primary-contrast": "#FFFFFF", "--secondary": "#1A1A1A", "--accent": "#F2C94C" });
+    const v = themeVars(t) as Record<string, string>;
+    expect(v).toMatchObject({ "--primary": "#B3202A", "--primary-contrast": "#FFFFFF", "--secondary": "#1A1A1A", "--accent": "#F2C94C" });
+    expect(contrastRatio(v["--primary-text-l"], "#FFFFFF")).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(v["--primary-text-d"], "#181C24")).toBeGreaterThanOrEqual(4.5);
     expect(themeVars({ ...t, accentColor: null })["--accent" as never]).toBe("#B3202A");
+  });
+
+  it("derives accessible primary text colours without changing the brand colour", () => {
+    const v = themeVars({ ...NEUTRAL_THEME, primaryColor: "#2E8B6E" }) as Record<string, string>;
+    expect(v["--primary"]).toBe("#2E8B6E");
+    expect(contrastRatio(v["--primary-text-l"], "#FFFFFF")).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(v["--primary-text-d"], "#181C24")).toBeGreaterThanOrEqual(4.5);
+    expect(accessibleTextColor("#0B1F3A", "#FFFFFF")).toBe("#0B1F3A");
   });
 
   it("picks a readable text colour for light and dark primaries", () => {

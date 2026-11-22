@@ -11,7 +11,7 @@
 .goalTitle { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
 .checkins { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s1); font-size: var(--fs-sm); }
 .checkins li { display: flex; flex-wrap: wrap; gap: var(--s2); justify-content: space-between; }
-.summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; color: var(--primary); font-weight: 600; }
+.summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; color: var(--primary-text); font-weight: 600; }
 .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s2); }
 .ach { padding: var(--s2) var(--s3); border-radius: 999px; background: var(--primary-soft); font-size: var(--fs-sm); overflow-wrap: anywhere; }
 .list { list-style: none; margin: 0; padding: 0; display: grid; }

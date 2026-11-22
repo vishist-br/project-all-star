@@ -26,7 +26,7 @@
 .drop:hover, .dropActive { border-color: var(--primary); background: var(--primary-soft); }
 .drop:focus-within { outline: 3px solid color-mix(in srgb, var(--primary) 55%, transparent); outline-offset: 2px; }
 .dropDisabled { opacity: .6; cursor: progress; }
-.dropIcon { font-size: 1.75rem; line-height: 1; color: var(--primary); }
+.dropIcon { font-size: 1.75rem; line-height: 1; color: var(--primary-text); }
 .dropTitle { font-weight: 700; font-size: var(--fs-lg); overflow-wrap: anywhere; }
 .dropHint { color: var(--muted); font-size: var(--fs-sm); margin: 0; }
 .hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -34,7 +34,7 @@
 .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s2); }
 .chip { display: inline-flex; gap: var(--s1); align-items: center; padding: 2px var(--s2); border: 1px solid var(--line-strong); border-radius: 999px; font-size: var(--fs-xs); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
 .chipReq { border-color: var(--primary); }
-.chipReq span { font-family: system-ui, sans-serif; color: var(--primary); font-weight: 700; }
+.chipReq span { font-family: system-ui, sans-serif; color: var(--primary-text); font-weight: 700; }
 
 .busy { display: flex; align-items: center; gap: var(--s3); padding: var(--s4); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); overflow-wrap: anywhere; }
 

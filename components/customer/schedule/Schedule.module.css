@@ -16,11 +16,12 @@
 .day { display: grid; gap: var(--s2); }
 .dayHead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s2); }
 .dayTitle { margin: 0; font-size: var(--fs-md); }
-.dayToday { color: var(--primary); }
+.dayToday { color: var(--primary-text); }
 .holiday { margin: 0; padding: var(--s2) var(--s3); border-radius: var(--r-sm); background: var(--ok-soft); font-size: var(--fs-sm); }
 
-.pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); }
-.pagerRange { font-weight: 600; }
+.pager { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: var(--s2); }
+.pagerRange { grid-column: 1 / -1; grid-row: 1; text-align: center; font-weight: 600; }
+@media (min-width: 640px) { .pager { grid-template-columns: auto 1fr auto; } .pagerRange { grid-column: 2; } }
 
 /* month grid */
 .grid { width: 100%; border-collapse: collapse; table-layout: fixed; }

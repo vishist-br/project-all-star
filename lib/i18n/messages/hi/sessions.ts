@@ -19,7 +19,7 @@ export const sessions: Record<keyof typeof en, string> = {
   "sess.roster.label": "सदस्य",
   "sess.roster.empty.title": "इस सत्र में अभी कोई सदस्य नहीं",
   "sess.roster.empty.text": "सदस्य बैच में आने या बुकिंग करने पर यहाँ दिखेंगे।",
-  "sess.row.aria": "{name}: {status}। {next} में बदलने के लिए टैप करें।",
+  "sess.row.aria": "{next} में बदलने के लिए टैप करें।",
   "sess.row.more": "{name} के लिए और विकल्प",
   "sess.row.queued": "सिंक की प्रतीक्षा",
   "sess.row.notSaved": "सहेजा नहीं गया",
