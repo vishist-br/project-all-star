@@ -26,6 +26,8 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## In Progress
 
+(none)
+
 
 ## Blocked
 
