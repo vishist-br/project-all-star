@@ -21,13 +21,11 @@ Format: `ID | title | owner agent | depends on | wave`
 ## Pending
 
 - STAR-75 | Cross-role end-to-end Playwright scenarios | QA | STAR-63, STAR-64, STAR-67 to STAR-73 | 5
-- STAR-76 | UX quality audit: placeholders, states, 360px, a11y, i18n, wording, seed privacy | QA | STAR-64, STAR-67 to STAR-73 | 5
 - STAR-77 | Update README, DEMO.md, DATA_MODEL.md, TESTING.md, THIRD_PARTY.md | Docs | STAR-75, all Backend and Frontend tasks | 5
 - STAR-78 | Sprint 2 handoff summary on the Sprint page | Docs | every other task In Review | 6
 
 ## In Progress
 
-(none)
 
 ## Blocked
 
@@ -35,6 +33,7 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Completed
 
+- STAR-76 | UX quality audit: placeholders, states, 360px, a11y, i18n, wording, seed privacy | QA | STAR-64, STAR-67 to STAR-73 | 5 | Notion In Review. e2e/ux-audit.spec.ts (26 passed, 9 fixme tracked) + e2e/helpers/ux-*.ts + docs/UX-AUDIT.md; 98 pages x 3 tenants x 3 roles plus empty tenant, 360/768/1280, hi/kn, axe; bugs STAR-83 to STAR-90 (1 High, 7 Medium) filed; typecheck and eslint clean.
 - STAR-74 | API role matrix and tenant isolation tests for all new operations | QA | STAR-60, STAR-61, STAR-62, STAR-65, STAR-66 | 4 | Notion In Review. tests/api-matrix.test.ts (55 tests; matrix generated from the contract for all 52 operations, 9 actors, both tenants, response leakage and cross-tenant write checks), tests/api-dataflow.test.ts (8 cross-role flows), tests/seed-rich-qa.test.ts (6: rich seed privacy, idempotency, N+1 guard), tests/helpers-api.ts; test:isolation script extended; no defects found; full suite 736 passed, typecheck and lint clean.
 - STAR-64 | Owner CSV import screen live in every mode, show skippedRows and warnings | Frontend | STAR-59 | 2 | Notion In Review. Screen always uses the real import: bridge app/ui/members-import/route.ts now resolves the viewer principal (real session or seeded demo owner), checks role importMembersCsv, runs importMembers(); mock client deleted; stepper, drag and drop, errors table, skippedRows, warnings, confirm dialog, success state; lib/import/view.ts; owner.ts imp.* strings (en/hi/kn); tests/import.test.ts (rewritten), e2e/owner-import.spec.ts (7), e2e/smoke.spec.ts import test updated for demo mode.
 - STAR-73 | Owner coaches page, booking-rule settings, batches polish | Frontend | STAR-59, STAR-62, STAR-66 | 4 | Notion In Review. Routes /[role]/coaches, /coaches/[coachId], /settings (editable booking rules via server action app/[role]/_actions/settings.ts), /batches (filters venueId, sportId); components/owner/{coaches,settings,batches}; old DashboardScreen, CoachesList, BatchesScreen, SettingsScreen removed from OwnerScreens.tsx; tests/owner-coaches-view.test.ts (13 tests), e2e/owner-coaches.spec.ts (8); full suite 636 passed, typecheck, lint, build, e2e 58 passed.
