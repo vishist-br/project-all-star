@@ -20,7 +20,7 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Pending
 
-- STAR-78 | Sprint 2 handoff summary on the Sprint page | Docs | every other task In Review | 6
+(none)
 
 ## In Progress
 
@@ -33,6 +33,7 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Completed
 
+- STAR-78 | Sprint 2 handoff summary on the Sprint page | Docs | every other task In Review | 6 - claimed by Docs agent 2026-11-22 | Notion In Review. Handoff written on the Sprint page 'Sprint 2: POC completion' (done, blocked, Backlog STAR-79 to 82, proposed decisions, human actions, tests, demo, deployment).
 - STAR-83 to STAR-90 | UX audit fixes: role homes, theme text contrast, badge contrast, touch targets, Hindi hydration, a11y names, header wrap, members table at 768 (plus three Low items) | Frontend | STAR-76 | 6 | Notion In Review. See docs/UX-AUDIT.md Resolved; KNOWN list in e2e/ux-audit.spec.ts emptied.
 - STAR-77 | Update README, DEMO.md, DATA_MODEL.md, TESTING.md, THIRD_PARTY.md | Docs | STAR-75, all Backend and Frontend tasks | 5 - claimed by Docs agent 2026-11-22 | Notion In Review. README (run steps, env vars, sign-in, roles, hosting, tests, limitations), docs/DEMO.md (per-role click-through, accounts, cross-role story), DATA_MODEL.md (final model, ER summary, tenant_id rule), TESTING.md (manual guide, suites), THIRD_PARTY.md (re-check, no new dependency). Verified: fresh npm ci, migrate deploy, db:seed (8.7 s), one-off magic-link script, npm test 772 passed. Not re-run: e2e suite, npm run db:up.
 - STAR-75 | Cross-role end-to-end Playwright scenarios | QA | STAR-63, STAR-64, STAR-67 to STAR-73 | 5 | Notion In Review. e2e/cross-role.spec.ts (15 tests: scenarios 1-9, three real magic-link browser contexts, console and network hygiene asserted in every test) + e2e/helpers/cross-role.ts; run `E2E_WEBPACK=1 E2E_DB_NAME=allstar_e2e_qa75 E2E_PORT=3275 npx playwright test e2e/cross-role.spec.ts`; 15 passed, no test.fixme, no defects found; typecheck clean.
@@ -60,3 +61,7 @@ Format: `ID | title | owner agent | depends on | wave`
 ## Epics (for reference, not claimable)
 
 STAR-50 S2-E1 plan, contract and schema; STAR-51 S2-E2 coach workout plans; STAR-52 S2-E3 sessions, roll call, booking, availability; STAR-53 S2-E4 customer view; STAR-54 S2-E5 owner analytics; STAR-55 S2-E6 design system and validation.
+
+## Sprint scope status
+
+Every Sprint 2 work task (STAR-56 to STAR-78, STAR-83 to STAR-90) is Completed here and In Review in Notion; Pending, In Progress and Blocked are empty, so the POC scope is complete pending human review. Nothing is Done: a human moves In Review tasks to Done. Epics STAR-50 to 55 are containers still To Do in Notion. Backlog, not scheduled: STAR-79, STAR-80, STAR-81, STAR-82.
