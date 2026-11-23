@@ -1221,6 +1221,62 @@ paths:
               schema: {$ref: '#/components/schemas/OwnerInsights'}
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
+  /holidays:
+    get:
+      tags: [Holidays]
+      operationId: listHolidays
+      x-roles: [owner]
+      summary: List the tenant's holiday and closure days (sessions on these dates are not counted as missed)
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Page of holidays, oldest date first
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/HolidayPage'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+    post:
+      tags: [Holidays]
+      operationId: createHoliday
+      x-roles: [owner]
+      summary: Add a holiday or closure day (one per calendar date)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/HolidayInput'}
+      responses:
+        '201':
+          description: Created holiday
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Holiday'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /holidays/{holidayId}:
+    delete:
+      tags: [Holidays]
+      operationId: deleteHoliday
+      x-roles: [owner]
+      summary: Remove a holiday or closure day
+      parameters:
+        - name: holidayId
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '204': {description: Removed}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
 components:
   securitySchemes:
     bearerAuth:
@@ -1613,6 +1669,27 @@ components:
         city: {type: string, nullable: true}
         timezone: {type: string, example: Asia/Kolkata}
         batchCount: {type: integer}
+    Holiday:
+      type: object
+      required: [id, date, name]
+      properties:
+        id: {type: string}
+        date: {type: string, format: date}
+        name: {type: string, minLength: 1, maxLength: 80}
+    HolidayInput:
+      type: object
+      required: [date, name]
+      properties:
+        date: {type: string, format: date}
+        name: {type: string, minLength: 1, maxLength: 80}
+    HolidayPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/Holiday'}
+        nextCursor: {type: string, nullable: true}
     VenuePage:
       type: object
       required: [items]

@@ -148,6 +148,9 @@ const CASES: Record<string, Case> = {
   getCoachWorkload: read(),
   getFeeStats: read(),
   getOwnerInsights: read(),
+  listHolidays: read(),
+  createHoliday: read(() => ({ body: { date: d(400 + ++seq), name: `QA Closure ${uniq()}` } })),
+  deleteHoliday: { rows: "open", scoped: true, build: async (c) => ({ params: { holidayId: await c.fresh.holiday() } }) },
 };
 
 const roleOf = (w: Who): Role => (w === "owner" ? "owner" : w === "coach" || w === "coachX" ? "coach" : "customer");
@@ -162,8 +165,8 @@ function expected(op: Op, cs: Case, who: Who): number {
 const fill = (path: string, params: Record<string, string> = {}) => path.replace(/\{(\w+)\}/g, (_, k) => params[k] ?? `missing-${k}`);
 
 describe("contract coverage: every operation is in the matrix", () => {
-  it("parses at least 52 operations from the contract", () => {
-    expect(OPS.length).toBeGreaterThanOrEqual(52);
+  it("parses at least 55 operations from the contract", () => {
+    expect(OPS.length).toBeGreaterThanOrEqual(55);
   });
 
   it("every operation is a matrix case, a public case or a documented gap; nothing stale", () => {
@@ -198,7 +201,7 @@ describe("contract coverage: every operation is in the matrix", () => {
       listWorkoutLogs: "ocu", recordWorkoutLog: "cu", getMemberStats: "ocu", listGoals: "ocu", createGoal: "oc", updateGoal: "oc",
       addGoalCheckIn: "oc", listMemberUpdates: "ocu", markMemberUpdatesRead: "u", createSession: "oc", getSession: "ocu", updateSession: "oc",
       recordAttendance: "oc", bookSession: "ocu", cancelBooking: "ocu", getOwnerOverview: "o", getOwnerTrends: "o", getCoachWorkload: "o",
-      getFeeStats: "o", getOwnerInsights: "o",
+      getFeeStats: "o", getOwnerInsights: "o", listHolidays: "o", createHoliday: "o", deleteHoliday: "o",
     };
     for (const [id, code] of Object.entries(plan)) {
       const want = [...code].map((ch) => ({ o: "owner", c: "coach", u: "customer" })[ch as "o"]).sort();
