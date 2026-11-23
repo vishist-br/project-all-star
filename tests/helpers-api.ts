@@ -34,6 +34,7 @@ export interface TenantFx {
     plan(): Promise<{ id: string; itemId: string }>;
     futureSession(): Promise<string>;
     booking(): Promise<string>;
+    holiday(): Promise<string>;
     token(who: Who): Promise<string>;
   };
 }
@@ -65,7 +66,8 @@ export async function call(handler: Handler, method: string, path: string, token
 }
 
 let counter = 0;
-export const uniq = () => `${Date.now().toString(36)}${(counter++).toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+let holidaySeq = 0;
+export const uniq =() => `${Date.now().toString(36)}${(counter++).toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 export async function buildWorld(prisma: PrismaClient, tag: string): Promise<World> {
   const sfx = uniq();
@@ -151,6 +153,10 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
         plan: freshPlan,
         futureSession,
         token: (who: Who) => mint(user[who], t.id),
+        async holiday() {
+          const row = await prisma.holiday.create({ data: { tenantId: t.id, date: new Date(`${d(300 + ++holidaySeq)}T00:00:00Z`), name: "QA fixture closure" } });
+          return row.id;
+        },
         async booking() {
           const sid = await futureSession();
           const r = await call(bookRoute, "POST", `/sessions/${sid}/bookings`, token.owner, { body: { memberId: kid.id }, params: { sessionId: sid } });
@@ -189,7 +195,7 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
   };
 }
 
-const ID_MODELS = ["user", "member", "guardian", "venue", "sport", "batch", "session", "attendance", "workoutPlan", "planAssignment", "workoutLog", "goal", "sessionBooking", "memberUpdate", "exercise", "magicLink", "authSession", "coachAvailability", "tenantSettings"] as const;
+const ID_MODELS = ["user", "member", "guardian", "venue", "sport", "batch", "session", "attendance", "workoutPlan", "planAssignment", "workoutLog", "goal", "sessionBooking", "memberUpdate", "exercise", "magicLink", "authSession", "coachAvailability", "tenantSettings", "holiday"] as const;
 
 /** All row ids of a tenant (for response leakage checks) and per-table counts (for write checks). */
 export async function tenantIds(prisma: PrismaClient, tenantId: string): Promise<Set<string>> {

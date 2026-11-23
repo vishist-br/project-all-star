@@ -50,7 +50,7 @@ Sprint 1 tables:
 | `sessions` | A dated class. `UNIQUE(tenant_id, batch_id, startsAt)`, `UNIQUE(tenant_id, client_id)` (offline idempotency), CHECK `endsAt > startsAt`. Status SCHEDULED, COMPLETED, CANCELLED. Sprint 2 adds `capacity`, `title`, `cancelled_at`, `cancel_reason`. |
 | `attendance` | One row per member per session: `UNIQUE(tenant_id, session_id, member_id)` and `UNIQUE(tenant_id, client_id)`. CHECK: `reason` is required exactly when status is EXCUSED (reasons EXAM, ILLNESS, FESTIVAL, TRAVEL). `photo_ref` is nullable: one-tap roll call needs no photo. |
 | `excused_absences` | Absence declared in advance (date range, reason), CHECK `toDate >= fromDate`. The table exists; no screen creates these yet. |
-| `holidays` | Per-tenant calendar, `UNIQUE(tenant_id, date)`. Honoured by the rules and analytics; no editor screen yet. |
+| `holidays` | Per-tenant calendar, `UNIQUE(tenant_id, date)`. Honoured by the rules and analytics. Owners edit it at `/owner/holidays` (STAR-94; API `listHolidays`, `createHoliday`, `deleteHoliday`, owner only, one day per date, a second add is a 409). |
 | `levels`, `member_levels` | Belt or level per sport (`UNIQUE(tenant_id, sport_id, rank)` and `(... name)`) and each member's level history. |
 | `goals`, `achievements` | Goals and basic achievements. Achievements store `measure_unit` (HOURS, DAYS, STREAK_DAYS, SESSIONS) and a value so both hourly and daily-streak views can be derived. |
 | `exercises` | Per-tenant copy of the catalog: `source` FREE_EXERCISE_DB (Unlicense) or ORIGINAL (our drafts, `needs_trainer_review` true until a trainer clears it), `licence`, `source_commit`. `UNIQUE(tenant_id, source, source_id)`. No image column (image licence unclear). |

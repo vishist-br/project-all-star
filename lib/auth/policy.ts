@@ -60,6 +60,10 @@ export const OPERATION_ROLES = {
   getCoachWorkload: ["owner"],
   getFeeStats: ["owner"],
   getOwnerInsights: ["owner"],
+  // STAR-94: holiday calendar editor
+  listHolidays: ["owner"],
+  createHoliday: ["owner"],
+  deleteHoliday: ["owner"],
 } as const satisfies Record<string, RoleRule>;
 
 export type OperationId = keyof typeof OPERATION_ROLES;

@@ -61,6 +61,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ role:
       </div>
       <nav className={s.links} aria-label={t("set.links.title")}>
         <ButtonLink variant="secondary" href="/owner/coaches">{t("set.links.coaches")}</ButtonLink>
+        <ButtonLink variant="secondary" href="/owner/holidays">{t("set.links.holidays")}</ButtonLink>
         <ButtonLink variant="secondary" href="/owner/workouts">{t("set.links.library")}</ButtonLink>
       </nav>
     </section>
