@@ -20,11 +20,17 @@ Format: `ID | title | owner agent | depends on | wave`
 
 ## Pending
 
-Sprint 3 (speed and the unscheduled features). Wave 1 first; wave 2 starts after wave 1 is merged.
+Sprint 4 (verify what is built, finish the speed work, then the stretch features). Wave 1 first; wave 2 starts after wave 1 is merged and demos are done.
 
-STAR-96 | Parent weekly progress card (visibility summary, no surveillance wording) | Customer agent | none | wave 2
-STAR-97 | Coach credential badges | Coach agent | STAR-95 | wave 2
-STAR-98 | Parent OTP sign-in (needs a messaging provider decision first) | Auth agent | human decision | blocked
+STAR-99 | Ship Sprint 3 data: apply migrations 20261123140000_coach_credentials and _progress_card to Neon, re-seed demo, push main, verify live pages | Planner | human approval | wave 0
+STAR-100 | Full Playwright e2e on main in open POC mode: fix failures, de-flake tests/seed.test.ts and tests/seed-rich-qa.test.ts under load | QA agent | STAR-99 | wave 1
+STAR-101 | Mobile click-through QA of every nav entry per role at 360px on the live site (holidays, absences, credentials, weekly card, /card/<token>); file bugs | QA agent | STAR-99 | wave 1
+STAR-102 | Speed round 2: customer home loads schedule twice (50 queries), customer workouts getWorkoutPlan per plan, dashboard payload 162 KB (lazy chart panels); extend query and size budgets | Perf agent | none | wave 1
+STAR-103 | Owner and coach record an excused absence on behalf of a family (reuses STAR-95 rules) | Coach agent | none | wave 2
+STAR-104 | QR check-in (stretch, per-session token, coach confirms) | Customer agent | STAR-100 | wave 2
+STAR-105 | Anonymous class and coach feedback, owner-only trainer scorecard (stretch) | Owner agent | STAR-100 | wave 2
+STAR-106 | Configurable no-show policy engine, off by default (stretch) | Backend agent | STAR-100 | wave 2
+STAR-98 | Parent OTP sign-in (skipped by the user for now; needs messaging provider and DPDP decision) | Auth agent | human decision | blocked
 
 ## In Progress
 
