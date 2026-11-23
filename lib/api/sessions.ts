@@ -54,13 +54,22 @@ export async function listSessions(db: TenantClient, p: Principal, params: URLSe
   });
   const page = toPage(rows, limit);
 
-  const grouped = page.rows.length
-    ? await db.attendance.groupBy({
-        by: ["sessionId", "status"],
-        where: { sessionId: { in: page.rows.map((s) => s.id) } },
-        _count: { _all: true },
-      })
-    : [];
+  // Three independent reads keyed by the page's session ids: run them together, not one after another.
+  const ids = page.rows.map((s) => s.id);
+  type MyRow = { sessionId: string; status: string };
+  const [grouped, counts, myRows] = ids.length
+    ? await Promise.all([
+        db.attendance.groupBy({ by: ["sessionId", "status"], where: { sessionId: { in: ids } }, _count: { _all: true } }),
+        db.sessionBooking.groupBy({
+          by: ["sessionId", "status"],
+          where: { sessionId: { in: ids }, status: { in: ["BOOKED", "WAITLISTED"] } },
+          _count: { _all: true },
+        }),
+        p.role === "customer"
+          ? db.sessionBooking.findMany({ where: { sessionId: { in: ids }, member: memberWhere(p) }, select: { sessionId: true, status: true } })
+          : Promise.resolve([] as MyRow[]),
+      ])
+    : [[], [], [] as MyRow[]];
   const summary = new Map<string, { present: number; absent: number; excused: number; total: number }>();
   for (const g of grouped) {
     const s = summary.get(g.sessionId) ?? { present: 0, absent: 0, excused: 0, total: 0 };
@@ -72,29 +81,15 @@ export async function listSessions(db: TenantClient, p: Principal, params: URLSe
     summary.set(g.sessionId, s);
   }
 
-  const ids = page.rows.map((s) => s.id);
-  const counts = ids.length
-    ? await db.sessionBooking.groupBy({
-        by: ["sessionId", "status"],
-        where: { sessionId: { in: ids }, status: { in: ["BOOKED", "WAITLISTED"] } },
-        _count: { _all: true },
-      })
-    : [];
   const booked = new Map<string, number>();
   const waiting = new Map<string, number>();
   for (const c of counts) (c.status === "BOOKED" ? booked : waiting).set(c.sessionId, c._count._all);
   const mine = new Map<string, "booked" | "waitlisted" | "cancelled">();
-  if (p.role === "customer" && ids.length) {
-    const rows = await db.sessionBooking.findMany({
-      where: { sessionId: { in: ids }, member: memberWhere(p) },
-      select: { sessionId: true, status: true },
-    });
-    const rank = { booked: 0, waitlisted: 1, cancelled: 2 } as const;
-    for (const r of rows) {
-      const st = r.status.toLowerCase() as keyof typeof rank;
-      const cur = mine.get(r.sessionId);
-      if (!cur || rank[st] < rank[cur]) mine.set(r.sessionId, st);
-    }
+  const rank = { booked: 0, waitlisted: 1, cancelled: 2 } as const;
+  for (const r of myRows) {
+    const st = r.status.toLowerCase() as keyof typeof rank;
+    const cur = mine.get(r.sessionId);
+    if (!cur || rank[st] < rank[cur]) mine.set(r.sessionId, st);
   }
 
   const items: SessionDto[] = page.rows.map((s) => ({

@@ -22,7 +22,6 @@ Format: `ID | title | owner agent | depends on | wave`
 
 Sprint 3 (speed and the unscheduled features). Wave 1 first; wave 2 starts after wave 1 is merged.
 
-STAR-93 | Speed: add a timing check (server-timing header plus a Playwright budget per page) | QA agent | STAR-91 | wave 2
 STAR-94 | Holiday calendar editor for owners | Owner agent | none | wave 1
 STAR-95 | Pre-declared excused absences (member or parent declares, coach sees on roll call) | Coach agent | none | wave 1
 STAR-96 | Parent weekly progress card (visibility summary, no surveillance wording) | Customer agent | none | wave 2
@@ -40,6 +39,7 @@ STAR-98 | Parent OTP sign-in (needs a messaging provider decision first) | Auth 
 
 ## Completed
 
+- STAR-93 | Speed: add a timing check (server-timing header plus a Playwright budget per page) | QA agent | STAR-91 | wave 2 - claimed by speed-qa agent 2026-11-23 | Notion In Review pending (maintainer sets). proxy.ts adds Server-Timing (lib/server-timing.ts); tests/query-budget.test.ts budgets queries for 7 key pages; e2e/perf-budget.spec.ts budgets HTML size and TTFB; listSessions and getMemberStats batches parallelised (fewer round trips); docs/TESTING.md Speed budgets. vitest 789 passed, typecheck and lint clean.
 - STAR-91 | Speed: dashboard and workouts HTML is 166 KB and 96 KB; stream with Suspense, trim payload, cache catalog reads | Perf agent | none | wave 1 - claimed by perf agent 2026-11-22 | Notion In Review pending (maintainer sets). Owner roster 270 to 25 queries (getRosterStats replaces a getMemberStats call per row), dashboard overview computed once per request (95 to 78 queries), workouts library HTML 95.5 to 59.3 KB (15 rows per page, filter options cached 1 h), chart coordinates rounded. Tests: tests/perf.test.ts; vitest 780 passed, typecheck and lint clean.
 - STAR-92 | Speed: Prisma pool and `loading.tsx` skeletons on every role route, prefetch nav links | Perf agent | none | wave 1 - claimed by perf agent 2026-11-22 | Notion In Review pending (maintainer sets). app/[role]/loading.tsx already covers every role route (guarded by tests/perf.test.ts), nav and buttons use next/link with default prefetch, db.ts warns (names only) on missing pooled host, connection_limit or pgbouncer=true, PERF_LOG=1 query counter.
 - STAR-78 | Sprint 2 handoff summary on the Sprint page | Docs | every other task In Review | 6 - claimed by Docs agent 2026-11-22 | Notion In Review. Handoff written on the Sprint page 'Sprint 2: POC completion' (done, blocked, Backlog STAR-79 to 82, proposed decisions, human actions, tests, demo, deployment).

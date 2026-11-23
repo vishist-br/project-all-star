@@ -57,7 +57,7 @@ export async function getMemberStats(db: TenantClient, p: Principal, memberId: s
   const today = tenantDate(now);
   const { from, to } = parseRange(params, today, { from: -29, to: 0 }, STATS_MAX_DAYS);
 
-  const [attendance, holidays, entries, goalCounts, levelRows, activeGoal] = await Promise.all([
+  const [attendance, holidays, entries, goalCounts, levelRows, activeGoal, presentRows, doneLogs] = await Promise.all([
     db.attendance.findMany({
       where: { memberId, session: { startsAt: { gte: startOfDay(from), lt: startOfDay(addDays(to, 1)) }, status: "COMPLETED" } },
       select: { status: true, session: { select: { startsAt: true, endsAt: true } } },
@@ -72,6 +72,9 @@ export async function getMemberStats(db: TenantClient, p: Principal, memberId: s
       take: 1,
     }),
     db.goal.findFirst({ where: { memberId, status: "ACTIVE" }, orderBy: { createdAt: "desc" }, select: { targetSessions: true } }),
+    // Streaks read all history, independent of the range, so they join this batch (no second round trip).
+    db.attendance.findMany({ where: { memberId, status: "PRESENT" }, select: { session: { select: { startsAt: true } } } }),
+    db.workoutLog.findMany({ where: { memberId, status: "COMPLETED" }, select: { scheduledFor: true, completedAt: true } }),
   ]);
 
   // ---- attendance ----
@@ -123,10 +126,6 @@ export async function getMemberStats(db: TenantClient, p: Principal, memberId: s
   }
 
   // ---- streaks: all history, independent of the range ----
-  const [presentRows, doneLogs] = await Promise.all([
-    db.attendance.findMany({ where: { memberId, status: "PRESENT" }, select: { session: { select: { startsAt: true } } } }),
-    db.workoutLog.findMany({ where: { memberId, status: "COMPLETED" }, select: { scheduledFor: true, completedAt: true } }),
-  ]);
   const active = new Set<string>();
   for (const r of presentRows) active.add(tenantDate(r.session.startsAt));
   for (const l of doneLogs) active.add(l.completedAt ? tenantDate(l.completedAt) : dateFromDb(l.scheduledFor));

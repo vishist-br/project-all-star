@@ -86,3 +86,14 @@ describe("navigation speed", () => {
     }
   });
 });
+
+describe("Server-Timing header (STAR-93)", () => {
+  it("formats only a metric name and a duration", async () => {
+    const { serverTimingHeader } = await import("../lib/server-timing");
+    expect(serverTimingHeader(10, 12.34)).toBe("proxy;dur=2.3");
+    expect(serverTimingHeader(10, 5)).toBe("proxy;dur=0.0");
+  });
+  it("proxy.ts sets it on every response", () => {
+    expect(read("proxy.ts")).toContain('res.headers.set("Server-Timing"');
+  });
+});

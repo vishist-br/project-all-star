@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isOpenPoc, ROUTE_ROLE_HEADER } from "@/lib/demo";
+import { serverTimingHeader } from "@/lib/server-timing";
 import { ACCESS_COOKIE, REFRESH_COOKIE, setAuthCookies, type TokenPair } from "@/lib/auth-cookies";
 
 /** Same-origin bridge routes that belong to one role. */
@@ -13,6 +14,13 @@ const BRIDGE_ROLES: Record<string, string> = { "members-import": "owner", "worko
  * treated as signed out for this request.
  */
 export async function proxy(request: NextRequest) {
+  const started = performance.now();
+  const res = await route(request);
+  res.headers.set("Server-Timing", serverTimingHeader(started));
+  return res;
+}
+
+async function route(request: NextRequest): Promise<NextResponse> {
   if (isOpenPoc()) {
     // Open POC mode: no sign-in. The URL decides which role's screens render.
     const first = request.nextUrl.pathname.split("/")[1];

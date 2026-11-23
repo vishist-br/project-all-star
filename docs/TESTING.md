@@ -120,6 +120,14 @@ Rules of thumb:
 - Playwright 1.65 cannot download browsers on some macOS versions (for example macOS 13); use installed Chrome there.
 - Playwright traces for failures are kept under `test-results/`.
 
+### Speed budgets (STAR-93)
+
+Three guards, so a slow page fails CI instead of being found by hand:
+
+- `Server-Timing` header: `proxy.ts` adds `Server-Timing: proxy;dur=<ms>` to every page response (see `lib/server-timing.ts`; metric name and a number only, no ids or URLs). It covers the time in the proxy. A streamed page sends its headers before the body finishes, so a true end-to-end render time cannot be in a header; the Playwright spec measures that from outside.
+- `tests/query-budget.test.ts` (vitest, needs the seeded `DATABASE_URL`): renders owner dashboard, members, workouts, coach today, members and customer home, workouts through the root and role layouts with every Prisma query counted (cold cache, open POC mode faked), and fails if a page exceeds its budget. Budgets sit about 20 percent above the measured count. `QB_DEBUG=1 npx vitest run tests/query-budget.test.ts -t "customer home"` prints each query to find what grew. Measured on 2026-11-23: owner dashboard 40, members 25, workouts 8; coach today 21, members 25; customer home 50, workouts 41.
+- `e2e/perf-budget.spec.ts` (Playwright): per page, the median of 3 warm requests must stay under an HTML size and a time-to-first-byte ceiling, and the response must carry a well-formed `Server-Timing`. Run it alone: `E2E_WEBPACK=1 E2E_DB_NAME=allstar_e2e_perf93 E2E_PORT=3293 npx playwright test e2e/perf-budget.spec.ts` (`rm -rf .next` first if a build ran). It runs against `next dev`, so sizes include dev-only scripts; measured 199 KB dashboard (budget 250), 53 owner members, 70 owner workouts, 33 coach today, 48 coach members, 38 customer home, 63 customer workouts, all first bytes under 0.4 s. Never raise a ceiling to get a green run; find what grew.
+
 ### Before declaring a change done
 
 `npm run typecheck`, `npm run lint`, `npm test` with `DATABASE_URL` set, the relevant e2e spec, and `npm run build` (then `rm -rf .next` before any e2e run).
