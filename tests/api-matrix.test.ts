@@ -205,7 +205,7 @@ describe("contract coverage: every operation is in the matrix", () => {
       addGoalCheckIn: "oc", listMemberUpdates: "ocu", markMemberUpdatesRead: "u", createSession: "oc", getSession: "ocu", updateSession: "oc",
       recordAttendance: "oc", bookSession: "ocu", cancelBooking: "ocu", getOwnerOverview: "o", getOwnerTrends: "o", getCoachWorkload: "o",
       getFeeStats: "o", getOwnerInsights: "o", listHolidays: "o", createHoliday: "o", deleteHoliday: "o",
-      getFeeStats: "o", getOwnerInsights: "o", listExcusedAbsences: "ocu", createExcusedAbsence: "u", cancelExcusedAbsence: "u",
+      listExcusedAbsences: "ocu", createExcusedAbsence: "u", cancelExcusedAbsence: "u",
     };
     for (const [id, code] of Object.entries(plan)) {
       const want = [...code].map((ch) => ({ o: "owner", c: "coach", u: "customer" })[ch as "o"]).sort();

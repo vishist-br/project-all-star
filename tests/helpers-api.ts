@@ -204,8 +204,7 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
   };
 }
 
-const ID_MODELS = ["user", "member", "guardian", "venue", "sport", "batch", "session", "attendance", "workoutPlan", "planAssignment", "workoutLog", "goal", "sessionBooking", "memberUpdate", "exercise", "magicLink", "authSession", "coachAvailability", "tenantSettings", "holiday"] as const;
-const ID_MODELS = ["user", "member", "guardian", "venue", "sport", "batch", "session", "attendance", "workoutPlan", "planAssignment", "workoutLog", "goal", "sessionBooking", "memberUpdate", "exercise", "magicLink", "authSession", "coachAvailability", "tenantSettings", "excusedAbsence"] as const;
+const ID_MODELS = ["user", "member", "guardian", "venue", "sport", "batch", "session", "attendance", "workoutPlan", "planAssignment", "workoutLog", "goal", "sessionBooking", "memberUpdate", "exercise", "magicLink", "authSession", "coachAvailability", "tenantSettings", "holiday", "excusedAbsence"] as const;
 
 /** All row ids of a tenant (for response leakage checks) and per-table counts (for write checks). */
 export async function tenantIds(prisma: PrismaClient, tenantId: string): Promise<Set<string>> {
