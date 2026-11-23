@@ -8,5 +8,6 @@ import { customer } from "./hi/customer";
 import { plans } from "./hi/plans";
 import { sessions } from "./hi/sessions";
 import { analytics } from "./hi/analytics";
+import { absences } from "./hi/absences";
 
-export const hi: Record<MessageKey, string> = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics };
+export const hi: Record<MessageKey, string> = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences };

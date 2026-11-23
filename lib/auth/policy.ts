@@ -60,6 +60,10 @@ export const OPERATION_ROLES = {
   getCoachWorkload: ["owner"],
   getFeeStats: ["owner"],
   getOwnerInsights: ["owner"],
+  // STAR-95: pre-declared excused absences (member or parent declares; the coach sees them on the roll call)
+  listExcusedAbsences: ["owner", "coach", "customer"],
+  createExcusedAbsence: ["customer"],
+  cancelExcusedAbsence: ["customer"],
 } as const satisfies Record<string, RoleRule>;
 
 export type OperationId = keyof typeof OPERATION_ROLES;

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { bookSessionAction, cancelBookingAction, type BookingResult } from "@/app/[role]/_actions/bookings";
@@ -141,6 +142,12 @@ export function SessionCard({
             </Button>
           )}
         </div>
+      )}
+
+      {live && (
+        <p className={s.meta}>
+          <Link href={`/customer/absences?session=${session.id}`} data-testid="declare-absence">{t("abs.cardLink")}</Link>
+        </p>
       )}
 
       <p role="status" className={note ? (note.tone === "ok" ? s.noteOk : s.noteWarn) : s.srOnly} data-testid="booking-note">
