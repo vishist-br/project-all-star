@@ -3,6 +3,8 @@ import { getT } from "@/lib/i18n/server";
 import { NEEDS_REVIEW } from "@/lib/i18n";
 import { getSession } from "@/lib/session";
 import { homePath } from "@/lib/guard";
+import { isOpenPoc } from "@/lib/demo";
+import { ROLES } from "@/lib/nav";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Footer } from "@/components/Footer";
 
@@ -22,7 +24,15 @@ export default async function Home() {
           )}
           <h1>{t("home.title", { business: theme.displayName })}</h1>
           <p>{t("home.tagline")}</p>
-          <Link href={homePath(role)} className="btn">{t("home.continue", { role: t(`role.${role}`) })}</Link>
+          {isOpenPoc() ? (
+            <p style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+              {ROLES.map((r) => (
+                <Link key={r} href={homePath(r)} className="btn">{t("home.continue", { role: t(`role.${r}`) })}</Link>
+              ))}
+            </p>
+          ) : (
+            <Link href={homePath(role)} className="btn">{t("home.continue", { role: t(`role.${role}`) })}</Link>
+          )}
         </div>
       </main>
       <Footer />

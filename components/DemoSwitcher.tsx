@@ -44,7 +44,7 @@ export function DemoSwitcher({
           value={role}
           onChange={(e) => {
             setCookie(DEMO_ROLE_COOKIE, e.target.value);
-            router.refresh();
+            router.push(`/${e.target.value}`);
           }}
         >
           {ROLES.map((r) => (

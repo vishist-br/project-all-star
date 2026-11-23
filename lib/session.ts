@@ -1,11 +1,11 @@
 import { cache } from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "./db";
 import { ACCESS_COOKIE } from "./auth-cookies";
 import { buildMe } from "./auth/me";
 import { resolvePrincipal } from "./auth/session";
-import { DEMO_ROLE_COOKIE, DEMO_TENANT_COOKIE, DEMO_TENANT_SLUGS, DEMO_USER_NAMES } from "./demo";
+import { isOpenPoc, ROUTE_ROLE_HEADER, DEMO_ROLE_COOKIE, DEMO_TENANT_COOKIE, DEMO_TENANT_SLUGS, DEMO_USER_NAMES } from "./demo";
 import { isRole, type Role } from "./nav";
 import { getThemeBySlug, getThemeForTenant } from "./theme";
 import { NEUTRAL_THEME, type UiTheme } from "./theme-ui";
@@ -28,8 +28,9 @@ export type Session = {
 
 /** Demo switcher is shown only outside production, or when DEMO_MODE=true. */
 export function isDemoMode(): boolean {
-  return process.env.NODE_ENV !== "production" || process.env.DEMO_MODE === "true";
+  return process.env.NODE_ENV !== "production" || process.env.DEMO_MODE === "true" || isOpenPoc();
 }
+
 
 function toUiTheme(t: UiTheme): UiTheme {
   return {
@@ -62,9 +63,11 @@ async function realSession(accessToken: string): Promise<Session | null> {
 async function demoSession(): Promise<Session> {
   const jar = await cookies();
   const wanted = jar.get(DEMO_TENANT_COOKIE)?.value;
-  const slug = DEMO_TENANT_SLUGS.find((s) => s === wanted) ?? DEMO_TENANT_SLUGS[0];
+  const slug = DEMO_TENANT_SLUGS.find((s) => s === wanted) ?? (isOpenPoc() ? "demo-gym" : DEMO_TENANT_SLUGS[0]);
+  // In open mode the URL decides the role (proxy.ts sets the header), so /owner, /coach and /customer always open.
+  const routeRole = isOpenPoc() ? (await headers()).get(ROUTE_ROLE_HEADER) : null;
   const roleCookie = jar.get(DEMO_ROLE_COOKIE)?.value;
-  const role: Role = isRole(roleCookie) ? roleCookie : "owner";
+  const role: Role = isRole(routeRole) ? routeRole : isRole(roleCookie) ? roleCookie : "owner";
   const theme = toUiTheme(await getThemeBySlug(prisma, slug));
   return { role, name: DEMO_USER_NAMES[role], tenantSlug: slug, theme, source: "demo" };
 }
@@ -72,7 +75,7 @@ async function demoSession(): Promise<Session> {
 /** The current session, or null when nobody is signed in and demo mode is off. Cached per request. */
 export const getSessionOrNull = cache(async (): Promise<Session | null> => {
   const jar = await cookies();
-  const access = jar.get(ACCESS_COOKIE)?.value;
+  const access = isOpenPoc() ? undefined : jar.get(ACCESS_COOKIE)?.value;
   if (access) {
     const real = await realSession(access);
     if (real) return real;

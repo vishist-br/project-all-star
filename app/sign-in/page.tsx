@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { isOpenPoc } from "@/lib/demo";
 import { getT } from "@/lib/i18n/server";
 import { NEEDS_REVIEW } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -5,6 +7,7 @@ import { Footer } from "@/components/Footer";
 
 // Shown when there is no session. Sign-in is by magic link only, so this page explains where to find it.
 export default async function SignInNeededPage() {
+  if (isOpenPoc()) redirect("/");
   const { t, locale } = await getT();
   return (
     <>
