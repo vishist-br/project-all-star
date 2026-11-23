@@ -98,6 +98,7 @@ Next.js + TypeScript, Postgres + Prisma, tenant_id on every table, theme from te
 
 ## Hard rules
 
+- Every screen a user should reach must be listed in `lib/nav.ts` (side rail and the phone's More page). A feature that is only reachable by a link is not finished. `tests/nav.test.ts` lists the expected screens; add yours there.
 - Never mark a task Done. Never delete tasks, sprints or docs.
 - Do not change Priority, Sprint or Assignee on tasks you did not create.
 - If requirements are unclear, comment on the task and move to another one. Do not guess.

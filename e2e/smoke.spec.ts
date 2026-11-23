@@ -62,7 +62,7 @@ test.describe("(d) each role sees only its own screens", () => {
       await expect(page.getByRole("link", { name: /Continue as/ })).toHaveAttribute("href", `/${role}`);
       await page.goto(`/${role}`);
       const navLinks = page.getByRole("navigation", { name: "Main navigation" }).locator("a");
-      await expect(navLinks).toHaveCount(NAV[role].length);
+      await expect(navLinks).toHaveCount(NAV[role].length + 1);
       for (const item of NAV[role]) {
         await page.goto(`/${role}/${item.section}`);
         await expect(page.locator("section[role=alert]")).toHaveCount(0);

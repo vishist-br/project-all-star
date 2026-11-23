@@ -43,10 +43,10 @@ test.describe("coach sessions", () => {
   test("today, schedule, one-tap roll call, offline queue, complete, availability", async ({ page, context }) => {
     await signInAs(page, "demo-gym", "coach");
 
-    // Today, inside the coach nav (still five items).
+    // Today, inside the coach nav (every coach screen plus More).
     await page.goto("/coach");
     const nav = page.getByRole("navigation", { name: "Main navigation" });
-    await expect(nav.getByRole("link")).toHaveCount(5);
+    await expect(nav.getByRole("link")).toHaveCount(7 + 1);
     // (The Next dev indicator covers the left-most nav item at 360px, so follow its href instead of clicking.)
     const todayHref = await nav.getByRole("link", { name: "Today" }).getAttribute("href");
     expect(todayHref).toBe("/coach/today");
