@@ -48,10 +48,19 @@ export async function AppShell({ role, children }: { role: Role; children: React
         <Footer />
         <nav className="shell-nav" aria-label={t("nav.label")}>
           {NAV[role].map((item) => (
-            <NavLink key={item.section} href={`/${role}/${item.section}`} icon={item.icon}>
+            <NavLink
+              key={item.section}
+              href={`/${role}/${item.section}`}
+              icon={item.icon}
+              secondary={!item.bar}
+              exact={NAV[role].some((o) => o.section.startsWith(`${item.section}/`))}
+            >
               {t(item.label)}
             </NavLink>
           ))}
+          <NavLink href={`/${role}/more`} icon="⋯" exact moreLink>
+            {t("nav.more")}
+          </NavLink>
         </nav>
       </div>
     </ToastProvider>
