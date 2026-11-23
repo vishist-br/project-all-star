@@ -53,7 +53,7 @@ const handlerOf = (op: Op): Handler | undefined => routeModules[routeKey(op.path
 /** Contract operations that have no route in this POC (phone OTP is out of scope, PLAN-POC section 8). */
 const NOT_IMPLEMENTED = ["requestOtp", "verifyOtp"];
 /** Public operations: tested by their own cases below, not by the role matrix. */
-const PUBLIC = ["exchangeMagicLink", "refreshSession", "getTenantTheme"];
+const PUBLIC = ["exchangeMagicLink", "refreshSession", "getTenantTheme", "getSharedProgressCard"];
 
 type Row = "own" | "open";
 interface Req { params?: Record<string, string>; query?: string; body?: unknown; form?: FormData }
@@ -153,6 +153,12 @@ const CASES: Record<string, Case> = {
   deleteHoliday: { rows: "open", scoped: true, build: async (c) => ({ params: { holidayId: await c.fresh.holiday() } }) },
   listExcusedAbsences: memberRead(),
   createExcusedAbsence: { rows: "own", scoped: true, build: (c) => ({ params: { memberId: c.ids.kid }, body: { fromDate: d(20 + ++seq), reason: "travel", note: "QA trip" } }) },
+  getProgressCard: memberRead(),
+  getProgressNote: memberRead(),
+  saveProgressNote: { rows: "own", scoped: true, build: (c) => ({ params: { memberId: c.ids.kid }, body: { note: "Great focus on kicks this week." } }) },
+  listProgressCardLinks: memberRead(),
+  createProgressCardLink: { rows: "own", scoped: true, build: (c) => ({ params: { memberId: c.ids.kid }, body: {} }) },
+  revokeProgressCardLink: { rows: "own", scoped: true, build: async (c) => ({ params: { linkId: await c.fresh.link() } }) },
   cancelExcusedAbsence: { rows: "own", scoped: true, build: async (c) => ({ params: { absenceId: await c.fresh.absence() } }) },
 };
 
@@ -168,8 +174,8 @@ function expected(op: Op, cs: Case, who: Who): number {
 const fill = (path: string, params: Record<string, string> = {}) => path.replace(/\{(\w+)\}/g, (_, k) => params[k] ?? `missing-${k}`);
 
 describe("contract coverage: every operation is in the matrix", () => {
-  it("parses at least 55 operations from the contract", () => {
-    expect(OPS.length).toBeGreaterThanOrEqual(55);
+  it("parses at least 62 operations from the contract", () => {
+    expect(OPS.length).toBeGreaterThanOrEqual(62);
   });
 
   it("every operation is a matrix case, a public case or a documented gap; nothing stale", () => {
@@ -206,6 +212,7 @@ describe("contract coverage: every operation is in the matrix", () => {
       recordAttendance: "oc", bookSession: "ocu", cancelBooking: "ocu", getOwnerOverview: "o", getOwnerTrends: "o", getCoachWorkload: "o",
       getFeeStats: "o", getOwnerInsights: "o", listHolidays: "o", createHoliday: "o", deleteHoliday: "o",
       listExcusedAbsences: "ocu", createExcusedAbsence: "u", cancelExcusedAbsence: "u",
+      getProgressCard: "ocu", getProgressNote: "oc", saveProgressNote: "oc", listProgressCardLinks: "ocu", createProgressCardLink: "ocu", revokeProgressCardLink: "ocu",
     };
     for (const [id, code] of Object.entries(plan)) {
       const want = [...code].map((ch) => ({ o: "owner", c: "coach", u: "customer" })[ch as "o"]).sort();

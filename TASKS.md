@@ -22,13 +22,12 @@ Format: `ID | title | owner agent | depends on | wave`
 
 Sprint 3 (speed and the unscheduled features). Wave 1 first; wave 2 starts after wave 1 is merged.
 
-STAR-96 | Parent weekly progress card (visibility summary, no surveillance wording) | Customer agent | none | wave 2
 STAR-97 | Coach credential badges | Coach agent | STAR-95 | wave 2
 STAR-98 | Parent OTP sign-in (needs a messaging provider decision first) | Auth agent | human decision | blocked
 
 ## In Progress
 
-(none)
+STAR-96 | Parent weekly progress card (visibility summary, no surveillance wording) | Customer agent | none | wave 2 - claimed by card agent 2026-11-23
 
 
 ## Blocked

@@ -37,6 +37,8 @@ export interface TenantFx {
     holiday(): Promise<string>;
     /** A declared absence of the parent's child (STAR-95), created directly. */
     absence(): Promise<string>;
+    /** A live shared progress-card link of the parent's child (STAR-96), created directly; returns the row id. */
+    link(): Promise<string>;
     token(who: Who): Promise<string>;
   };
 }
@@ -161,6 +163,12 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
           return row.id;
         },
         token: (who: Who) => mint(user[who], t.id),
+        async link() {
+          const row = await prisma.progressCardLink.create({
+            data: { tenantId: t.id, memberId: kid.id, weekStart: new Date(`${d(-7)}T00:00:00Z`), tokenHash: hashToken(`fx-${uniq()}`), createdById: user.parent, expiresAt: new Date(Date.now() + 86_400_000) },
+          });
+          return row.id;
+        },
         async holiday() {
           const row = await prisma.holiday.create({ data: { tenantId: t.id, date: new Date(`${d(300 + ++holidaySeq)}T00:00:00Z`), name: "QA fixture closure" } });
           return row.id;
@@ -186,6 +194,8 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
       await prisma.authSession.deleteMany({ where: { id: { in: sessionIds } } });
       for (const tenantId of tenantIds) {
         await prisma.excusedAbsence.deleteMany({ where: { tenantId } });
+        await prisma.progressCardLink.deleteMany({ where: { tenantId } });
+        await prisma.progressNote.deleteMany({ where: { tenantId } });
         await prisma.memberUpdate.deleteMany({ where: { tenantId } });
         await prisma.sessionBooking.deleteMany({ where: { tenantId } });
         await prisma.workoutLog.deleteMany({ where: { tenantId } });
@@ -204,7 +214,7 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
   };
 }
 
-const ID_MODELS = ["user", "member", "guardian", "venue", "sport", "batch", "session", "attendance", "workoutPlan", "planAssignment", "workoutLog", "goal", "sessionBooking", "memberUpdate", "exercise", "magicLink", "authSession", "coachAvailability", "tenantSettings", "holiday", "excusedAbsence"] as const;
+const ID_MODELS = ["user", "member", "guardian", "venue", "sport", "batch", "session", "attendance", "workoutPlan", "planAssignment", "workoutLog", "goal", "sessionBooking", "memberUpdate", "exercise", "magicLink", "authSession", "coachAvailability", "tenantSettings", "holiday", "excusedAbsence", "progressNote", "progressCardLink"] as const;
 
 /** All row ids of a tenant (for response leakage checks) and per-table counts (for write checks). */
 export async function tenantIds(prisma: PrismaClient, tenantId: string): Promise<Set<string>> {

@@ -10,6 +10,9 @@ import { Card, StatGrid, StatTile } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Segmented } from "@/components/ui/Tabs";
 import { ErrorState } from "@/components/ui/States";
+import { CoachNoteCard } from "@/components/progress-card/CoachNoteCard";
+import { getProgressNote } from "@/lib/api/progress-card";
+import { mondayOf } from "@/lib/progress-card/rules";
 import { ApiError } from "@/lib/auth/errors";
 import type { MessageKey } from "@/lib/i18n";
 import { getT } from "@/lib/i18n/server";
@@ -54,6 +57,7 @@ export async function MemberDetail({ role, memberId, days }: { role: "coach" | "
   }
 
   const { member: m, stats, goals, assignments, updates, schedule, canManage, levels, plans, today } = data;
+  const note = canManage ? await getProgressNote(db, principal, memberId, new URLSearchParams()) : { weekStart: mondayOf(today), note: null };
   const notEnough = t("roster.notEnough");
   const series = weeklySeries(stats.weekly, (d) => shortDate(d, locale));
   const marked = stats.attendance.attended + stats.attendance.missed;
@@ -229,6 +233,8 @@ export async function MemberDetail({ role, memberId, days }: { role: "coach" | "
           </ul>
         )}
       </Card>
+
+      {canManage && <CoachNoteCard memberId={memberId} week={note.weekStart} initial={note.note ?? ""} />}
 
       {m.status === "active" && canManage && <SignInLinkCard memberId={memberId} />}
     </div>

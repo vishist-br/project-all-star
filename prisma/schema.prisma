@@ -28,6 +28,8 @@ model Tenant {
   sessions          Session[]
   attendance        Attendance[]
   excused           ExcusedAbsence[]
+  progressNotes     ProgressNote[]
+  progressLinks     ProgressCardLink[]
   holidays          Holiday[]
   levels            Level[]
   memberLevels      MemberLevel[]
@@ -70,6 +72,8 @@ model User {
   sessions      Session[]           @relation("SessionCoach")
   marked        Attendance[]        @relation("AttendanceMarkedBy")
   excusedBy     ExcusedAbsence[]    @relation("ExcusedCreatedBy")
+  progressNotes ProgressNote[]      @relation("ProgressNoteAuthor")
+  progressLinks ProgressCardLink[]  @relation("ProgressLinkCreator")
   awarded       MemberLevel[]       @relation("LevelAwardedBy")
   goalsSet      Goal[]              @relation("GoalCreatedBy")
   plans         WorkoutPlan[]       @relation("PlanCoach")
@@ -219,19 +223,21 @@ model Member {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @default(now()) @updatedAt
 
-  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  guardian     Guardian?        @relation(fields: [guardianId], references: [id], onDelete: SetNull)
-  user         User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
-  enrollments  BatchMember[]
-  attendance   Attendance[]
-  excused      ExcusedAbsence[]
-  levelHistory MemberLevel[]
-  goals        Goal[]
-  achievements Achievement[]
-  assignments  PlanAssignment[]
-  workoutLogs  WorkoutLog[]
-  updates      MemberUpdate[]
-  bookings     SessionBooking[]
+  tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  guardian      Guardian?          @relation(fields: [guardianId], references: [id], onDelete: SetNull)
+  user          User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  enrollments   BatchMember[]
+  attendance    Attendance[]
+  excused       ExcusedAbsence[]
+  progressNotes ProgressNote[]
+  progressLinks ProgressCardLink[]
+  levelHistory  MemberLevel[]
+  goals         Goal[]
+  achievements  Achievement[]
+  assignments   PlanAssignment[]
+  workoutLogs   WorkoutLog[]
+  updates       MemberUpdate[]
+  bookings      SessionBooking[]
 
   @@index([tenantId, isActive])
   @@index([tenantId, guardianId])
@@ -869,6 +875,7 @@ model TenantSettings {
   @@unique([tenantId])
   @@map("tenant_settings")
 }
+
 // like TenantTheme: no row = defaults; plain tenantId column (no relation) is acceptable
 
 model GoalCheckIn {
@@ -885,4 +892,47 @@ model GoalCheckIn {
 
   @@index([tenantId, goalId, recordedOn])
   @@map("goal_check_ins")
+}
+
+// ---------------------------------------------------------------------------
+// Parent weekly progress card (STAR-96)
+// ---------------------------------------------------------------------------
+
+// The coach's short note for one member and one week (weekStart = Monday, tenant calendar). One per week.
+model ProgressNote {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  memberId  String   @map("member_id")
+  weekStart DateTime @map("week_start") @db.Date
+  note      String
+  authorId  String   @map("author_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  author User   @relation("ProgressNoteAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, memberId, weekStart])
+  @@map("progress_notes")
+}
+
+// A shareable, unguessable link to one member's weekly card. Only the SHA-256 hash of the token is stored.
+model ProgressCardLink {
+  id          String    @id @default(cuid())
+  tenantId    String    @map("tenant_id")
+  memberId    String    @map("member_id")
+  weekStart   DateTime  @map("week_start") @db.Date
+  tokenHash   String    @unique @map("token_hash")
+  createdById String    @map("created_by_id")
+  expiresAt   DateTime  @map("expires_at")
+  revokedAt   DateTime? @map("revoked_at")
+  createdAt   DateTime  @default(now())
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member    Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdBy User   @relation("ProgressLinkCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, memberId])
+  @@map("progress_card_links")
 }

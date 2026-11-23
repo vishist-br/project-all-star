@@ -9,5 +9,6 @@ import { plans } from "./kn/plans";
 import { sessions } from "./kn/sessions";
 import { analytics } from "./kn/analytics";
 import { absences } from "./kn/absences";
+import { progressCard } from "./kn/progressCard";
 
-export const kn: Record<MessageKey, string> = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences };
+export const kn: Record<MessageKey, string> = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...progressCard };
