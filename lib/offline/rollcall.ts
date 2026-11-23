@@ -11,6 +11,10 @@ export type RosterRow = {
   excusedReason: ExcuseReason | null;
   note: string | null;
   attendanceClientId: string | null;
+  /** STAR-95: "excused" shown only because the member or parent declared it ahead of time. */
+  preMarked?: boolean;
+  declaredReason?: ExcuseReason | null;
+  declaredNote?: string | null;
 };
 
 export type RowView = RosterRow & {

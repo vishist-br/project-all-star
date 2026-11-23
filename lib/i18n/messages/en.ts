@@ -9,7 +9,8 @@ import { customer } from "./en/customer";
 import { plans } from "./en/plans";
 import { sessions } from "./en/sessions";
 import { analytics } from "./en/analytics";
+import { absences } from "./en/absences";
 
-export const en = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics } as const;
+export const en = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences } as const;
 
 export type MessageKey = keyof typeof en;

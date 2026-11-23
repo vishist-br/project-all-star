@@ -1,4 +1,5 @@
 import type { AttendanceStatus, ExcuseReason, Prisma } from "@prisma/client";
+import { preMarkClientId } from "../absences/rules";
 import { ApiError, type ErrorDetail } from "../auth/errors";
 import type { Principal } from "../auth/principal";
 import type { TenantClient } from "../tenant-scope";
@@ -6,6 +7,7 @@ import {
   buildSessionDetail,
   isHoliday,
   loadRoster,
+  loadSessionDeclarations,
   loadSessionFor,
   sessionWarnings,
   type Db,
@@ -148,6 +150,22 @@ export async function recordAttendance(db: TenantClient, p: Principal, sessionId
       if (same) continue; // exact replay
       if (e.markedAt && markedAt < mine.markedAt) continue; // stale write from a device that was offline longer
       await tx.attendance.update({ where: { id: mine.id }, data });
+    }
+
+    // STAR-95: completing the roll call turns every still-unmarked, pre-declared member into a real
+    // EXCUSED row (reason from the declaration), so the history shows it and it never counts as missed.
+    if (input.complete) {
+      const declared = await loadSessionDeclarations(tx, s);
+      const marked = new Set((await tx.attendance.findMany({ where: { sessionId: s.id }, select: { memberId: true } })).map((a) => a.memberId));
+      for (const r of roster) {
+        const dec = declared.get(r.memberId);
+        if (!dec || marked.has(r.memberId) || r.source === "waitlisted") continue;
+        const clientId = preMarkClientId(dec.id, s.id);
+        if (await tx.attendance.findFirst({ where: { clientId }, select: { id: true } })) continue;
+        await tx.attendance.create({
+          data: { tenantId: p.tenantId, sessionId: s.id, memberId: r.memberId, status: "EXCUSED", reason: dec.reason.toUpperCase() as ExcuseReason, clientId, markedAt: now, markedById: p.userId },
+        });
+      }
     }
 
     const sessionData: Prisma.SessionUncheckedUpdateInput = {};

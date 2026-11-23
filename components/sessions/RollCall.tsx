@@ -187,11 +187,15 @@ export function RollCall({ detail, userId }: { detail: SessionDetail; userId: st
                     {t(`sess.status.${r.attendance}` as MessageKey)}
                     {r.attendance === "excused" && r.excusedReason ? ` · ${t(`sess.reason.${r.excusedReason}` as MessageKey)}` : ""}
                   </Badge>
+                  {r.declaredReason && (
+                    <Badge tone="info">{t("roll.declared.reason", { reason: t(`sess.reason.${r.declaredReason}` as MessageKey) })}</Badge>
+                  )}
                   {r.source === "booked" && <Badge tone="neutral">{t("sess.source.booked")}</Badge>}
                   {r.sync === "queued" && <Badge tone="warn">{t("sess.row.queued")}</Badge>}
                   {(r.sync === "conflict" || r.sync === "failed") && <Badge tone="danger">{t("sess.row.notSaved")}</Badge>}
                   {r.justSaved && <Badge tone="ok">{t("sess.row.saved")}</Badge>}
                 </span>
+                {r.declaredNote && <span className={s.rollNote}>{r.declaredNote}</span>}
                 {r.note && <span className={s.rollNote}>{r.note}</span>}
                 <span className="sr-only">{t("sess.row.aria", { next: t(`sess.status.${nextStatus(r.attendance)}` as MessageKey) })}</span>
               </span>

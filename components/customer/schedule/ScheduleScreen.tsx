@@ -82,6 +82,7 @@ export async function ScheduleScreen({ searchParams }: { searchParams: Search })
       <PageHeader
         title={t("cs.title")}
         subtitle={selected.isOwn ? t("cs.subtitle") : `${selected.name}. ${t("cs.subtitle")}`}
+        actions={<Link className="btn btn-secondary" href="/customer/absences">{t("abs.plan")}</Link>}
       />
       <ChildSwitcher members={ctx.children} selectedId={selected.id} />
       <Segmented label={t("cs.view.label")} items={tabs} />

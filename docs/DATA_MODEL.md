@@ -1,6 +1,6 @@
 # Data model (final POC model, Sprint 2)
 
-Schema: `prisma/schema.prisma`. Nine migrations in `prisma/migrations/`, the last being `20261122000000_plans_bookings_analytics`. Design notes and formulas: `docs/PLAN-POC.md` (section 2 data, section 4 formulas). Database: PostgreSQL 16, Prisma 6.
+Schema: `prisma/schema.prisma`. Ten migrations in `prisma/migrations/`, the last being `20261123103819_excused_absence_declarations`. Design notes and formulas: `docs/PLAN-POC.md` (section 2 data, section 4 formulas). Database: PostgreSQL 16, Prisma 6.
 
 ## The tenant_id rule
 
@@ -51,6 +51,8 @@ Sprint 1 tables:
 | `attendance` | One row per member per session: `UNIQUE(tenant_id, session_id, member_id)` and `UNIQUE(tenant_id, client_id)`. CHECK: `reason` is required exactly when status is EXCUSED (reasons EXAM, ILLNESS, FESTIVAL, TRAVEL). `photo_ref` is nullable: one-tap roll call needs no photo. |
 | `excused_absences` | Absence declared in advance (date range, reason), CHECK `toDate >= fromDate`. The table exists; no screen creates these yet. |
 | `holidays` | Per-tenant calendar, `UNIQUE(tenant_id, date)`. Honoured by the rules and analytics. Owners edit it at `/owner/holidays` (STAR-94; API `listHolidays`, `createHoliday`, `deleteHoliday`, owner only, one day per date, a second add is a 409). |
+| `excused_absences` | Absence declared in advance by a member or parent (date range or one `session_id`, reason, optional note), CHECK `toDate >= fromDate`. `cancelled_at` is set when it is withdrawn (row kept). Migration `20261123103819_excused_absence_declarations` adds `session_id`, `cancelled_at` and two indexes (STAR-95). Screen: `/customer/absences`. |
+| `holidays` | Per-tenant calendar, `UNIQUE(tenant_id, date)`. Honoured by the rules and analytics; no editor screen yet. |
 | `levels`, `member_levels` | Belt or level per sport (`UNIQUE(tenant_id, sport_id, rank)` and `(... name)`) and each member's level history. |
 | `goals`, `achievements` | Goals and basic achievements. Achievements store `measure_unit` (HOURS, DAYS, STREAK_DAYS, SESSIONS) and a value so both hourly and daily-streak views can be derived. |
 | `exercises` | Per-tenant copy of the catalog: `source` FREE_EXERCISE_DB (Unlicense) or ORIGINAL (our drafts, `needs_trainer_review` true until a trainer clears it), `licence`, `source_commit`. `UNIQUE(tenant_id, source, source_id)`. No image column (image licence unclear). |
@@ -81,7 +83,7 @@ A member's progress timeline counts attended sessions.
 1. A missed class (`attendance.status = ABSENT`) extends the member's timeline by one session.
 2. An excused absence (`EXCUSED`, with reason exam, illness, festival or travel) does NOT extend the timeline.
 3. A session on a date in the tenant's `holidays` is not counted as missed and does not extend the timeline.
-4. `excused_absences` rows are absences declared in advance (a date range and reason); converting them to `EXCUSED` attendance is not built yet.
+4. `excused_absences` rows are absences declared in advance (a date range or one session, with a reason). They are never stored as attendance until the coach completes the roll call: until then the roll call shows the member pre-marked as EXCUSED (`preMarked`, with `declaredReason`), a mark the coach makes wins, and completing the roll call writes a real EXCUSED row (client id `pre-<declaration>-<session>`) for members still unmarked. Only a plain `ABSENT` extends the timeline (`extendsTimeline`), so a declared absence never does.
 
 Attendance percentage everywhere is `PRESENT / (PRESENT + ABSENT)` over completed, non-holiday sessions; excused absences are excluded on both sides.
 

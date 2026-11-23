@@ -151,6 +151,9 @@ const CASES: Record<string, Case> = {
   listHolidays: read(),
   createHoliday: read(() => ({ body: { date: d(400 + ++seq), name: `QA Closure ${uniq()}` } })),
   deleteHoliday: { rows: "open", scoped: true, build: async (c) => ({ params: { holidayId: await c.fresh.holiday() } }) },
+  listExcusedAbsences: memberRead(),
+  createExcusedAbsence: { rows: "own", scoped: true, build: (c) => ({ params: { memberId: c.ids.kid }, body: { fromDate: d(20 + ++seq), reason: "travel", note: "QA trip" } }) },
+  cancelExcusedAbsence: { rows: "own", scoped: true, build: async (c) => ({ params: { absenceId: await c.fresh.absence() } }) },
 };
 
 const roleOf = (w: Who): Role => (w === "owner" ? "owner" : w === "coach" || w === "coachX" ? "coach" : "customer");
@@ -202,6 +205,7 @@ describe("contract coverage: every operation is in the matrix", () => {
       addGoalCheckIn: "oc", listMemberUpdates: "ocu", markMemberUpdatesRead: "u", createSession: "oc", getSession: "ocu", updateSession: "oc",
       recordAttendance: "oc", bookSession: "ocu", cancelBooking: "ocu", getOwnerOverview: "o", getOwnerTrends: "o", getCoachWorkload: "o",
       getFeeStats: "o", getOwnerInsights: "o", listHolidays: "o", createHoliday: "o", deleteHoliday: "o",
+      getFeeStats: "o", getOwnerInsights: "o", listExcusedAbsences: "ocu", createExcusedAbsence: "u", cancelExcusedAbsence: "u",
     };
     for (const [id, code] of Object.entries(plan)) {
       const want = [...code].map((ch) => ({ o: "owner", c: "coach", u: "customer" })[ch as "o"]).sort();

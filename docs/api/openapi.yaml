@@ -1277,6 +1277,83 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
+  /members/{memberId}/excused-absences:
+    get:
+      tags: [Members]
+      operationId: listExcusedAbsences
+      x-roles: [owner, coach, customer]
+      summary: Absences a member or parent declared ahead of time (active, not yet past by default)
+      description: |
+        Own view only (customer: self or children, coach: members in own batches). `status=all`
+        also returns withdrawn and past declarations.
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - {name: status, in: query, schema: {type: string, enum: [active, all]}}
+      responses:
+        '200':
+          description: Declared absences, soonest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/ExcusedAbsence'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    post:
+      tags: [Members]
+      operationId: createExcusedAbsence
+      x-roles: [customer]
+      summary: Tell the coach ahead of time that a session or a date range will be missed
+      description: |
+        Customer only, for self or a child. Give either `sessionId` (one upcoming session of a
+        batch the member is enrolled in) or `fromDate` (and optionally `toDate`, at most 60 days,
+        not in the past). On the coach's roll call the member shows as excused with this reason;
+        an excused absence does not extend the member's timeline. 409 conflict when the same
+        absence is already declared or the session has started.
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExcusedAbsenceInput'}
+      responses:
+        '201':
+          description: Declared absence
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExcusedAbsence'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /excused-absences/{absenceId}/cancel:
+    post:
+      tags: [Members]
+      operationId: cancelExcusedAbsence
+      x-roles: [customer]
+      summary: Withdraw a declared absence (safe to repeat)
+      parameters:
+        - name: absenceId
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Withdrawn declaration
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExcusedAbsence'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
 components:
   securitySchemes:
     bearerAuth:
@@ -2307,6 +2384,30 @@ components:
         createdAt: {type: string, format: date-time}
         cancelledAt: {type: string, format: date-time, nullable: true}
         cancellableUntil: {type: string, format: date-time, nullable: true, description: For customers; startsAt minus the tenant cancellation window}
+    ExcusedAbsenceInput:
+      type: object
+      properties:
+        sessionId: {type: string, description: One upcoming session. Do not combine with dates.}
+        fromDate: {type: string, format: date}
+        toDate: {type: string, format: date, description: Defaults to fromDate; at most 60 days after it}
+        reason: {type: string, enum: [exam, illness, festival, travel]}
+        note: {type: string, maxLength: 280}
+      required: [reason]
+    ExcusedAbsence:
+      type: object
+      required: [id, memberId, fromDate, toDate, reason, status]
+      properties:
+        id: {type: string}
+        memberId: {type: string}
+        memberName: {type: string}
+        sessionId: {type: string, nullable: true}
+        fromDate: {type: string, format: date}
+        toDate: {type: string, format: date}
+        reason: {type: string, enum: [exam, illness, festival, travel]}
+        note: {type: string, nullable: true}
+        status: {type: string, enum: [active, withdrawn]}
+        createdAt: {type: string, format: date-time}
+        cancelledAt: {type: string, format: date-time, nullable: true}
     RosterEntry:
       type: object
       required: [memberId, memberName, source, attendance]
@@ -2326,6 +2427,12 @@ components:
           enum: [exam, illness, festival, travel]
         note: {type: string, nullable: true}
         attendanceClientId: {type: string, nullable: true}
+        preMarked: {type: boolean, description: True when excused is shown only because the member or parent declared the absence ahead of time (nothing marked yet)}
+        declaredReason:
+          type: string
+          nullable: true
+          enum: [exam, illness, festival, travel]
+        declaredNote: {type: string, nullable: true}
     SessionDetail:
       allOf:
         - $ref: '#/components/schemas/Session'
