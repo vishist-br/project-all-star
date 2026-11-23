@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { ErrorState, EmptyState } from "@/components/ui/States";
 import { Segmented } from "@/components/ui/Tabs";
 import { getCoachWorkload } from "@/lib/api/analytics";
+import { credentialsByCoach } from "@/lib/api/coach-credentials";
 import { listCoaches } from "@/lib/api/coaches";
 import { checkRole } from "@/lib/auth/guard";
 import { getT } from "@/lib/i18n/server";
@@ -46,6 +47,15 @@ export default async function CoachesPage({ params, searchParams }: { params: Pr
       load = new Map(w.items.map((c) => [c.coachId, c.loadPercent]));
     } catch (err) {
       console.error("owner coach workload failed", err instanceof Error ? err.message : err);
+    }
+  }
+
+  let creds: Awaited<ReturnType<typeof credentialsByCoach>> = new Map();
+  if (list) {
+    try {
+      creds = await credentialsByCoach(db, list.items.map((c) => c.id));
+    } catch (err) {
+      console.error("owner coach credentials failed", err instanceof Error ? err.message : err);
     }
   }
 
@@ -105,6 +115,13 @@ export default async function CoachesPage({ params, searchParams }: { params: Pr
                 <div><dt>{t("oc.upcoming")}</dt><dd>{num(c.upcomingSessions7d)}</dd></div>
                 <div><dt>{t("oc.assignments")}</dt><dd>{num(c.activeAssignments)}</dd></div>
               </dl>
+              <p className={s.na}>
+                {(() => {
+                  const mine = creds.get(c.id) ?? [];
+                  const v = mine.filter((x) => x.verified).length;
+                  return `${t("cred.title")}: ${t("cred.count.verified", { n: v })} · ${t("cred.count.unverified", { n: mine.length - v })}`;
+                })()}
+              </p>
               <div className={s.load}>
                 <div className={s.loadHead}>
                   <span>{t("oc.load")}</span>

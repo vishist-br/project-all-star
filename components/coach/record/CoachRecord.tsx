@@ -10,6 +10,8 @@ import type { MessageKey } from "@/lib/i18n";
 import { getT } from "@/lib/i18n/server";
 import { loadCoachRecord } from "@/lib/members/server";
 import { PERIODS, percentText, shortDate } from "@/lib/members/view";
+import { CredentialManager } from "@/components/coach/credentials/CredentialManager";
+import { listCoachCredentials } from "@/lib/api/coach-credentials";
 import { getViewer } from "@/lib/viewer";
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
@@ -26,6 +28,12 @@ export async function CoachRecord({ coachId, basePath, days }: { coachId: string
     data = await loadCoachRecord(db, principal, coachId, days);
   } catch (err) {
     console.error("coach record failed", err);
+  }
+  let creds: Awaited<ReturnType<typeof listCoachCredentials>> | null = null;
+  try {
+    creds = await listCoachCredentials(db, principal, coachId);
+  } catch (err) {
+    console.error("coach credentials failed", err instanceof Error ? err.message : err);
   }
   const notEnough = t("roster.notEnough");
 
@@ -53,6 +61,12 @@ export async function CoachRecord({ coachId, basePath, days }: { coachId: string
             <StatTile label={t("record.members")} value={data.stats.memberCount} />
           </StatGrid>
           <p className={s.note}>{t("record.note")}</p>
+
+          {creds && (
+            <Card title={t("cred.title")}>
+              <CredentialManager coachId={coachId} initial={creds.items} canVerify={false} canAdd={principal.role === "coach" && principal.userId === coachId} thisYear={new Date().getUTCFullYear()} />
+            </Card>
+          )}
 
           <Card title={t("record.chart.title")}>
             <BarChart

@@ -588,6 +588,87 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
+  /coaches/{coachId}/credentials:
+    get:
+      tags: [Coaches]
+      operationId: listCoachCredentials
+      x-roles: [owner, coach, customer]
+      summary: Credential badges of a coach (verified or unverified). Coach only for self; a customer only for coaches who teach their members.
+      parameters:
+        - $ref: '#/components/parameters/CoachId'
+      responses:
+        '200':
+          description: Credentials, oldest first
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CoachCredentialList'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    post:
+      tags: [Coaches]
+      operationId: createCoachCredential
+      x-roles: [owner, coach]
+      summary: Add a claimed credential to a coach (coach only for self). It starts unverified until the owner verifies it.
+      parameters:
+        - $ref: '#/components/parameters/CoachId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CoachCredentialInput'}
+      responses:
+        '201':
+          description: Created credential (unverified)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CoachCredential'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /coach-credentials/{credentialId}:
+    patch:
+      tags: [Coaches]
+      operationId: setCoachCredentialVerification
+      x-roles: [owner]
+      summary: Owner marks a credential verified or unverified
+      parameters:
+        - name: credentialId
+          in: path
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CoachCredentialVerification'}
+      responses:
+        '200':
+          description: Updated credential
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CoachCredential'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    delete:
+      tags: [Coaches]
+      operationId: deleteCoachCredential
+      x-roles: [owner, coach]
+      summary: Remove a credential (owner any; coach only their own)
+      parameters:
+        - name: credentialId
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '204': {description: Removed}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
   /workout-plans:
     get:
       tags: [Workouts]
@@ -1746,6 +1827,37 @@ components:
         city: {type: string, nullable: true}
         timezone: {type: string, example: Asia/Kolkata}
         batchCount: {type: integer}
+    CoachCredential:
+      type: object
+      required: [id, coachId, title, issuer, year, verified, verifiedAt]
+      properties:
+        id: {type: string}
+        coachId: {type: string}
+        title: {type: string, minLength: 1, maxLength: 80}
+        issuer: {type: string, nullable: true, maxLength: 80}
+        year: {type: integer, nullable: true, minimum: 1970}
+        verified: {type: boolean}
+        verifiedAt: {type: string, format: date-time, nullable: true}
+    CoachCredentialList:
+      type: object
+      required: [coachId, items]
+      properties:
+        coachId: {type: string}
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/CoachCredential'}
+    CoachCredentialInput:
+      type: object
+      required: [title]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 80}
+        issuer: {type: string, nullable: true, maxLength: 80}
+        year: {type: integer, nullable: true, minimum: 1970}
+    CoachCredentialVerification:
+      type: object
+      required: [verified]
+      properties:
+        verified: {type: boolean}
     Holiday:
       type: object
       required: [id, date, name]

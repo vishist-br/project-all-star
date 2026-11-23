@@ -154,6 +154,10 @@ const CASES: Record<string, Case> = {
   listExcusedAbsences: memberRead(),
   createExcusedAbsence: { rows: "own", scoped: true, build: (c) => ({ params: { memberId: c.ids.kid }, body: { fromDate: d(20 + ++seq), reason: "travel", note: "QA trip" } }) },
   cancelExcusedAbsence: { rows: "own", scoped: true, build: async (c) => ({ params: { absenceId: await c.fresh.absence() } }) },
+  listCoachCredentials: { rows: "own", scoped: true, build: (c) => ({ params: { coachId: c.user.coach } }) },
+  createCoachCredential: { rows: "own", scoped: true, build: (c) => ({ params: { coachId: c.user.coach }, body: { title: `QA Certificate ${uniq()}`, issuer: "QA Board", year: 2022 } }) },
+  setCoachCredentialVerification: { rows: "open", scoped: true, build: async (c) => ({ params: { credentialId: await c.fresh.credential() }, body: { verified: true } }) },
+  deleteCoachCredential: { rows: "own", scoped: true, build: async (c) => ({ params: { credentialId: await c.fresh.credential() } }) },
 };
 
 const roleOf = (w: Who): Role => (w === "owner" ? "owner" : w === "coach" || w === "coachX" ? "coach" : "customer");
@@ -168,8 +172,8 @@ function expected(op: Op, cs: Case, who: Who): number {
 const fill = (path: string, params: Record<string, string> = {}) => path.replace(/\{(\w+)\}/g, (_, k) => params[k] ?? `missing-${k}`);
 
 describe("contract coverage: every operation is in the matrix", () => {
-  it("parses at least 55 operations from the contract", () => {
-    expect(OPS.length).toBeGreaterThanOrEqual(55);
+  it("parses at least 59 operations from the contract", () => {
+    expect(OPS.length).toBeGreaterThanOrEqual(59);
   });
 
   it("every operation is a matrix case, a public case or a documented gap; nothing stale", () => {
@@ -206,6 +210,7 @@ describe("contract coverage: every operation is in the matrix", () => {
       recordAttendance: "oc", bookSession: "ocu", cancelBooking: "ocu", getOwnerOverview: "o", getOwnerTrends: "o", getCoachWorkload: "o",
       getFeeStats: "o", getOwnerInsights: "o", listHolidays: "o", createHoliday: "o", deleteHoliday: "o",
       listExcusedAbsences: "ocu", createExcusedAbsence: "u", cancelExcusedAbsence: "u",
+      listCoachCredentials: "ocu", createCoachCredential: "oc", setCoachCredentialVerification: "o", deleteCoachCredential: "oc",
     };
     for (const [id, code] of Object.entries(plan)) {
       const want = [...code].map((ch) => ({ o: "owner", c: "coach", u: "customer" })[ch as "o"]).sort();

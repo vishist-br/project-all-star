@@ -1,3 +1,5 @@
+import { CredentialBadges } from "@/components/coach/credentials/CredentialBadges";
+import { listMyCoachesWithCredentials } from "@/lib/api/coach-credentials";
 import { getMember } from "@/lib/api/members";
 import { ChildSwitcher } from "@/components/customer/ChildSwitcher";
 import { NoMember } from "@/components/customer/NoMember";
@@ -20,7 +22,14 @@ export async function ProfileScreen() {
   if (!ctx.selected) return <NoMember />;
   const { principal, db, selected } = ctx;
   allow(principal, "getMember");
-  const [member, session] = await Promise.all([getMember(db, principal, selected.id), getSession()]);
+  const [member, session, coaches] = await Promise.all([
+    getMember(db, principal, selected.id),
+    getSession(),
+    listMyCoachesWithCredentials(db, principal).catch((err) => {
+      console.error("member coach info failed", err instanceof Error ? err.message : err);
+      return [];
+    }),
+  ]);
   const fee = feeBadge(member.feeStatus);
 
   return (
@@ -55,6 +64,21 @@ export async function ProfileScreen() {
           )}
         </dl>
         <p className={s.meta}>{t("pf.fee.note")}</p>
+      </Card>
+      <Card title={t("cred.member.title")}>
+        <p className="muted small">{t("cred.member.intro")}</p>
+        {coaches.length === 0 ? (
+          <p className="muted small">{t("cred.member.empty")}</p>
+        ) : (
+          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: "var(--s3)" }}>
+            {coaches.map((c) => (
+              <li key={c.coachId} data-testid="member-coach">
+                <p><Avatar name={c.name} /> <strong>{c.name}</strong></p>
+                <CredentialBadges items={c.credentials} t={t} />
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
       <Card title={t("pf.language")}>
         <LanguageSwitcher />

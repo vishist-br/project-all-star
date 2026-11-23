@@ -41,6 +41,7 @@ model Tenant {
   workoutLogs       WorkoutLog[]
   memberUpdates     MemberUpdate[]
   coachAvailability CoachAvailability[]
+  coachCredentials  CoachCredential[]
   sessionBookings   SessionBooking[]
   goalCheckIns      GoalCheckIn[]
 
@@ -63,21 +64,23 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  tenant        Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  batches       Batch[]             @relation("BatchCoach")
-  guardians     Guardian[]
-  members       Member[]
-  sessions      Session[]           @relation("SessionCoach")
-  marked        Attendance[]        @relation("AttendanceMarkedBy")
-  excusedBy     ExcusedAbsence[]    @relation("ExcusedCreatedBy")
-  awarded       MemberLevel[]       @relation("LevelAwardedBy")
-  goalsSet      Goal[]              @relation("GoalCreatedBy")
-  plans         WorkoutPlan[]       @relation("PlanCoach")
-  assignmentsBy PlanAssignment[]    @relation("AssignmentBy")
-  workoutLogsBy WorkoutLog[]        @relation("WorkoutLogBy")
-  updatesActed  MemberUpdate[]      @relation("MemberUpdateActor")
-  availability  CoachAvailability[] @relation("CoachAvailability")
-  bookingsBy    SessionBooking[]    @relation("BookingBy")
+  tenant              Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  batches             Batch[]             @relation("BatchCoach")
+  guardians           Guardian[]
+  members             Member[]
+  sessions            Session[]           @relation("SessionCoach")
+  marked              Attendance[]        @relation("AttendanceMarkedBy")
+  excusedBy           ExcusedAbsence[]    @relation("ExcusedCreatedBy")
+  awarded             MemberLevel[]       @relation("LevelAwardedBy")
+  goalsSet            Goal[]              @relation("GoalCreatedBy")
+  plans               WorkoutPlan[]       @relation("PlanCoach")
+  assignmentsBy       PlanAssignment[]    @relation("AssignmentBy")
+  workoutLogsBy       WorkoutLog[]        @relation("WorkoutLogBy")
+  updatesActed        MemberUpdate[]      @relation("MemberUpdateActor")
+  availability        CoachAvailability[] @relation("CoachAvailability")
+  bookingsBy          SessionBooking[]    @relation("BookingBy")
+  credentials         CoachCredential[]   @relation("CredentialCoach")
+  credentialsVerified CoachCredential[]   @relation("CredentialVerifier")
 
   @@unique([tenantId, email])
   @@index([tenantId, role])
@@ -869,6 +872,7 @@ model TenantSettings {
   @@unique([tenantId])
   @@map("tenant_settings")
 }
+
 // like TenantTheme: no row = defaults; plain tenantId column (no relation) is acceptable
 
 model GoalCheckIn {
@@ -885,4 +889,25 @@ model GoalCheckIn {
 
   @@index([tenantId, goalId, recordedOn])
   @@map("goal_check_ins")
+}
+
+/// Coach Insight Directory (STAR-97): a credential a coach claims (certification, issuer, year).
+/// It shows as unverified until the owner marks it verified (verifiedAt set).
+model CoachCredential {
+  id           String    @id @default(cuid())
+  tenantId     String    @map("tenant_id")
+  coachId      String    @map("coach_id")
+  title        String
+  issuer       String?
+  year         Int?
+  verifiedAt   DateTime? @map("verified_at")
+  verifiedById String?   @map("verified_by_id")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now()) @updatedAt
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  coach        User      @relation("CredentialCoach", fields: [coachId], references: [id], onDelete: Cascade)
+  verifiedBy   User?     @relation("CredentialVerifier", fields: [verifiedById], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, coachId])
+  @@map("coach_credentials")
 }

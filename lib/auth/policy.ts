@@ -64,6 +64,11 @@ export const OPERATION_ROLES = {
   listHolidays: ["owner"],
   createHoliday: ["owner"],
   deleteHoliday: ["owner"],
+  // STAR-97: coach credential badges (owner verifies; coach adds own; members read)
+  listCoachCredentials: ["owner", "coach", "customer"],
+  createCoachCredential: ["owner", "coach"],
+  setCoachCredentialVerification: ["owner"],
+  deleteCoachCredential: ["owner", "coach"],
   // STAR-95: pre-declared excused absences (member or parent declares; the coach sees them on the roll call)
   listExcusedAbsences: ["owner", "coach", "customer"],
   createExcusedAbsence: ["customer"],

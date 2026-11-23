@@ -44,6 +44,7 @@ export async function clearRich(prisma: PrismaClient): Promise<void> {
     await prisma.user.deleteMany({ where: byId });
     await prisma.holiday.deleteMany({ where: byId });
     await prisma.coachAvailability.deleteMany({ where: byId });
+    await prisma.coachCredential.deleteMany({ where: byId });
     await prisma.tenantSettings.deleteMany({ where: { tenantId: t.id } });
   }
 }
@@ -451,6 +452,27 @@ async function seedRichTenant(prisma: PrismaClient, t: SeedTenant, r: RichTenant
   }
   await prisma.coachAvailability.createMany({ data: avail });
   counts.availability = avail.length;
+
+  // 9b. Coach credential badges (fake): the first coach has two verified and one unverified claim,
+  // the others one verified and one unverified, so every screen shows both states.
+  const credentials: Prisma.CoachCredentialCreateManyInput[] = [];
+  const verifier = (await prisma.user.findFirst({ where: { tenantId, role: "OWNER" }, orderBy: { createdAt: "asc" }, select: { id: true } }))?.id ?? null;
+  t.coaches.forEach((c, i) => {
+    const list = [
+      { key: "cert", title: "Fitness Instructor Certificate (demo)", issuer: "Demo Fitness Council", year: 2019 + i, verified: true },
+      { key: "firstaid", title: "First Aid and CPR (demo)", issuer: "Demo Red Cross Society", year: 2024, verified: i === 0 },
+      ...(i === 0 ? [{ key: "level2", title: "Level 2 Coaching Award (demo)", issuer: "Demo Sports Academy Board", year: 2022, verified: true }] : []),
+      { key: "kids", title: "Youth Coaching Workshop (demo)", issuer: "Demo Coaches Association", year: 2025, verified: false },
+    ];
+    for (const x of list) {
+      credentials.push({
+        id: id(`cred-${c.key}-${x.key}`), tenantId, coachId: coachId[c.key], title: x.title, issuer: x.issuer, year: x.year,
+        verifiedAt: x.verified ? istAt(addDays(today, -20), "11:00") : null, verifiedById: x.verified ? verifier : null,
+      });
+    }
+  });
+  await prisma.coachCredential.createMany({ data: credentials });
+  counts.coachCredentials = credentials.length;
 
   // 10. Tenant settings.
   await prisma.tenantSettings.create({

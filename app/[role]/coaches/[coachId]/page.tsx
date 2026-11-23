@@ -11,6 +11,8 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Card, StatGrid, StatTile } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ErrorState } from "@/components/ui/States";
+import { CredentialManager } from "@/components/coach/credentials/CredentialManager";
+import { listCoachCredentials } from "@/lib/api/coach-credentials";
 import { listBatches } from "@/lib/api/batches";
 import { listCoachAvailability } from "@/lib/api/availability";
 import { getCoachStats } from "@/lib/api/coaches";
@@ -60,11 +62,12 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ ro
     );
   }
 
-  const [availability, venues, batches, plans] = await Promise.all([
+  const [availability, venues, batches, plans, creds] = await Promise.all([
     optional(() => listCoachAvailability(db, principal, coachId), { coachId, slots: [] }),
     optional(() => listVenues(db, principal, LIMIT()), { items: [], nextCursor: null }),
     optional(() => listBatches(db, principal, LIMIT()), { items: [], nextCursor: null }),
     optional(() => listWorkoutPlans(db, principal, LIMIT()), { items: [], nextCursor: null }),
+    optional(() => listCoachCredentials(db, principal, coachId), { coachId, items: [] }),
   ]);
   const venueNames = new Map(venues.items.map((v) => [v.id, v.name]));
   const days = groupAvailability(availability.slots, venueNames);
@@ -117,6 +120,10 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ ro
       </Card>
 
       <div className={s.layout}>
+        <Card title={t("cred.title")}>
+          <CredentialManager coachId={coachId} initial={creds.items} canVerify canAdd={false} thisYear={new Date().getUTCFullYear()} />
+        </Card>
+
         <Card title={t("cs.chart.title")}>
           {hasWeekly ? (
             <BarChart

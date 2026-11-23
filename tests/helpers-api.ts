@@ -37,6 +37,8 @@ export interface TenantFx {
     holiday(): Promise<string>;
     /** A declared absence of the parent's child (STAR-95), created directly. */
     absence(): Promise<string>;
+    /** An unverified credential of the tenant coach (STAR-97), created directly. */
+    credential(): Promise<string>;
     token(who: Who): Promise<string>;
   };
 }
@@ -154,6 +156,10 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
       fresh: {
         plan: freshPlan,
         futureSession,
+        async credential() {
+          const row = await prisma.coachCredential.create({ data: { tenantId: t.id, coachId: user.coach, title: `QA fixture credential ${uniq()}`, issuer: "QA Board", year: 2021 } });
+          return row.id;
+        },
         async absence() {
           const row = await prisma.excusedAbsence.create({
             data: { tenantId: t.id, memberId: kid.id, fromDate: new Date(`${d(30 + ++slot)}T00:00:00Z`), toDate: new Date(`${d(30 + slot)}T00:00:00Z`), reason: "EXAM", createdById: user.parent },
@@ -186,6 +192,7 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
       await prisma.authSession.deleteMany({ where: { id: { in: sessionIds } } });
       for (const tenantId of tenantIds) {
         await prisma.excusedAbsence.deleteMany({ where: { tenantId } });
+        await prisma.coachCredential.deleteMany({ where: { tenantId } });
         await prisma.memberUpdate.deleteMany({ where: { tenantId } });
         await prisma.sessionBooking.deleteMany({ where: { tenantId } });
         await prisma.workoutLog.deleteMany({ where: { tenantId } });
@@ -204,7 +211,7 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
   };
 }
 
-const ID_MODELS = ["user", "member", "guardian", "venue", "sport", "batch", "session", "attendance", "workoutPlan", "planAssignment", "workoutLog", "goal", "sessionBooking", "memberUpdate", "exercise", "magicLink", "authSession", "coachAvailability", "tenantSettings", "holiday", "excusedAbsence"] as const;
+const ID_MODELS = ["user", "member", "guardian", "venue", "sport", "batch", "session", "attendance", "workoutPlan", "planAssignment", "workoutLog", "goal", "sessionBooking", "memberUpdate", "exercise", "magicLink", "authSession", "coachAvailability", "tenantSettings", "holiday", "excusedAbsence", "coachCredential"] as const;
 
 /** All row ids of a tenant (for response leakage checks) and per-table counts (for write checks). */
 export async function tenantIds(prisma: PrismaClient, tenantId: string): Promise<Set<string>> {
@@ -236,6 +243,7 @@ export async function tenantSnapshot(prisma: PrismaClient, tenantId: string): Pr
   snap.plansRows = await prisma.workoutPlan.findMany({ where: { tenantId }, orderBy: { id: "asc" } });
   snap.assignmentRows = await prisma.planAssignment.findMany({ where: { tenantId }, orderBy: { id: "asc" } });
   snap.goalRows = await prisma.goal.findMany({ where: { tenantId }, orderBy: { id: "asc" } });
+  snap.credentialRows = await prisma.coachCredential.findMany({ where: { tenantId }, orderBy: { id: "asc" } });
   snap.bookingRows = await prisma.sessionBooking.findMany({ where: { tenantId }, orderBy: { id: "asc" } });
   return JSON.parse(JSON.stringify(snap));
 }
