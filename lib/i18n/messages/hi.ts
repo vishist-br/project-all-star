@@ -11,4 +11,6 @@ import { analytics } from "./hi/analytics";
 import { absences } from "./hi/absences";
 import { credentials } from "./hi/credentials";
 
-export const hi: Record<MessageKey, string> = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...credentials };
+export const hi: Record<MessageKey, string> = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...credentials, ...progressCard };
+import { progressCard } from "./hi/progressCard";
+

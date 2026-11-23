@@ -11,4 +11,6 @@ import { analytics } from "./kn/analytics";
 import { absences } from "./kn/absences";
 import { credentials } from "./kn/credentials";
 
-export const kn: Record<MessageKey, string> = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...credentials };
+export const kn: Record<MessageKey, string> = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...credentials, ...progressCard };
+import { progressCard } from "./kn/progressCard";
+

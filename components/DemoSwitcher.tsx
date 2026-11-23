@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n/client";
 import { ROLES, type Role } from "@/lib/nav";
 import { DEMO_ROLE_COOKIE, DEMO_TENANT_COOKIE } from "@/lib/demo";
@@ -20,6 +20,8 @@ export function DemoSwitcher({
 }) {
   const { t } = useI18n();
   const router = useRouter();
+  // The public weekly card (/card/<token>) is for outsiders: no demo controls on it.
+  if (usePathname().startsWith("/card/")) return null;
 
   return (
     <div className="demo-switcher" role="group" aria-label={t("demo.label")}>

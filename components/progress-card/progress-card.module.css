@@ -1,0 +1,34 @@
+.stack { display: grid; gap: var(--s4); }
+.card { display: grid; gap: var(--s4); padding: var(--s4); border: 1px solid var(--line); border-radius: var(--r); background: var(--card); max-width: 40rem; width: 100%; margin-inline: auto; }
+.head { display: grid; gap: var(--s1); }
+.biz { margin: 0; color: var(--muted); font-size: var(--fs-sm); font-weight: 600; overflow-wrap: anywhere; }
+.title { margin: 0; font-size: var(--fs-xl, 1.5rem); font-weight: 800; overflow-wrap: anywhere; }
+.meta { margin: 0; color: var(--muted); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.cheer { margin: 0; padding: var(--s3); border-radius: var(--r); background: var(--primary-soft); font-weight: 600; }
+.block { display: grid; gap: var(--s2); }
+.block h2 { margin: 0; font-size: var(--fs-md, 1rem); }
+.big { margin: 0; font-size: var(--fs-lg); font-weight: 700; overflow-wrap: anywhere; }
+.levelRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s4); }
+.ring { width: 110px; flex: 0 0 110px; }
+.grow { display: grid; gap: var(--s1); min-width: 0; flex: 1 1 10rem; }
+.goals { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.goal { display: grid; gap: var(--s2); min-width: 0; }
+.goalHead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s2); }
+.goalTitle { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.note { margin: 0; padding: var(--s3); border-left: 4px solid var(--primary); background: var(--bg, transparent); white-space: pre-wrap; overflow-wrap: anywhere; }
+.unavailable { max-width: 32rem; margin: var(--s6, 2rem) auto; padding: var(--s4); text-align: center; display: grid; gap: var(--s3); }
+.weekNav { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; justify-content: space-between; }
+.share { display: grid; gap: var(--s3); }
+.linkRow { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.linkRow input { flex: 1 1 14rem; min-width: 0; }
+.live { list-style: none; margin: 0; padding: 0; display: grid; }
+.live li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--s2); min-height: var(--tap); border-bottom: 1px solid var(--line); padding-block: var(--s2); }
+.live li:last-child { border-bottom: 0; }
+.textarea { min-height: 7rem; resize: vertical; font: inherit; }
+.count { margin: 0; color: var(--muted); font-size: var(--fs-sm); }
+.pub { padding: var(--s4); }
+
+@media print {
+  .noPrint { display: none !important; }
+  .card { border: 0; padding: 0; max-width: none; }
+}

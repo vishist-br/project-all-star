@@ -70,6 +70,14 @@ export const OPERATION_ROLES = {
   setCoachCredentialVerification: ["owner"],
   deleteCoachCredential: ["owner", "coach"],
   // STAR-95: pre-declared excused absences (member or parent declares; the coach sees them on the roll call)
+  // STAR-96: parent weekly progress card (coach note, shareable tokenised link)
+  getProgressCard: ["owner", "coach", "customer"],
+  getProgressNote: ["owner", "coach"],
+  saveProgressNote: ["owner", "coach"],
+  listProgressCardLinks: ["owner", "coach", "customer"],
+  createProgressCardLink: ["owner", "coach", "customer"],
+  revokeProgressCardLink: ["owner", "coach", "customer"],
+  getSharedProgressCard: "public",
   listExcusedAbsences: ["owner", "coach", "customer"],
   createExcusedAbsence: ["customer"],
   cancelExcusedAbsence: ["customer"],

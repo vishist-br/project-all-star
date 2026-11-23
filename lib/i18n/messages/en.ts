@@ -12,6 +12,8 @@ import { analytics } from "./en/analytics";
 import { absences } from "./en/absences";
 import { credentials } from "./en/credentials";
 
-export const en = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...credentials } as const;
+export const en = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...credentials, ...progressCard } as const;
+import { progressCard } from "./en/progressCard";
+
 
 export type MessageKey = keyof typeof en;

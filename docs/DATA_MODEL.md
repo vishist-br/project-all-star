@@ -1,6 +1,6 @@
 # Data model (final POC model, Sprint 2)
 
-Schema: `prisma/schema.prisma`. Ten migrations in `prisma/migrations/`, the last being `20261123103819_excused_absence_declarations`. Design notes and formulas: `docs/PLAN-POC.md` (section 2 data, section 4 formulas). Database: PostgreSQL 16, Prisma 6.
+Schema: `prisma/schema.prisma`. Eleven migrations in `prisma/migrations/`, the last being `20261123140000_progress_card`. Design notes and formulas: `docs/PLAN-POC.md` (section 2 data, section 4 formulas). Database: PostgreSQL 16, Prisma 6.
 
 ## The tenant_id rule
 
@@ -52,7 +52,8 @@ Sprint 1 tables:
 | `excused_absences` | Absence declared in advance (date range, reason), CHECK `toDate >= fromDate`. The table exists; no screen creates these yet. |
 | `holidays` | Per-tenant calendar, `UNIQUE(tenant_id, date)`. Honoured by the rules and analytics. Owners edit it at `/owner/holidays` (STAR-94; API `listHolidays`, `createHoliday`, `deleteHoliday`, owner only, one day per date, a second add is a 409). |
 | `excused_absences` | Absence declared in advance by a member or parent (date range or one `session_id`, reason, optional note), CHECK `toDate >= fromDate`. `cancelled_at` is set when it is withdrawn (row kept). Migration `20261123103819_excused_absence_declarations` adds `session_id`, `cancelled_at` and two indexes (STAR-95). Screen: `/customer/absences`. |
-| `holidays` | Per-tenant calendar, `UNIQUE(tenant_id, date)`. Honoured by the rules and analytics; no editor screen yet. |
+| `progress_notes` | STAR-96. The coach's note (max 280 characters) for one member and one Monday-start week, `UNIQUE(tenant_id, member_id, week_start)`. Shown on the parent weekly progress card. |
+| `progress_card_links` | STAR-96. A shareable link to one member's weekly card: only the SHA-256 `token_hash` is stored (unique), `expires_at` (30 days), `revoked_at`. The public page `/card/<token>` resolves the tenant from this row and shows a first name only. |
 | `levels`, `member_levels` | Belt or level per sport (`UNIQUE(tenant_id, sport_id, rank)` and `(... name)`) and each member's level history. |
 | `goals`, `achievements` | Goals and basic achievements. Achievements store `measure_unit` (HOURS, DAYS, STREAK_DAYS, SESSIONS) and a value so both hourly and daily-streak views can be derived. |
 | `exercises` | Per-tenant copy of the catalog: `source` FREE_EXERCISE_DB (Unlicense) or ORIGINAL (our drafts, `needs_trainer_review` true until a trainer clears it), `licence`, `source_commit`. `UNIQUE(tenant_id, source, source_id)`. No image column (image licence unclear). |

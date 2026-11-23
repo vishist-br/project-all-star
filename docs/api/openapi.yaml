@@ -1435,6 +1435,167 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
+  /members/{memberId}/progress-card:
+    get:
+      tags: [Members]
+      operationId: getProgressCard
+      x-roles: [owner, coach, customer]
+      summary: The weekly progress card (attendance, level, goals, streak, coach note)
+      description: |
+        Own view only. Positive progress framing: attended sessions and excused absences, no
+        missed-class count. The card carries a first name only (no surname, photo, phone or
+        guardian name); full names inside the coach note and goal titles are scrubbed. `week` is
+        the Monday that starts the week (default: this week).
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - {name: week, in: query, schema: {type: string, format: date}}
+      responses:
+        '200':
+          description: Progress card
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProgressCard'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /members/{memberId}/progress-card/note:
+    get:
+      tags: [Members]
+      operationId: getProgressNote
+      x-roles: [owner, coach]
+      summary: The coach note for a week, as written (for editing)
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - {name: week, in: query, schema: {type: string, format: date}}
+      responses:
+        '200':
+          description: Note (null when none)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProgressNote'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    put:
+      tags: [Members]
+      operationId: saveProgressNote
+      x-roles: [owner, coach]
+      summary: Write, replace or (empty text) remove the coach note for a week
+      description: Owner, or the coach of the member. At most 280 characters. Shown on the parent's card and on shared links.
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProgressNoteInput'}
+      responses:
+        '200':
+          description: Saved note
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProgressNote'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /members/{memberId}/progress-card/links:
+    get:
+      tags: [Members]
+      operationId: listProgressCardLinks
+      x-roles: [owner, coach, customer]
+      summary: Live shared links of a member's card (never includes a token)
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: Active links, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/ProgressCardLink'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    post:
+      tags: [Members]
+      operationId: createProgressCardLink
+      x-roles: [owner, coach, customer]
+      summary: Create an unguessable link to the card for a week
+      description: |
+        The response carries the token once (only its hash is stored). `path` is same-origin
+        (`/card/{token}`); the browser prefixes its own origin. The link works without sign-in,
+        expires after 30 days and can be revoked. At most 10 live links per member (409).
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                week: {type: string, format: date, description: Monday of the week; default this week}
+      responses:
+        '201':
+          description: Link and its one-time token
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CreatedProgressCardLink'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /progress-card-links/{linkId}/revoke:
+    post:
+      tags: [Members]
+      operationId: revokeProgressCardLink
+      x-roles: [owner, coach, customer]
+      summary: Stop a shared link from working (safe to repeat)
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Revoked link
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProgressCardLink'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /progress-cards/{token}:
+    get:
+      tags: [Members]
+      operationId: getSharedProgressCard
+      x-roles: [public]
+      security: []
+      summary: Public weekly card behind an unguessable token
+      description: |
+        No sign-in; the token is the only credential. Unknown, malformed, revoked and expired
+        tokens are all the same 404. Same first-name-only card as getProgressCard; never cached.
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Progress card
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProgressCard'}
+        '404': {$ref: '#/components/responses/NotFound'}
 components:
   securitySchemes:
     bearerAuth:
@@ -2505,6 +2666,78 @@ components:
         reason: {type: string, enum: [exam, illness, festival, travel]}
         note: {type: string, maxLength: 280}
       required: [reason]
+    ProgressCard:
+      type: object
+      required: [firstName, tenantName, weekStart, weekEnd, level, attendance, streak, goals, coachNote]
+      properties:
+        firstName: {type: string, description: First name only}
+        tenantName: {type: string}
+        weekStart: {type: string, format: date}
+        weekEnd: {type: string, format: date}
+        level:
+          type: object
+          nullable: true
+          required: [name, nextName, progressPercent]
+          properties:
+            name: {type: string}
+            nextName: {type: string, nullable: true}
+            progressPercent: {type: number, nullable: true}
+        attendance:
+          type: object
+          required: [attended, held, excused, percent]
+          properties:
+            attended: {type: integer}
+            held: {type: integer, description: Counted sessions held this week (attended plus excused plus not attended)}
+            excused: {type: integer}
+            percent: {type: number, nullable: true}
+        streak:
+          type: object
+          required: [currentDays, longestDays]
+          properties:
+            currentDays: {type: integer}
+            longestDays: {type: integer}
+        goals:
+          type: array
+          items:
+            type: object
+            required: [title, progressPercent, achieved]
+            properties:
+              title: {type: string}
+              progressPercent: {type: number}
+              achieved: {type: boolean}
+        coachNote: {type: string, nullable: true}
+    ProgressNoteInput:
+      type: object
+      required: [note]
+      properties:
+        week: {type: string, format: date, description: Monday of the week; default this week}
+        note: {type: string, maxLength: 280, description: Empty removes the note}
+    ProgressNote:
+      type: object
+      required: [memberId, weekStart, note, updatedAt]
+      properties:
+        memberId: {type: string}
+        weekStart: {type: string, format: date}
+        note: {type: string, nullable: true}
+        updatedAt: {type: string, format: date-time, nullable: true}
+    ProgressCardLink:
+      type: object
+      required: [id, memberId, weekStart, status, expiresAt, createdAt]
+      properties:
+        id: {type: string}
+        memberId: {type: string}
+        weekStart: {type: string, format: date}
+        status: {type: string, enum: [active, revoked, expired]}
+        expiresAt: {type: string, format: date-time}
+        createdAt: {type: string, format: date-time}
+    CreatedProgressCardLink:
+      allOf:
+        - $ref: '#/components/schemas/ProgressCardLink'
+        - type: object
+          required: [token, path]
+          properties:
+            token: {type: string}
+            path: {type: string, description: Same-origin path (card, then the token)}
     ExcusedAbsence:
       type: object
       required: [id, memberId, fromDate, toDate, reason, status]

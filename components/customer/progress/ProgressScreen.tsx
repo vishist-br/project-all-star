@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { addDays } from "@/lib/api/schedule";
 import { listGoals } from "@/lib/api/goals";
 import { getMember } from "@/lib/api/members";
@@ -66,6 +67,7 @@ export async function ProgressScreen({ searchParams }: { searchParams: Search })
       <PageHeader title={t("cp.title")} subtitle={selected.isOwn ? t("cp.subtitle.self") : t("cp.subtitle.child", { name: selected.name })} />
       <ChildSwitcher members={ctx.children} selectedId={selected.id} />
       <Segmented label={t("cp.range.label")} items={period} />
+      <Link className="btn btn-secondary" href="/customer/progress/week" data-testid="weekly-card-link">{t("pc.open")}</Link>
 
       <Card title={t("cp.level.title")}>
         {lvl ? (
