@@ -138,8 +138,10 @@ test("a coach signs off a skill and clears it", async ({ page, request }) => {
   await signIn(page, request, KARATE_COACH);
   await page.goto("/coach/members");
   await page.getByRole("link", { name: /Sample Kid 01/ }).first().click();
+  // The member page compiles on first visit in `next dev`: wait for it rather than for the default 5 s.
+  await expect(page).toHaveURL(/\/coach\/members\/[^/]+$/, { timeout: 60_000 });
   const section = page.getByTestId("skills-section");
-  await expect(section).toBeVisible();
+  await expect(section).toBeVisible({ timeout: 30_000 });
   const todo = section.locator('li[data-signed="false"]').first();
   const name = (await todo.locator("p").first().textContent()) ?? "";
   const count = section.getByText(/^\d of \d skills$/).first();

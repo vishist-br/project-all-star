@@ -124,7 +124,9 @@ export async function openAs(browser: Browser, actor: Actor, viewport = { width:
   const page = await context.newPage();
   retryAborted(page);
   await page.goto(url);
-  await expect(page).toHaveURL(actor.role === "customer" ? /\/customer\/home$/ : new RegExp(`/${actor.role}$`), { timeout: 60_000 });
+  // The role root redirects to its landing screen, so wait for either end of that hop (a poll can miss the middle).
+  const landed = { owner: /\/owner(\/dashboard)?$/, coach: /\/coach(\/today)?$/, customer: /\/customer(\/home)?$/ }[actor.role];
+  await expect(page).toHaveURL(landed, { timeout: 60_000 });
   // Really signed in (not the demo picker): the session cookie exists and the picker is gone.
   expect((await context.cookies()).some((c) => c.name === "as_access")).toBe(true);
   await expect(page.getByRole("combobox", { name: "Business", exact: true })).toHaveCount(0);

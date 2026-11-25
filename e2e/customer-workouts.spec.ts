@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 import { scratchUrl } from "./db";
+import { NAV } from "../lib/nav";
+import { messages } from "../lib/i18n";
 
 // Customer home and workouts (STAR-69): the seeded demo customers (rich seed: an active daily plan,
 // one workout done and one started today, bookings and unread updates).
@@ -28,9 +30,9 @@ const byName = (page: Page, name: string) => page.locator("li[data-status]").fil
 test("home shows today's items, start/complete/skip persist after a reload, with a rest timer", async ({ page, request }) => {
   await signIn(page, request, A1);
 
-  // Customer nav: five items, Home first.
+  // Customer nav: every customer screen in lib/nav.ts order (Home first), then More.
   const nav = page.getByRole("navigation", { name: "Main navigation" }).locator("a");
-  await expect(nav).toHaveText(["⌂Home", "✚Workouts", "◷Schedule", "▲Progress", "◐Classes", "✉Updates", "✎Plan an absence", "☺Profile", "⋯More"]);
+  await expect(nav).toHaveText([...NAV.customer.map((i) => `${i.icon}${messages.en[i.label]}`), "⋯More"]);
 
   // Seeded state today: one done, one in progress, the rest to do.
   const plan = page.getByRole("region", { name: A1.plan });

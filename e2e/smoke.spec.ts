@@ -73,7 +73,7 @@ test.describe(`(d) role screens, ${OPEN_POC ? "open POC mode: the role comes fro
       }
       // Choosing a role in the demo switcher goes straight to that role's home.
       await pick(page, "View as", role);
-      await expect(page).toHaveURL(new RegExp(`/${role}(/|$)`));
+      await expect(page).toHaveURL(new RegExp(`/${role}(/|$)`), { timeout: 60_000 }) // first visit compiles the route in `next dev`;
       const navLinks = page.getByRole("navigation", { name: "Main navigation" }).locator("a");
       await expect(navLinks).toHaveCount(NAV[role].length + 1);
       for (const item of NAV[role]) {
