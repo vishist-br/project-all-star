@@ -17,9 +17,6 @@ async function main() {
       APP_BASE_URL: `http://127.0.0.1:${E2E_PORT}`,
       DEMO_MODE: "true",
       NEXT_TELEMETRY_DISABLED: "1",
-      // A long suite compiles every route in one `next dev` process; with the default heap Next restarts the server
-      // ("approaching the used memory threshold"), which drops requests mid-test (ECONNRESET, pages stuck on Loading).
-      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ""} --max-old-space-size=6144`.trim(),
     },
   });
   const stop = () => {
