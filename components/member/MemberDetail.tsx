@@ -10,6 +10,9 @@ import { Card, StatGrid, StatTile } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Segmented } from "@/components/ui/Tabs";
 import { ErrorState } from "@/components/ui/States";
+import { SkillsPanel } from "@/components/skills/SkillsPanel";
+import { getMemberSkillProgress } from "@/lib/api/skills";
+import type { SkillProgress } from "@/lib/skills/view";
 import { CoachNoteCard } from "@/components/progress-card/CoachNoteCard";
 import { MemberWorkoutResults } from "@/components/send/MemberWorkoutResults";
 import { getProgressNote } from "@/lib/api/progress-card";
@@ -63,6 +66,12 @@ export async function MemberDetail({ role, memberId, days }: { role: "coach" | "
   const series = weeklySeries(stats.weekly, (d) => shortDate(d, locale));
   const marked = stats.attendance.attended + stats.attendance.missed;
   const base = `/${role}/members/${memberId}`;
+  let skills: SkillProgress | null = null;
+  try {
+    skills = (await getMemberSkillProgress(db, principal, memberId, new URLSearchParams())) as unknown as SkillProgress;
+  } catch (err) {
+    console.error("member skills failed", err instanceof Error ? err.message : err);
+  }
   const week = schedule.days.filter((d) => d.isHoliday || d.items.length > 0 || d.sessions.length > 0);
 
   return (
@@ -151,6 +160,8 @@ export async function MemberDetail({ role, memberId, days }: { role: "coach" | "
           <p className="muted">{t("member.level.none")}</p>
         )}
       </Card>
+
+      {skills && skills.checklists.length > 0 && <SkillsPanel memberId={memberId} checklists={skills.checklists} canManage={canManage} />}
 
       <div className={s.cols}>
         <GoalsPanel

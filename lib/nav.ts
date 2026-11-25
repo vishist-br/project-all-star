@@ -22,6 +22,7 @@ export const NAV: Record<Role, readonly NavItem[]> = {
     { section: "members/import", label: "nav.import", icon: "⇪" },
     { section: "batches", label: "nav.batches", icon: "◷", bar: true },
     { section: "coaches", label: "nav.coaches", icon: "★" },
+    { section: "insights", label: "nav.insights", icon: "◈" },
     { section: "workouts", label: "nav.workouts", icon: "✚" },
     { section: "holidays", label: "nav.holidays", icon: "☀" },
     { section: "settings", label: "nav.settings", icon: "⚙", bar: true },

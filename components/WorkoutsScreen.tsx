@@ -105,6 +105,7 @@ export async function WorkoutsScreen({ filters }: { filters: WorkoutFilters }) {
                 </>
               )}
               <p className="small muted">{t("wk.licence", { licence: e.licence })}</p>
+              <p><ButtonLink variant="secondary" href={`/${principal.role}/exercise/${e.id}`}>{t("xp.open")}</ButtonLink></p>
             </details>
           </li>
         ))}

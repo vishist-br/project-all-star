@@ -30,26 +30,26 @@ STAR-103 | Owner and coach record an excused absence on behalf of a family (reus
 STAR-104 | QR check-in (stretch, per-session token, coach confirms) | Customer agent | STAR-100 | wave 2
 STAR-105 | Anonymous class and coach feedback, owner-only trainer scorecard (stretch) | Owner agent | STAR-100 | wave 2
 STAR-106 | Configurable no-show policy engine, off by default (stretch) | Backend agent | STAR-100 | wave 2
-STAR-107 | Workout engine phase 1: per-set logging (WorkoutSet), live workout screen, offline queue | Backend + Customer agents | user go-ahead | proposed, docs/PLAN-WORKOUT-ENGINE.md
-STAR-108 | Workout engine phase 2: metric types and sport packs (gym, karate, badminton, swimming, generic) | Backend agent | STAR-107 | proposed
 STAR-109 | Workout engine phase 3: supersets and rounds in plan builder and live workout | Coach + Customer agents | STAR-108 | proposed
-STAR-110 | Workout engine phase 4: coach send step, member inbox, coach results view | Coach agent | STAR-109 | proposed
 STAR-111 | Workout engine phase 5: group class workout attach, after-class summary, absent catch-up | Coach agent | STAR-110 | proposed
-STAR-112 | Workout engine phase 6: exercise history, records, charts, belt and skill checklists | Customer agent | STAR-108 | proposed
 STAR-113 | Workout engine phase 7: owner class insights and timetable suggestions | Owner agent | STAR-111 | proposed
 STAR-114 | Workout engine phase 8: folders, templates, body measurements, muscle-group volume (gym) | Customer agent | STAR-112 | proposed
 STAR-98 | Parent OTP sign-in (skipped by the user for now; needs messaging provider and DPDP decision) | Auth agent | human decision | blocked
 
 ## In Progress
 
-STAR-107 | Workout engine wave 0: schema, contract and core APIs for per-set logging, metric types, supersets, records, class summaries, skill checklists, bulk send, class insights (phases 1-3 data layer plus 4, 5, 6, 7 APIs) | Backend agent | none | claimed 2026-11-25, branch star-107-workout-engine-core. UI agents start after it merges.
-
+STAR-108 | Workout engine UI A: customer live workout (per-set logging, supersets, rest timer, offline sets) and coach superset plan builder | Frontend agent "Workout" | STAR-107 | claimed 2026-11-25, branch star-108-live-workout
+STAR-110 | Workout engine UI B: coach send step, member inbox, coach results view, class workout attach, finish class and send, member class summaries, public /share/class/[token] | Frontend agent "Send and classes" | STAR-107 | claimed 2026-11-25, branch star-110-send-and-classes
+STAR-112 | Workout engine UI C: exercise Progress/History/How to, belts and skills, owner class insights | Frontend agent "Progress and insights" | STAR-107 | claimed 2026-11-25, branch star-112-history-belts-insights
 
 ## Blocked
 
 (none)
 
 ## Completed
+
+- STAR-99 | Sprint 3 migrations applied to Neon, demo re-seeded, main pushed | Planner | user approval | 2026-11-25 | live pages checked over HTTP (owner/coaches, coach/record, customer/profile, customer/progress/week, owner/holidays, customer/absences all 200).
+- STAR-107 | Workout engine core: schema, contract 0.3.0, 17 operations, seed | Backend agent | none | 2026-11-25 | Merged into main (05b2232), migration 20261125090000_workout_engine_core NOT applied to Neon. vitest 1116 passed, typecheck and lint clean.
 
 - STAR-97 | Coach credential badges (owner-verified) | Coach agent | STAR-95 | wave 2 - claimed by badge agent 2026-11-23 | Notion In Review pending (maintainer sets). Migration 20261123140000_coach_credentials (additive: coach_credentials table; NOT applied to remote). Ops listCoachCredentials, createCoachCredential, setCoachCredentialVerification, deleteCoachCredential (59 total); badges on owner Coaches list and coach detail (verify/unverify), coach My record (add own, shows unverified), customer Profile Your coaches; en/hi/kn (hi/kn need review); rich seed demo credentials. Tests: tests/coach-credentials.test.ts + api-matrix (4 ops); vitest 883 passed, typecheck and lint clean.
 - STAR-96 | Parent weekly progress card (visibility summary, no surveillance wording) | Customer agent | none | wave 2 - claimed by card agent 2026-11-23 | Notion In Review pending (maintainer sets). Migration 20261123140000_progress_card (additive: progress_notes, progress_card_links; NOT applied to any remote DB). Screen /customer/progress/week (sub-view of Progress, link on that page; print layout + share), coach note card on /coach|owner/members/[id], public /card/[token] (first name only, noindex, 30-day expiry, revocable, only a token hash stored). 7 operations (getProgressCard, getProgressNote, saveProgressNote, listProgressCardLinks, createProgressCardLink, revokeProgressCardLink, public getSharedProgressCard); i18n pc.* en/hi/kn (hi/kn need review). tests/progress-card.test.ts (18) + api-matrix entries; typecheck, lint, vitest green.

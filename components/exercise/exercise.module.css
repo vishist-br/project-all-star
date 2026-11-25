@@ -1,0 +1,70 @@
+/* Exercise progress screens. Uses the shared design tokens only, so tenant themes and dark mode just work. */
+.stack { display: grid; gap: var(--s4); min-width: 0; }
+.back { display: inline-flex; align-items: center; gap: var(--s2); min-height: var(--tap); color: var(--primary-text); text-decoration: none; font-weight: 600; width: fit-content; }
+.back:hover { text-decoration: underline; }
+.head h1 { overflow-wrap: anywhere; }
+.sub { margin: var(--s1) 0 0; color: var(--muted); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+
+.tablist { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 3px; background: var(--line); border-radius: var(--r); }
+.tab { display: flex; align-items: center; justify-content: center; min-height: var(--tap); padding: 4px var(--s2); border-radius: var(--r-sm); color: var(--fg); text-decoration: none; font-size: var(--fs-sm); text-align: center; overflow-wrap: anywhere; line-height: 1.25; }
+.tab[aria-selected="true"] { background: var(--card); font-weight: 700; box-shadow: var(--shadow-1); color: var(--primary-text); }
+
+.picker { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: end; }
+.picker label { display: grid; gap: var(--s1); flex: 1 1 12rem; min-width: 0; font-size: var(--fs-sm); font-weight: 600; }
+
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s2); }
+.tile { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s3); display: grid; gap: 2px; align-content: start; min-width: 0; box-shadow: var(--shadow-1); }
+.tileLabel { font-size: var(--fs-xs); color: var(--muted); overflow-wrap: anywhere; line-height: 1.3; }
+.tileValue { font-size: 1.2rem; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.tileSub { font-size: var(--fs-xs); color: var(--muted); }
+@media (min-width: 480px) { .tileValue { font-size: var(--fs-kpi); } }
+
+.caption { margin: 0; font-size: var(--fs-md); font-weight: 600; overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--s2); list-style: none; margin: 0; padding: 0; }
+.chip { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap); padding: 0 var(--s4); border-radius: 999px; border: 1px solid var(--line-strong); background: var(--card); color: var(--fg); text-decoration: none; font-size: var(--fs-sm); font-weight: 600; text-align: center; max-width: 100%; overflow-wrap: anywhere; }
+.chip[aria-current="true"] { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); }
+.rangeRow { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s3); align-items: center; }
+.rangeLink { display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 var(--s1); font-size: var(--fs-sm); color: var(--primary-text); }
+.rangeLink[aria-current="true"] { font-weight: 700; text-decoration: none; color: var(--fg); border-bottom: 2px solid var(--primary); }
+.best { display: inline-flex; align-items: center; gap: var(--s2); margin: 0; }
+.bestMark { color: var(--ok); }
+
+.records { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+.records th, .records td { padding: var(--s3) 0; text-align: start; border-bottom: 1px solid var(--line); }
+.records tr:last-child th, .records tr:last-child td { border-bottom: 0; }
+.records td:nth-child(2) { font-weight: 700; font-variant-numeric: tabular-nums; }
+.records td:last-child { color: var(--muted); text-align: end; }
+.records thead th { color: var(--muted); font-weight: 600; font-size: var(--fs-xs); }
+
+.sessions { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.sessionHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); margin-bottom: var(--s2); }
+.sessionHead h3 { margin: 0; font-size: var(--fs-md); }
+.sets { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+.set { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); font-variant-numeric: tabular-nums; }
+.setNo { color: var(--muted); min-width: 4.5ch; font-size: var(--fs-sm); }
+.setVal { font-weight: 600; overflow-wrap: anywhere; }
+.note { margin: var(--s2) 0 0; color: var(--muted); font-size: var(--fs-sm); }
+.more { display: flex; justify-content: center; }
+
+.demo { display: grid; place-items: center; text-align: center; gap: var(--s1); min-height: 9rem; padding: var(--s4); border: 2px dashed var(--line-strong); border-radius: var(--r-lg); background: var(--card); color: var(--muted); }
+.demoIcon { font-size: 2rem; line-height: 1; }
+.review { margin: 0; padding: var(--s3); border-radius: var(--r); background: var(--warn-soft); color: var(--warn); font-size: var(--fs-sm); }
+.facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: var(--s3); margin: 0; }
+.facts div { display: grid; gap: 2px; }
+.facts dt { color: var(--muted); font-size: var(--fs-sm); }
+.facts dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.steps { margin: 0; padding-inline-start: 1.4rem; display: grid; gap: var(--s2); }
+.badges { display: flex; flex-wrap: wrap; gap: var(--s2); list-style: none; margin: 0; padding: 0; }
+.h3 { margin: var(--s3) 0 var(--s2); font-size: var(--fs-sm); color: var(--muted); font-weight: 600; }
+
+/* Exercises overview */
+.exList { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.exRow { display: grid; grid-template-columns: minmax(0, 1fr) 6.5rem; gap: var(--s3); align-items: center; text-decoration: none; color: inherit; min-height: var(--tap); }
+.exRow:hover .exName { text-decoration: underline; }
+.exName { font-weight: 700; overflow-wrap: anywhere; }
+.exMeta { color: var(--muted); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.exSpark { width: 100%; height: 32px; color: var(--primary-text); }
+.exSpark :global(.sparkline) { width: 100%; height: 32px; }
+
+.skeleton { display: grid; gap: var(--s4); }
+
