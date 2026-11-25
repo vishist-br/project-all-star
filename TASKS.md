@@ -42,7 +42,7 @@ STAR-98 | Parent OTP sign-in (skipped by the user for now; needs messaging provi
 
 ## In Progress
 
-(none)
+STAR-107 | Workout engine wave 0: schema, contract and core APIs for per-set logging, metric types, supersets, records, class summaries, skill checklists, bulk send, class insights (phases 1-3 data layer plus 4, 5, 6, 7 APIs) | Backend agent | none | claimed 2026-11-25, branch star-107-workout-engine-core. UI agents start after it merges.
 
 
 ## Blocked
