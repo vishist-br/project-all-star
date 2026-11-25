@@ -168,7 +168,11 @@ test("a parent with several children switches between them", async ({ page, requ
     const group = page.getByRole("group", { name: "Choose whose day to view" });
     await expect(group.getByRole("button")).toHaveCount(2);
     await expect(page.getByRole("main")).toContainText("Sample Kid 01's day");
-    await group.getByRole("button", { name: "Sample Kid 02" }).click();
+    // A click that lands before the page has hydrated is swallowed: click again until the choice shows.
+    await expect(async () => {
+      await group.getByRole("button", { name: "Sample Kid 02" }).click();
+      await expect(group.getByRole("button", { name: "Sample Kid 02" })).toHaveAttribute("aria-pressed", "true", { timeout: 5_000 });
+    }).toPass({ timeout: 60_000 });
     await expect(page.getByRole("main")).toContainText("Sample Kid 02's day");
     await expect(group.getByRole("button", { name: "Sample Kid 02" })).toHaveAttribute("aria-pressed", "true");
     // The choice sticks across screens.

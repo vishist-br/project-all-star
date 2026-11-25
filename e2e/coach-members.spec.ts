@@ -136,7 +136,8 @@ test.describe("coach members at 360px", () => {
     const ctx = await browser.newContext({ viewport: { width: 360, height: 780 } });
     const customer = await ctx.newPage();
     await customer.goto(url);
-    await expect(customer).toHaveURL(/\/customer\/home$/);
+    // The link exchange and the first compile of the customer home can take a while in `next dev`.
+    await expect(customer).toHaveURL(/\/customer\/home$/, { timeout: 90_000 });
     await expect(customer.getByRole("region", { name: PLAN })).toBeVisible();
     await customer.goto("/customer/updates");
     await expect(customer.getByText(`New goal: ${goalTitle}`)).toBeVisible();

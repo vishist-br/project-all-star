@@ -147,7 +147,7 @@ export function retryAborted(page: Page) {
         return await original(url, options);
       } catch (e) {
         last = e;
-        if (!/ERR_ABORTED|frame was detached|Timeout \d+ms exceeded/.test(String((e as Error).message))) throw e;
+        if (!/ERR_ABORTED|frame was detached|interrupted by another navigation|Timeout \d+ms exceeded/.test(String((e as Error).message))) throw e;
       }
     }
     throw last;
