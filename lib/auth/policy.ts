@@ -99,6 +99,18 @@ export const OPERATION_ROLES = {
   sendPlanToMembers: ["owner", "coach"],
   getPlanResults: ["owner", "coach"],
   getClassInsights: ["owner"],
+  // STAR-114: gym extras (plan folders and templates, body measurements, muscle-group volume)
+  listPlanFolders: ["owner", "coach"],
+  createPlanFolder: ["owner", "coach"],
+  renamePlanFolder: ["owner", "coach"],
+  deletePlanFolder: ["owner", "coach"],
+  movePlanToFolder: ["owner", "coach"],
+  duplicatePlan: ["owner", "coach"],
+  listPlanTemplates: ["owner", "coach"],
+  listBodyMeasurements: ["owner", "coach", "customer"],
+  recordBodyMeasurement: ["customer"],
+  deleteBodyMeasurement: ["customer"],
+  getMuscleVolume: ["owner", "coach", "customer"],
 } as const satisfies Record<string, RoleRule>;
 
 export type OperationId = keyof typeof OPERATION_ROLES;

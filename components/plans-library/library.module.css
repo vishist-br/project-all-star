@@ -1,0 +1,14 @@
+/* Plans library: folders as collapsible groups and the templates section. Tokens from globals.css. */
+.newFolder { display: flex; flex-wrap: wrap; align-items: end; gap: var(--s3); margin: 0 0 var(--s4); }
+.newFolder .field { flex: 1 1 12rem; min-width: 0; }
+.groups { display: grid; gap: var(--s4); }
+.group { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); min-width: 0; }
+.summary { padding: 0 var(--s3); min-height: var(--tap); display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); cursor: pointer; font-weight: 700; font-size: var(--fs-md); min-width: 0; overflow-wrap: anywhere; }
+.count { font-weight: 400; font-size: var(--fs-sm); color: var(--muted); }
+.owner { font-weight: 400; font-size: var(--fs-sm); color: var(--muted); }
+.folderTools { display: flex; flex-wrap: wrap; gap: var(--s1); }
+.groupBody { padding: 0 var(--s3) var(--s3); display: grid; gap: var(--s3); }
+.hint { margin: 0; color: var(--muted); font-size: var(--fs-sm); }
+.actions { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.sheetBody { display: grid; gap: var(--s3); }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }

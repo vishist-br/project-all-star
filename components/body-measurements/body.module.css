@@ -1,0 +1,43 @@
+/* Body measurements and muscle volume screens. Design tokens only, so tenant themes and dark mode just work. */
+.stack { display: grid; gap: var(--s4); min-width: 0; }
+.back { display: inline-flex; align-items: center; gap: var(--s2); min-height: var(--tap); color: var(--primary-text); text-decoration: none; font-weight: 600; width: fit-content; }
+.back:hover { text-decoration: underline; }
+.meta { margin: 0; color: var(--muted); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2); }
+.tile { border: 1px solid var(--line); border-radius: var(--r); padding: var(--s3); display: grid; gap: 2px; min-width: 0; background: var(--bg); }
+.tileLabel { font-size: var(--fs-xs); color: var(--muted); }
+.tileValue { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.tileSub { font-size: var(--fs-xs); color: var(--muted); }
+@media (min-width: 480px) { .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+.form { display: grid; gap: var(--s3); }
+.formGrid { align-items: end; display: grid; gap: var(--s3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.formGrid > :first-child { grid-column: 1 / -1; }
+.more { display: grid; gap: var(--s3); }
+.more > .formGrid { margin-top: var(--s3); }
+.more > .formGrid > :first-child { grid-column: auto; }
+.summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; color: var(--primary-text); font-weight: 600; }
+
+.chips { display: flex; flex-wrap: wrap; gap: var(--s2); list-style: none; margin: 0 0 var(--s3); padding: 0; }
+.chip { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap); padding: 0 var(--s4); border-radius: 999px; border: 1px solid var(--line-strong); background: var(--card); color: var(--fg); text-decoration: none; font-size: var(--fs-sm); font-weight: 600; max-width: 100%; }
+.chip[aria-current="true"] { background: var(--primary); border-color: var(--primary); color: var(--primary-contrast); }
+
+.history { list-style: none; margin: 0; padding: 0; display: grid; }
+.entry { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); padding: var(--s3) 0; border-bottom: 1px solid var(--line); min-width: 0; }
+.entry:last-child { border-bottom: 0; }
+.entryText { display: grid; gap: 2px; min-width: 0; flex: 1 1 12rem; }
+.entryDate { font-weight: 700; }
+.entryNums { color: var(--muted); font-size: var(--fs-sm); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.entryNote { color: var(--muted); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+
+/* Muscle volume: a compact horizontal bar list */
+.bars { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.bar { display: grid; gap: 4px; min-width: 0; }
+.barHead { display: flex; justify-content: space-between; gap: var(--s2); align-items: baseline; font-size: var(--fs-sm); }
+.barName { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.barNum { color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+.track { height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.fill { display: block; height: 100%; border-radius: 999px; background: var(--primary); min-width: 4px; }
+.barSub { font-size: var(--fs-xs); color: var(--muted); }
+.rangeRow { display: flex; flex-wrap: wrap; gap: var(--s2); }

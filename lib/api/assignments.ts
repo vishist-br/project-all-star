@@ -141,11 +141,11 @@ export async function createPlanAssignments(db: TenantClient, p: Principal, body
   const note = textField(v, body, "note", "", 280);
   v.throwIfAny();
 
-  const plan = await db.workoutPlan.findFirst({ where: { id: planId! }, select: { id: true, title: true, status: true, version: true } });
+  const plan = await db.workoutPlan.findFirst({ where: { id: planId! }, select: { id: true, title: true, status: true, version: true, isTemplate: true } });
   if (!plan) throw new ApiError("not_found", "Plan not found");
   const mine = await db.workoutPlan.findFirst({ where: { id: plan.id, ...planWhere(p) }, select: { id: true } });
   if (!mine) throw new ApiError("forbidden", "This plan is not yours");
-  if (plan.status !== "ACTIVE") throw new ApiError("conflict", "Only an active plan can be assigned");
+  if (plan.status !== "ACTIVE" || plan.isTemplate) throw new ApiError("conflict", "Only an active plan can be assigned (a template is a starting point: use it to make a plan first)");
 
   const inTenant = await db.member.findMany({ where: { id: { in: memberIds } }, select: { id: true, isActive: true } });
   if (inTenant.length !== memberIds.length) throw new ApiError("not_found", "Member not found");
