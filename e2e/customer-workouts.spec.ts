@@ -137,6 +137,9 @@ test("workouts screen lists the assigned plans and the coming days; exercise det
   // Exercise detail from a coming-days link.
   await page.locator("ol > li ul a").first().click();
   await expect(page).toHaveURL(/\/customer\/exercise\//);
+  // The exercise page opens on Progress; the plan item and the catalog steps live under the How to tab.
+  await page.getByRole("tab", { name: "How to" }).click();
+  await expect(page).toHaveURL(/tab=howto/);
   await expect(page.getByRole("heading", { name: "In your plan" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "How to do it" })).toBeVisible();
   await expect(page.getByText("Main muscles")).toBeVisible();

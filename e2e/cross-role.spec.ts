@@ -262,8 +262,7 @@ test("(2) session: roll call with an excused absence updates Progress and the ow
     await sheet.getByRole("button", { name: "Save" }).click();
     await ex(rowMain(cp, "Sample Member 04")).toHaveAttribute("data-status", "excused");
     await ex(cp.getByTestId("sync-status")).toContainText("All changes saved");
-    await cp.getByRole("button", { name: "Complete session" }).click();
-    await ex(cp.getByText("Session completed. Nice work!")).toBeVisible();
+    await finishClass(cp);
 
     // Member Progress: attended +1, missed +1 (absent only), excused +1 and never missed.
     const a2 = await countsOf(c2.page);
@@ -315,11 +314,15 @@ test("(3) booking: full class waitlists the second customer, a cancel promotes, 
   const b = await openAs(browser, PEOPLE.gymM4, PHONE);
   const owner = await openAs(browser, PEOPLE.gymOwner);
   try {
-    // A one-seat class that starts in ~30 hours (IST), found again by its id.
-    const start = new Date(Date.now() + 330 * 60_000 + 30 * 3_600_000);
+    // A one-seat class at 23:00 IST, the first such slot at least 24 hours away (so 24 to 48 hours ahead:
+    // outside the 120 minute window, inside a 48 hour one). A fixed late slot never overlaps the seeded
+    // day sessions, whatever the time of day the test runs. Found again by its id.
+    const ist = new Date(Date.now() + 330 * 60_000 + 24 * 3_600_000); // IST wall clock, shifted into UTC fields
+    const start = new Date(Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth(), ist.getUTCDate(), 23, 0));
+    if (start.getTime() < ist.getTime()) start.setUTCDate(start.getUTCDate() + 1);
     const date = start.toISOString().slice(0, 10);
-    const hhmm = start.toISOString().slice(11, 16);
-    const end = new Date(start.getTime() + 3_600_000).toISOString().slice(11, 16);
+    const hhmm = "23:00";
+    const end = "23:30";
     const url = await scheduleSession(coach.page, { batch: "Morning Strength", date, start: hhmm, end, capacity: 1 });
     const sessionId = url.split("/").pop()!;
     const card = (p: Page) => p.locator(`li[data-session-id="${sessionId}"]`);
@@ -357,7 +360,7 @@ test("(3) booking: full class waitlists the second customer, a cancel promotes, 
     await b.page.goto("/customer/updates");
     await ex(b.page.getByText(/Good news: a spot opened up in Morning Strength Floor/)).toBeVisible();
 
-    // Owner sets the cancellation window to 48 hours in Settings: B (class in 30 hours) can no longer cancel.
+    // Owner sets the cancellation window to 48 hours in Settings: B (class 24 to 48 hours away) can no longer cancel.
     const setWindow = async (minutes: string) => {
       const p = owner.page;
       await p.goto("/owner/settings");
@@ -585,7 +588,8 @@ test("(7a) offline: coach roll call is kept on the device and syncs end to end",
     await row(cp, "Sample Member 01").locator("button[data-status]").click();
     await ex(row(cp, "Sample Member 01").locator("button[data-status]")).toHaveAttribute("data-status", "absent");
     await ex(cp.getByTestId("sync-status")).toContainText("saved on this device");
-    await ex(cp.getByRole("button", { name: "Complete session" })).toBeDisabled();
+    // A group class is finished with "Finish class and send"; offline it is allowed and queues on the device.
+    await ex(cp.getByRole("button", { name: "Finish class and send" })).toBeEnabled();
     const queued = await cp.evaluate(() => Object.entries(localStorage).filter(([k]) => k.startsWith("rollcall.queue")).flatMap(([, v]) => JSON.parse(v)));
     expect(queued.length).toBe(2);
 
@@ -602,8 +606,7 @@ test("(7a) offline: coach roll call is kept on the device and syncs end to end",
     const sessionId = cp.url().split("/").pop()!;
     const saved = await withDb((db) => db.attendance.count({ where: { sessionId } }));
     expect(saved).toBe(3);
-    await cp.getByRole("button", { name: "Complete session" }).click();
-    await ex(cp.getByText("Session completed. Nice work!")).toBeVisible();
+    await finishClass(cp);
 
     await finish(coach, owner);
   } finally {
@@ -753,4 +756,12 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 360, height: 780 
       }
     });
   }
+}
+
+/** Finishes a group class through the confirm sheet ("Finish class and send") and waits for the toast. */
+async function finishClass(page: Page) {
+  await page.getByRole("button", { name: "Finish class and send" }).click();
+  const sheet = page.getByRole("dialog", { name: "Finish class and send" });
+  await sheet.getByRole("button", { name: "Finish and send" }).click();
+  await ex(page.getByText("Class finished", { exact: false }).first()).toBeVisible();
 }

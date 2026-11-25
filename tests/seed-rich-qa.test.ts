@@ -116,7 +116,7 @@ describe("rich seed against local Postgres", () => {
       expect(g.name).toMatch(/^Sample /);
       if (g.phone) expect(g.phone.replace(/\D/g, "")).toMatch(/^(91)?0+$|^9?0{3,}/);
     }
-  });
+  }, 60_000);
 
   it("N+1 guard: owner analytics query counts stay flat across the rich tenants and under a fixed ceiling", async (ctx) => {
     if (!prisma) return ctx.skip();

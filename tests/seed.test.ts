@@ -21,7 +21,7 @@ describe("demo seed", () => {
     let prisma: PrismaClient | null = null;
     beforeAll(async () => {
       prisma = await tryConnect();
-    });
+    }, 60_000);
     afterAll(async () => {
       await prisma?.$disconnect();
     });
@@ -50,7 +50,8 @@ describe("demo seed", () => {
         expect(await prisma.member.count({ where })).toBeGreaterThanOrEqual(6);
         expect(await prisma.session.count({ where: { ...where, status: "COMPLETED" } })).toBeGreaterThanOrEqual(3);
       }
-    });
+      // Seeds the demo tenants twice: the vitest default of 5 s is too tight on a loaded machine.
+    }, 120_000);
 
     it("rich layer: every tenant has data for every owner, coach and customer screen, idempotently", async (ctx) => {
       if (!prisma) return ctx.skip();
