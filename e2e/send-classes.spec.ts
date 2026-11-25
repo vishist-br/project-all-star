@@ -1,5 +1,5 @@
-import { expect as baseExpect, test, type Browser, type Page } from "@playwright/test";
-import { PEOPLE, closeAll, expect as ex, noHorizontalScroll, openAs, tenantId, uniq, withDb, type Session } from "./helpers/cross-role";
+import { expect as baseExpect, test, type Page } from "@playwright/test";
+import { PEOPLE, closeAll, noHorizontalScroll, openAs, tenantId, uniq, withDb } from "./helpers/cross-role";
 import { BASE_URL } from "./helpers/cross-role";
 
 // STAR-110: coach send step, member inbox, class workout and finish, class summary, public share page.
@@ -65,6 +65,12 @@ async function plan(title: string) {
   });
 }
 
+/** With E2E_SHOTS=<dir>, saves a full-page screenshot (used to look at the screens at 360px). */
+async function shot(page: Page, name: string) {
+  const dir = process.env.E2E_SHOTS;
+  if (dir) await page.screenshot({ path: `${dir}/${name}.png`, fullPage: true });
+}
+
 const pick = (page: Page, name: string) => page.getByRole("checkbox", { name: new RegExp(name) });
 
 test("coach sends a plan to two members and sees one result per member", async ({ browser }) => {
@@ -86,6 +92,7 @@ test("coach sends a plan to two members and sees one result per member", async (
     await expect(page.getByRole("button", { name: "Choose members to send to" })).toBeDisabled();
     await noHorizontalScroll(page);
 
+    await shot(page, "send-1-empty");
     await page.getByLabel("Find a member").fill("Sample Member 0");
     await pick(page, "Sample Member 01").check();
     await pick(page, "Sample Member 02").check();
@@ -96,12 +103,14 @@ test("coach sends a plan to two members and sees one result per member", async (
     await expect(preview.getByText("Start on Monday, easy pace")).toBeVisible();
     await expect(preview.getByText(/^New from Coach /)).toBeVisible();
 
+    await shot(page, "send-2-filled");
     await page.getByRole("button", { name: "Send to 2 members" }).click();
     const results = page.getByTestId("send-results");
     await expect(results.getByRole("heading", { name: "Sent to 2 members" })).toBeVisible();
     const list = results.getByRole("list", { name: "Results per member" });
     await expect(list.getByRole("listitem")).toHaveCount(2);
     await expect(list.getByText("Sent", { exact: true })).toHaveCount(2);
+    await shot(page, "send-3-results");
     await noHorizontalScroll(page);
 
     // Sending the same plan with the same start date again changes nothing and says why.
@@ -120,6 +129,7 @@ test("coach sends a plan to two members and sees one result per member", async (
     await page.getByRole("button", { name: "Send to 1 member" }).click();
     await expect(page.getByText("Already has an active plan", { exact: true })).toBeVisible();
     await expect(page.getByText(/already follows this plan from another start date/)).toBeVisible();
+    await shot(page, "send-4-skipped");
 
     // The "Copy link for WhatsApp" link is the customer workouts page: no token.
     await page.getByRole("button", { name: "Send to more members" }).click();
@@ -141,6 +151,7 @@ test("member sees the new plan in the inbox with the coach note, and it clears o
     await expect(card.getByText("Start on Monday, easy pace")).toBeVisible();
     await expect(card.getByRole("link", { name: "Start workout" })).toHaveAttribute("href", "/customer/workouts");
     await card.getByText("Preview exercises").click();
+    await shot(page, "inbox-home");
     await expect(card.getByRole("list", { name: `Exercises in ${state.planTitle}` }).getByRole("listitem").first()).toBeVisible();
     await noHorizontalScroll(page);
 
@@ -189,7 +200,9 @@ test("coach sees the member's logged sets in results and can reply with a note",
     await expect(page.getByText(/rank|leaderboard|behind|worst/i)).toHaveCount(0);
     await noHorizontalScroll(page);
 
+    await shot(page, "results");
     await card.getByRole("button", { name: "Reply with a note" }).click();
+    await shot(page, "results-reply");
     await page.getByLabel("Your note").fill("Great control on the rows");
     await page.getByRole("button", { name: "Send note" }).click();
     await expect(page.getByText("Note sent to Sample")).toBeVisible();
@@ -208,7 +221,7 @@ test("coach sees the member's logged sets in results and can reply with a note",
   const m2 = await openAs(browser, PEOPLE.gymM1, PHONE);
   try {
     await m2.page.goto("/customer/updates");
-    await expect(m2.page.getByText("Great control on the rows")).toBeVisible();
+    await expect(m2.page.getByText("Great control on the rows").first()).toBeVisible();
   } finally {
     await closeAll(m2);
   }
@@ -218,7 +231,7 @@ test("coach sees the member's logged sets in results and can reply with a note",
 async function startedClass() {
   return withDb(async (db) => {
     const tid = await tenantId(db, "demo-karate");
-    const ref = await db.session.findFirstOrThrow({ where: { tenantId: tid, planDayId: { not: null }, batch: { isGroupClass: true } }, orderBy: { startsAt: "desc" } });
+    const ref = await db.session.findFirstOrThrow({ where: { tenantId: tid, planDayId: { not: null }, batch: { kind: "GROUP_CLASS" } }, orderBy: { startsAt: "desc" } });
     const now = Date.now();
     const s = await db.session.create({
       data: { tenantId: tid, batchId: ref.batchId, coachId: ref.coachId, startsAt: new Date(now - 20 * 60_000), endsAt: new Date(now + 40 * 60_000), status: "SCHEDULED", title: `E2E class ${uniq()}` },
@@ -252,6 +265,7 @@ test("coach finishes a karate class; the parent sees the summary and shares it w
     const page = coach.page;
     await finishThroughUi(page, state.sessionId, { attach: true });
     await noHorizontalScroll(page);
+    await shot(page, "class-session");
     await page.getByRole("button", { name: "Finish class and send" }).click();
     const sheet = page.getByRole("dialog", { name: "Finish class and send" });
     await expect(sheet.getByText(/present get today's class summary/)).toBeVisible();
@@ -270,6 +284,7 @@ test("coach finishes a karate class; the parent sees the summary and shares it w
   // The parent (Sample Kid 01 is on the class) sees it on Home, in Updates and under Classes.
   const parent = await openAs(browser, PEOPLE.karateParent, PHONE);
   try {
+    await parent.context.grantPermissions(["clipboard-read", "clipboard-write"]);
     const page = parent.page;
     await page.goto("/customer/home");
     const card = page.getByRole("article").filter({ hasText: "Class summary, just now" });
@@ -278,11 +293,13 @@ test("coach finishes a karate class; the parent sees the summary and shares it w
     await expect(card.getByText("Ten slow front kicks each side")).toBeVisible();
     await expect(card.getByText("What you did")).toBeVisible();
     await expect(card.getByText("Practise at home")).toBeVisible();
+    await shot(page, "summary-home");
     await noHorizontalScroll(page);
 
     await page.goto("/customer/classes");
     await expect(page.getByRole("heading", { level: 1, name: "Classes" })).toBeVisible();
     await page.getByRole("link", { name: "Open summary" }).first().click();
+    await page.waitForURL(/\/customer\/classes\/.+/);
     await expect(page.getByText("Lovely focus today, everyone")).toBeVisible();
 
     await page.getByRole("button", { name: "Share with family" }).click();
@@ -291,7 +308,8 @@ test("coach finishes a karate class; the parent sees the summary and shares it w
     state.shareUrl = (await manual.count()) > 0 ? await manual.inputValue() : await page.evaluate(() => navigator.clipboard.readText());
     expect(state.shareUrl).toMatch(/\/share\/class\/[A-Za-z0-9_-]{20,}$/);
     await page.goto("/customer/updates");
-    await expect(page.getByText("Class summaries")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Class summaries" })).toBeVisible();
+    await shot(page, "updates");
     parent.hygiene.assertClean();
   } finally {
     await closeAll(parent);
@@ -312,6 +330,7 @@ test("the public share page shows first names only, is not indexed, and a revoke
     const body = await page.locator("body").innerText();
     expect(body).not.toMatch(/Sample Kid 01/);
     expect(body).toMatch(/Great work in class, Sample/);
+    await shot(page, "share-public");
     await expect(page.getByRole("navigation")).toHaveCount(0);
     await expect(page.locator(".demo-switcher")).toHaveCount(0);
     await noHorizontalScroll(page);
@@ -324,6 +343,7 @@ test("the public share page shows first names only, is not indexed, and a revoke
     await expect(page.getByRole("heading", { name: "This link is not available" })).toBeVisible();
     await expect(page.getByText(/This link has expired\. Ask the academy for a new one\./)).toBeVisible();
     await expect(page.getByText("Lovely focus today")).toHaveCount(0);
+    await shot(page, "share-expired");
     await page.goto("/share/class/not-a-real-token-0123456789abcdef");
     await expect(page.getByRole("heading", { name: "This link is not available" })).toBeVisible();
     await noHorizontalScroll(page);
@@ -356,5 +376,3 @@ test("a class finished with no signal is saved on the device and publishes when 
     await closeAll(coach);
   }
 });
-
-export type { Browser, Session };

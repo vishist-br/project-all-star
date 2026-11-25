@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { LOCALES, messages, translate, type MessageKey } from "../lib/i18n";
+import { LOCALES, messages, translate } from "../lib/i18n";
 import { sendClasses } from "../lib/i18n/messages/en/send-classes";
 import { describeUpdate } from "../lib/customer/updates";
 
-const keys = Object.keys(sendClasses) as MessageKey[];
+const keys = Object.keys(sendClasses) as (keyof typeof sendClasses)[];
 
 describe("send and class strings", () => {
   it("exist in every language with the same placeholders", () => {
