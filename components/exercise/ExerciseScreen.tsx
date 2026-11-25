@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { tenantDate } from "@/lib/api/pagination";
 import { getExercise } from "@/lib/api/exercises";
-import { addDays, getMemberSchedule } from "@/lib/api/schedule";
+import { addDays, loadScheduledEntries } from "@/lib/api/schedule";
 import { getExerciseHistory } from "@/lib/api/workout-sets";
 import { ApiError } from "@/lib/auth/errors";
 import { checkRole } from "@/lib/auth/guard";
@@ -168,13 +168,16 @@ export async function ExerciseScreen({ role, exerciseId, search }: { role: Role;
   );
 
   if (tab === "howto") {
-    let planItem: Awaited<ReturnType<typeof getMemberSchedule>>["days"][number]["items"][number] | undefined;
+    let planItem: { planTitle: string; sets: number | null; reps: number | null; durationSeconds: number | null; restSeconds: number | null; notes: string | null } | undefined;
     if (role === "customer" && memberId) {
       try {
         checkRole(principal, "getMemberSchedule");
-        const schedule = await getMemberSchedule(db, principal, memberId, new URLSearchParams({ from: todayStr, to: addDays(todayStr, 13) }));
-        const entries = schedule.days.flatMap((d) => d.items);
-        planItem = entries.find((i) => itemId && i.planItemId === itemId) ?? entries.find((i) => i.exerciseId === exerciseId);
+        // Only the plan entries of the next two weeks are needed, not sessions, bookings or holidays (STAR-102).
+        const entries = (await loadScheduledEntries(db, [memberId], todayStr, addDays(todayStr, 13))).sort(
+          (x, y) => x.date.localeCompare(y.date) || x.planTitle.localeCompare(y.planTitle) || x.item.position - y.item.position,
+        );
+        const hit = entries.find((e) => itemId && e.item.id === itemId) ?? entries.find((e) => e.item.exerciseId === exerciseId);
+        planItem = hit && { planTitle: hit.planTitle, ...hit.item };
       } catch {
         planItem = undefined;
       }

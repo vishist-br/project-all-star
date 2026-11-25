@@ -30,9 +30,9 @@ import { loadAttendanceMap, loadMembers, loadSessions, type MemberRow } from "..
 import type { TenantClient } from "../tenant-scope";
 import { dateToDb } from "../workouts/validate";
 import { buildCoachStats, tenantCoaches } from "./coaches";
-import { holidayDates } from "./member-stats";
+import { sharedHolidayDates, sharedScheduledEntries } from "./request-shared";
 import { enumParam, tenantDate } from "./pagination";
-import { STATS_MAX_DAYS, addDays, loadScheduledEntries, parseRange, spanDays, startOfDay, type ScheduledEntry } from "./schedule";
+import { STATS_MAX_DAYS, addDays, parseRange, spanDays, startOfDay, type ScheduledEntry } from "./schedule";
 
 const DAY_MS = 86_400_000;
 const ENGAGED_DAYS = 14;
@@ -124,13 +124,13 @@ async function computeOverviewUncached(db: TenantClient, from: string, to: strin
     loadMembers(db),
     loadSessions(db, prev.from, to),
     loadAttendanceMap(db, prev.from, to),
-    holidayDates(db, prev.from, to),
+    sharedHolidayDates(db, today, prev.from, to),
     db.batch.findMany({ select: { id: true, name: true, kind: true, capacity: true } }),
   ]);
   const life = new Map(members.map((m) => [m.id, m]));
   const workoutTo = to < today ? to : today;
   const [rawEntries, engagedNow, engagedPrev, assignments, bookingGroups] = await Promise.all([
-    prev.from <= workoutTo ? loadScheduledEntries(db, members.map((m) => m.id), prev.from, workoutTo) : Promise.resolve([]),
+    prev.from <= workoutTo ? sharedScheduledEntries(db, today, members.map((m) => m.id), members.map((m) => m.id), prev.from, workoutTo) : Promise.resolve([]),
     engagedMembers(db, members, to, today),
     engagedMembers(db, members, prev.to, today),
     db.planAssignment.groupBy({
@@ -287,11 +287,11 @@ export async function getOwnerTrends(db: TenantClient, params: URLSearchParams, 
     loadMembers(db),
     loadSessions(db, first, today),
     loadAttendanceMap(db, first, today),
-    holidayDates(db, first, today),
+    sharedHolidayDates(db, today, first, today),
     db.attendance.findMany({ where: { status: "PRESENT", session: { startsAt: dayRange(first, today) } }, select: { memberId: true, session: { select: { startsAt: true } } } }),
   ]);
   const life = new Map(members.map((m) => [m.id, m]));
-  const entries = aliveEntries(await loadScheduledEntries(db, members.map((m) => m.id), first, today), life);
+  const entries = aliveEntries(await sharedScheduledEntries(db, today, members.map((m) => m.id), members.map((m) => m.id), first, today), life);
   const lifeRows = members.map(lifeOf);
 
   const points = buckets.map((b) => {
@@ -372,7 +372,7 @@ export async function getOwnerInsights(db: TenantClient, now = new Date()) {
 
   const [{ dto: overview, coachSessions, members }, holidays, markRows, lastLogs] = await Promise.all([
     computeOverview(db, p30.from, p30.to, now),
-    holidayDates(db, lookFrom, today),
+    sharedHolidayDates(db, today, lookFrom, today),
     db.attendance.findMany({
       where: { session: { status: "COMPLETED", startsAt: dayRange(lookFrom, today) } },
       select: { memberId: true, status: true, session: { select: { startsAt: true } } },
@@ -404,7 +404,7 @@ export async function getOwnerInsights(db: TenantClient, now = new Date()) {
     if (d && d > (lastActive.get(g.memberId) ?? "")) lastActive.set(g.memberId, d);
   }
 
-  const entries = aliveEntries(await loadScheduledEntries(db, [...activeIds], winFrom, today), life);
+  const entries = aliveEntries(await sharedScheduledEntries(db, today, members.map((m) => m.id), [...activeIds], winFrom, today), life);
   const perMember = new Map<string, { scheduled: number; completed: number }>();
   for (const e of entries) {
     const t = perMember.get(e.memberId) ?? { scheduled: 0, completed: 0 };
@@ -460,7 +460,7 @@ export async function getOwnerInsights(db: TenantClient, now = new Date()) {
         select: { memberId: true, status: true, session: { select: { startsAt: true } } },
       })
     : [];
-  const holidays30 = await holidayDates(db, p30.from, today);
+  const holidays30 = await sharedHolidayDates(db, today, p30.from, today);
   const tally = new Map<string, { present: number; absent: number }>();
   for (const r of att30) {
     if (holidays30.has(tenantDate(r.session.startsAt)) || r.status === "EXCUSED") continue;
@@ -486,7 +486,7 @@ export async function getOwnerInsights(db: TenantClient, now = new Date()) {
     select: { id: true, startsAt: true, batch: { select: { name: true, kind: true } }, coach: { select: { name: true } } },
     orderBy: [{ startsAt: "desc" }, { id: "asc" }],
   });
-  const holidays14 = await holidayDates(db, addDays(today, -15), today);
+  const holidays14 = await sharedHolidayDates(db, today, addDays(today, -15), today);
   const unloggedSessions = unloggedRows
     .filter((s) => !holidays14.has(tenantDate(s.startsAt)))
     .slice(0, MAX_UNLOGGED)

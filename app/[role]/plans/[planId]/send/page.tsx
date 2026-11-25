@@ -26,14 +26,43 @@ export default async function SendPlanPage({ params }: { params: Promise<{ role:
   checkRole(principal, "sendPlanToMembers");
   const back = <ButtonLink variant="ghost" href={`/${role}/plans`}>{t("snd.back")}</ButtonLink>;
 
-  let plan: Awaited<ReturnType<typeof getWorkoutPlan>>;
-  try {
-    plan = await getWorkoutPlan(db, principal, planId);
-  } catch (err) {
+  // The plan, the roster, the batches and the coach's name do not depend on each other: one round trip, not four (STAR-102).
+  const loadRoster = async () => {
+    const members: MemberRow[] = [];
+    try {
+      let cursor: string | null = null;
+      const batchesP = listBatches(db, principal, new URLSearchParams({ limit: "100" }));
+      batchesP.catch(() => undefined);
+      for (let page = 0; page < 5; page += 1) {
+        const q = new URLSearchParams({ limit: "100", status: "active" });
+        if (cursor) q.set("cursor", cursor);
+        const res: Awaited<ReturnType<typeof listMembers>> = await listMembers(db, principal, q);
+        members.push(...res.items.map((m) => ({ id: m.id, name: m.name, level: m.level, batchIds: m.batchIds })));
+        cursor = res.nextCursor;
+        if (!cursor) break;
+      }
+      const b = await batchesP;
+      return { members, batches: b.items.map((x): BatchRow => ({ id: x.id, name: x.name })), loadFailed: false };
+    } catch (err) {
+      if (!(err instanceof ApiError)) throw err;
+      return { members: [] as MemberRow[], batches: [] as BatchRow[], loadFailed: true };
+    }
+  };
+  const [planResult, roster, me] = await Promise.all([
+    getWorkoutPlan(db, principal, planId).then(
+      (value) => ({ ok: true as const, value }),
+      (error: unknown) => ({ ok: false as const, error }),
+    ),
+    loadRoster(),
+    db.user.findFirst({ where: { id: principal.userId }, select: { name: true } }),
+  ]);
+  if (!planResult.ok) {
+    const err = planResult.error;
     if (err instanceof ApiError && err.code === "not_found") notFound();
     if (err instanceof ApiError && err.code === "forbidden") return <Notice title={t("snd.title")} text={t("snd.notice.notYours")} actions={back} />;
     throw err;
   }
+  const plan = planResult.value;
   const mine = principal.role === "owner" || plan.coachId === principal.userId;
   if (!mine) return <Notice title={plan.title} text={t("snd.notice.notYours")} actions={back} />;
   const open = <ButtonLink variant="secondary" href={`/${role}/plans/${plan.id}`}>{t("snd.notice.openPlan")}</ButtonLink>;
@@ -42,26 +71,7 @@ export default async function SendPlanPage({ params }: { params: Promise<{ role:
   const summary = summarizePlan(plan.days);
   if (summary.exercises === 0) return <Notice title={plan.title} text={t("snd.notice.empty")} actions={open} />;
 
-  let loadFailed = false;
-  const members: MemberRow[] = [];
-  let batches: BatchRow[] = [];
-  try {
-    let cursor: string | null = null;
-    for (let page = 0; page < 5; page += 1) {
-      const q = new URLSearchParams({ limit: "100", status: "active" });
-      if (cursor) q.set("cursor", cursor);
-      const res: Awaited<ReturnType<typeof listMembers>> = await listMembers(db, principal, q);
-      members.push(...res.items.map((m) => ({ id: m.id, name: m.name, level: m.level, batchIds: m.batchIds })));
-      cursor = res.nextCursor;
-      if (!cursor) break;
-    }
-    const b = await listBatches(db, principal, new URLSearchParams({ limit: "100" }));
-    batches = b.items.map((x) => ({ id: x.id, name: x.name }));
-  } catch (err) {
-    if (!(err instanceof ApiError)) throw err;
-    loadFailed = true;
-  }
-  const me = await db.user.findFirst({ where: { id: principal.userId }, select: { name: true } });
+  const { members, batches, loadFailed } = roster;
 
   return (
     <>

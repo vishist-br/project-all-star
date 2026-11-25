@@ -30,11 +30,23 @@ vi.mock("next/navigation", () => ({
 vi.mock("react", async (orig) => {
   const actual = await orig<typeof import("react")>();
   // Per-request memoisation like the server's cache(); cleared before every page.
+  const ids = new WeakMap<object, number>() as WeakMap<object, number> & { size: number };
+  Object.defineProperty(ids, "size", { get: () => count, configurable: true });
+  let count = 0;
+  const origSet = ids.set.bind(ids);
+  ids.set = (key, val) => (count++, origSet(key, val));
   const cache = <A extends unknown[], R>(fn: (...a: A) => R) => {
     const memo = new Map<string, unknown>();
     h.memos.push(memo);
     return (...args: A): R => {
-      const k = JSON.stringify(args);
+      const k = JSON.stringify(args, (_k, v) => {
+        // Objects such as a Prisma client are keyed by identity (React's cache does the same); plain data by value.
+        if (v && typeof v === "object" && (v as { constructor?: { name?: string } }).constructor?.name !== "Object" && !Array.isArray(v)) {
+          if (!ids.has(v)) ids.set(v, ids.size + 1);
+          return `#obj${ids.get(v)}`;
+        }
+        return v;
+      });
       if (!memo.has(k)) memo.set(k, fn(...args));
       return memo.get(k) as R;
     };
@@ -73,17 +85,44 @@ async function render(node: unknown, depth = 0): Promise<void> {
   await render(props.children, depth + 1);
 }
 
-type PageFn = ComponentType<{ params: Promise<{ role: string }>; searchParams: Promise<Record<string, string>> }>;
+type PageFn = ComponentType<{ params: Promise<Record<string, string>>; searchParams: Promise<Record<string, string>> }>;
 type PageMod = { default: PageFn };
 
-const PAGES: { name: string; role: "owner" | "coach" | "customer"; load: () => Promise<PageMod>; budget: number }[] = [
-  { name: "owner dashboard", role: "owner", load: () => import("../app/[role]/dashboard/page") as unknown as Promise<PageMod>, budget: 48 },
+// Ids of rows in the seeded demo tenant, for the pages that take a route segment (filled in beforeAll).
+const ids = { planId: "", exerciseId: "" };
+
+const PAGES: {
+  name: string;
+  role: "owner" | "coach" | "customer";
+  load: () => Promise<PageMod>;
+  budget: number;
+  /** Extra route segments (a function, because the ids are read from the database first). */
+  segments?: () => Record<string, string>;
+  search?: Record<string, string>;
+}[] = [
+  { name: "owner dashboard", role: "owner", load: () => import("../app/[role]/dashboard/page") as unknown as Promise<PageMod>, budget: 75 },
   { name: "owner members", role: "owner", load: () => import("../app/[role]/members/page") as unknown as Promise<PageMod>, budget: 30 },
   { name: "owner workouts", role: "owner", load: () => import("../app/[role]/workouts/page") as unknown as Promise<PageMod>, budget: 10 },
   { name: "coach today", role: "coach", load: () => import("../app/[role]/today/page") as unknown as Promise<PageMod>, budget: 26 },
   { name: "coach members", role: "coach", load: () => import("../app/[role]/members/page") as unknown as Promise<PageMod>, budget: 30 },
-  { name: "customer home", role: "customer", load: () => import("../app/[role]/home/page") as unknown as Promise<PageMod>, budget: 60 },
-  { name: "customer workouts", role: "customer", load: () => import("../app/[role]/workouts/page") as unknown as Promise<PageMod>, budget: 50 },
+  { name: "customer home", role: "customer", load: () => import("../app/[role]/home/page") as unknown as Promise<PageMod>, budget: 53 },
+  { name: "customer workouts", role: "customer", load: () => import("../app/[role]/workouts/page") as unknown as Promise<PageMod>, budget: 46 },
+  // STAR-102: the screens added after round 1.
+  { name: "customer live workout", role: "customer", load: () => import("../app/[role]/workouts/live/page") as unknown as Promise<PageMod>, budget: 23 },
+  { name: "customer classes", role: "customer", load: () => import("../app/[role]/classes/page") as unknown as Promise<PageMod>, budget: 14 },
+  { name: "customer progress exercises", role: "customer", load: () => import("../app/[role]/progress/exercises/page") as unknown as Promise<PageMod>, budget: 18 },
+  { name: "customer progress skills", role: "customer", load: () => import("../app/[role]/progress/skills/page") as unknown as Promise<PageMod>, budget: 15 },
+  ...(["progress", "history", "howto"] as const).map((tab) => ({
+    name: `customer exercise ${tab} tab`,
+    role: "customer" as const,
+    load: () => import("../app/[role]/exercise/[exerciseId]/page") as unknown as Promise<PageMod>,
+    budget: 17,
+    segments: () => ({ exerciseId: ids.exerciseId }),
+    search: { tab },
+  })),
+  { name: "owner insights", role: "owner", load: () => import("../app/[role]/insights/page") as unknown as Promise<PageMod>, budget: 14 },
+  { name: "owner plan results", role: "owner", load: () => import("../app/[role]/plans/[planId]/results/page") as unknown as Promise<PageMod>, budget: 20, segments: () => ({ planId: ids.planId }) },
+  { name: "owner plan send", role: "owner", load: () => import("../app/[role]/plans/[planId]/send/page") as unknown as Promise<PageMod>, budget: 26, segments: () => ({ planId: ids.planId }) },
 ];
 
 let ready = false;
@@ -99,6 +138,15 @@ beforeAll(async () => {
     console.warn("[skip] Database unreachable or not migrated; query budgets not checked.");
   }
   if (!ready) console.warn("[skip] demo-gym is not seeded; run `npm run db:seed`.");
+  else {
+    const plan = await prisma.workoutPlan.findFirst({
+      where: { tenant: { slug: "demo-gym" }, assignments: { some: {} } },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, days: { select: { items: { select: { exerciseId: true }, take: 1 } }, take: 1 } },
+    });
+    ids.planId = plan?.id ?? "missing";
+    ids.exerciseId = plan?.days[0]?.items[0]?.exerciseId ?? "missing";
+  }
 });
 afterAll(async () => {
   if (ready) await (await import("../lib/db")).prisma.$disconnect();
@@ -117,9 +165,9 @@ describe("query-count budget per page (STAR-93)", () => {
         import("../app/[role]/layout"),
         pg.load(),
       ]);
-      const params = Promise.resolve({ role: pg.role });
+      const params = Promise.resolve({ role: pg.role, ...(pg.segments?.() ?? {}) });
       h.queries = 0;
-      const pageEl = createElement(page.default, { params, searchParams: Promise.resolve({}) });
+      const pageEl = createElement(page.default, { params, searchParams: Promise.resolve(pg.search ?? {}) });
       const tree = await RoleLayout({ children: pageEl, params });
       const root = await Root({ children: tree as ReactNode });
       await render(root);

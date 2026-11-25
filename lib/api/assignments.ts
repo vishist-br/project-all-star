@@ -118,6 +118,28 @@ export async function listPlanAssignments(db: TenantClient, p: Principal, params
   return { items: await toDtos(db, page.rows), nextCursor: page.nextCursor };
 }
 
+/**
+ * Lean listPlanAssignments for cards that only need the plan, dates, status and note (STAR-102): one
+ * query, no adherence maths (which reads every plan day and log). Same visibility and order.
+ */
+export async function listAssignmentBriefs(db: TenantClient, p: Principal, memberId: string, limit = 50) {
+  const rows = await db.planAssignment.findMany({
+    where: { AND: [assignmentWhere(p), { memberId }] },
+    orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+    take: Math.min(Math.max(limit, 1), 100),
+    select: { id: true, planId: true, status: true, startsOn: true, endsOn: true, note: true, plan: { select: { title: true } } },
+  });
+  return rows.map((r) => ({
+    id: r.id,
+    planId: r.planId,
+    planTitle: r.plan.title,
+    status: r.status.toLowerCase(),
+    startsOn: dateFromDb(r.startsOn),
+    endsOn: r.endsOn ? dateFromDb(r.endsOn) : null,
+    note: r.note,
+  }));
+}
+
 /** POST /plan-assignments (createPlanAssignments). All or nothing; 409 for a duplicate active assignment. */
 export async function createPlanAssignments(db: TenantClient, p: Principal, body: unknown) {
   if (!isRecord(body)) throw new ApiError("validation_failed", "Body must be a JSON object");
