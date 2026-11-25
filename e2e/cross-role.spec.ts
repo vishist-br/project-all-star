@@ -722,8 +722,11 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 360, height: 780 
           const link = p.getByRole("navigation", { name: "Main navigation" }).locator(`a[href="${href}"]`);
           // A click that lands while the page is still hydrating can be swallowed: click again until the URL changes.
           await expect(async () => {
-            if (viewport.width < 768) await link.evaluate((el) => (el as HTMLElement).click());
-            else await link.click();
+            // The Next dev indicator sits bottom-left and can cover the lowest side-rail items (the owner has the
+            // most): click for real when the link is clickable, else through the DOM.
+            const clickable = viewport.width >= 768 && (await link.click({ trial: true, timeout: 2_000 }).then(() => true, () => false));
+            if (clickable) await link.click();
+            else await link.evaluate((el) => (el as HTMLElement).click());
             await expect(p).toHaveURL(new RegExp(`${href}(\\?.*)?$`), { timeout: 10_000 });
           }).toPass({ timeout: 90_000 });
           await assertHealthy(p, href, 200);

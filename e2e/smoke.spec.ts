@@ -13,6 +13,15 @@ async function rootVar(page: Page, name: string) {
 }
 
 async function pick(page: Page, label: "Business" | "View as", value: string) {
+  // A change made before React hydrates the switcher is lost (no handler yet): wait until it is hydrated.
+  await page.waitForFunction(
+    (l) => {
+      const el = [...document.querySelectorAll(".demo-switcher label")].find((x) => x.textContent?.includes(l))?.querySelector("select");
+      return !!el && Object.keys(el).some((k) => k.startsWith("__reactProps"));
+    },
+    label,
+    { timeout: 60_000 },
+  );
   await page.getByRole("combobox", { name: label, exact: true }).selectOption(value);
   // Choosing a role navigates to that role's home (router.push): wait for it, or a following goto races it.
   if (label === "View as") await page.waitForURL(new RegExp(`/${value}(/|$)`), { timeout: 60_000 });
