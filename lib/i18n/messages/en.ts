@@ -12,8 +12,9 @@ import { analytics } from "./en/analytics";
 import { absences } from "./en/absences";
 import { credentials } from "./en/credentials";
 
-export const en = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...credentials, ...progressCard, ...workoutEngine, ...liveWorkout } as const;
+export const en = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...credentials, ...progressCard, ...workoutEngine, ...progressInsights, ...liveWorkout } as const;
 import { progressCard } from "./en/progressCard";
+import { progressInsights } from "./en/progress-insights";
 import { workoutEngine } from "./en/workout-engine";
 
 

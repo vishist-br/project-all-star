@@ -95,7 +95,7 @@ export function DashboardContent({ data, t, locale }: { data: DashboardData; t: 
   );
   const header = (
     <>
-      <PageHeader title={t("nav.dashboard")} subtitle={t("od.subtitle", { from: shortDate(data.from, locale), to: shortDate(data.to, locale) })} />
+      <PageHeader title={t("nav.dashboard")} subtitle={t("od.subtitle", { from: shortDate(data.from, locale), to: shortDate(data.to, locale) })} actions={<ButtonLink variant="secondary" href="/owner/insights" data-testid="insights-link">{t("oi.link")}</ButtonLink>} />
       <div className={s.toolbar}>
         {range}
         {quick}

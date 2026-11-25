@@ -10,7 +10,7 @@ describe("role navigation", () => {
   });
   it("lists every top-level screen of each role, so none is reachable only by a link", () => {
     const has = (r: (typeof ROLES)[number], s: string) => expect(findNavItem(r, s), `${r}/${s}`).toBeDefined();
-    for (const s of ["dashboard", "members", "members/import", "batches", "coaches", "workouts", "holidays", "settings"]) has("owner", s);
+    for (const s of ["dashboard", "members", "members/import", "batches", "coaches", "insights", "workouts", "holidays", "settings"]) has("owner", s);
     for (const s of ["today", "today/week", "today/availability", "members", "plans", "workouts", "record"]) has("coach", s);
     for (const s of ["home", "workouts", "schedule", "progress", "updates", "absences", "profile"]) has("customer", s);
   });
