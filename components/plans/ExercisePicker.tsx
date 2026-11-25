@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Select, TextInput } from "@/components/ui/Form";
 import { Sheet } from "@/components/ui/Sheet";
+import type { MessageKey } from "@/lib/i18n";
 import { useI18n } from "@/lib/i18n/client";
 import type { ExerciseFacets } from "@/lib/plans/facets";
 import type { ExerciseDetail, ExerciseSummary } from "@/lib/plans/result";
@@ -17,26 +18,29 @@ export function ExercisePicker({
   open,
   dayLabel,
   facets,
+  defaultSport = "",
   onAdd,
   onClose,
 }: {
   open: boolean;
   dayLabel: string;
   facets: ExerciseFacets;
-  onAdd: (exercise: { id: string; name: string }) => void;
+  /** The plan's sport: the sport filter starts on it, so a karate plan shows karate exercises first. */
+  defaultSport?: string;
+  onAdd: (exercise: { id: string; name: string; metricType: string }) => void;
   onClose: () => void;
 }) {
   const { t } = useI18n();
   return (
     <Sheet open={open} title={t("plans.picker.title")} closeLabel={t("plans.picker.close")} onClose={onClose}>
-      <PickerBody dayLabel={dayLabel} facets={facets} onAdd={onAdd} onClose={onClose} />
+      <PickerBody dayLabel={dayLabel} facets={facets} defaultSport={defaultSport} onAdd={onAdd} onClose={onClose} />
     </Sheet>
   );
 }
 
-function PickerBody({ dayLabel, facets, onAdd, onClose }: { dayLabel: string; facets: ExerciseFacets; onAdd: (e: { id: string; name: string }) => void; onClose: () => void }) {
+function PickerBody({ dayLabel, facets, defaultSport, onAdd, onClose }: { dayLabel: string; facets: ExerciseFacets; defaultSport: string; onAdd: (e: { id: string; name: string; metricType: string }) => void; onClose: () => void }) {
   const { t } = useI18n();
-  const [filters, setFilters] = useState<Filters>({ q: "", sport: "", muscle: "", equipment: "" });
+  const [filters, setFilters] = useState<Filters>({ q: "", sport: facets.sports.includes(defaultSport) ? defaultSport : "", muscle: "", equipment: "" });
   const [items, setItems] = useState<ExerciseSummary[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
@@ -83,6 +87,7 @@ function PickerBody({ dayLabel, facets, onAdd, onClose }: { dayLabel: string; fa
   return (
     <div className={s.pickerBody}>
       <p className="muted small">{t("plans.picker.addingTo", { day: dayLabel })}</p>
+      {filters.sport !== "" && filters.sport === defaultSport && <p className="muted small">{t("pb.picker.sportHint", { sport: filters.sport })}</p>}
       <div className={s.pickerFilters}>
         <div className={`field ${s.pickerSearch}`}>
           <label className="field-label" htmlFor="pk-q">{t("plans.picker.search")}</label>
@@ -131,7 +136,10 @@ function PickerBody({ dayLabel, facets, onAdd, onClose }: { dayLabel: string; fa
                   <div className={s.resultText}>
                     <span className={s.resultName}>{e.name}</span>
                     <span className="small muted">{[e.sportSlug, e.equipment, e.primaryMuscles.join(", ")].filter(Boolean).join(" · ")}</span>
-                    {e.needsTrainerReview && <span><Badge tone="warn">{t("wk.draft")}</Badge></span>}
+                    <span className={s.resultBadges}>
+                      <Badge tone="info">{t(`we.metric.${e.metricType}` as MessageKey)}</Badge>
+                      {e.needsTrainerReview && <Badge tone="warn">{t("wk.draft")}</Badge>}
+                    </span>
                   </div>
                   <div className={s.resultBtns}>
                     <Button
@@ -144,7 +152,7 @@ function PickerBody({ dayLabel, facets, onAdd, onClose }: { dayLabel: string; fa
                     <Button
                       aria-label={t("plans.picker.add", { name: e.name })}
                       onClick={() => {
-                        onAdd({ id: e.id, name: e.name });
+                        onAdd({ id: e.id, name: e.name, metricType: e.metricType });
                         setAnnounce(t("plans.picker.added", { name: e.name }));
                       }}
                     >

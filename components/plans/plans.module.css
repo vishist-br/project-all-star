@@ -23,8 +23,8 @@
 .dayName { font-size: var(--fs-md); font-weight: 700; margin: 0; }
 .itemList { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
 .item { display: grid; gap: var(--s3); padding: var(--s3); border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); min-width: 0; }
-.itemHead { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); min-width: 0; }
-.itemName { font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+.itemHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); min-width: 0; }
+.itemName { font-weight: 700; min-width: 0; overflow-wrap: anywhere; flex: 1 1 9rem; }
 .itemTools { display: flex; gap: var(--s1); flex: none; }
 .numbers { display: grid; gap: var(--s3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .emptyDay { margin: 0; color: var(--muted); font-size: var(--fs-sm); }
@@ -54,3 +54,5 @@
   .twoCol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .numbers { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+.resultBadges { display: flex; flex-wrap: wrap; gap: var(--s1); }
