@@ -332,6 +332,34 @@ export async function createWorkoutPlan(db: TenantClient, p: Principal, body: un
   return loadPlanDto(db, created.id);
 }
 
+export type PlanBrief = { id: string; title: string; description: string | null; days: { items: { exerciseName: string }[] }[] };
+
+/**
+ * Title, description and exercise names of several plans in one round of queries (STAR-102), for cards
+ * that preview many plans at once. Same visibility as getWorkoutPlan: plans outside the caller's view
+ * are simply absent from the map instead of throwing.
+ */
+export async function getPlanBriefs(db: TenantClient, p: Principal, planIds: readonly string[]): Promise<Map<string, PlanBrief>> {
+  const out = new Map<string, PlanBrief>();
+  if (planIds.length === 0) return out;
+  const rows = await db.workoutPlan.findMany({
+    where: { id: { in: [...new Set(planIds)] }, ...planViewWhere(p) },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      days: {
+        orderBy: { dayIndex: "asc" },
+        select: { items: { where: { archivedAt: null }, orderBy: [{ position: "asc" }, { id: "asc" }], select: { exercise: { select: { name: true } } } } },
+      },
+    },
+  });
+  for (const r of rows) {
+    out.set(r.id, { id: r.id, title: r.title, description: r.description, days: r.days.map((d) => ({ items: d.items.map((i) => ({ exerciseName: i.exercise.name })) })) });
+  }
+  return out;
+}
+
 /** GET /workout-plans/{id} (getWorkoutPlan). 404 other tenant, 403 outside the caller's view. */
 export async function getWorkoutPlan(db: TenantClient, p: Principal, planId: string) {
   const inTenant = await db.workoutPlan.findFirst({ where: { id: planId }, select: { id: true } });

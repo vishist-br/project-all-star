@@ -1,7 +1,7 @@
 import type { SetType } from "@prisma/client";
 import { assertCanViewMember } from "../auth/access";
 import type { Principal } from "../auth/principal";
-import { getMemberSchedule } from "../api/schedule";
+import { loadScheduledEntries } from "../api/schedule";
 import type { TenantClient } from "../tenant-scope";
 import { asMetric, type LiveItem, type SavedSet } from "../workouts/live/model";
 import { dateToDb } from "../workouts/validate";
@@ -51,27 +51,29 @@ const toSaved = (r: Row): SavedSet => ({
  */
 export async function loadLiveWorkout(db: TenantClient, principal: Principal, memberId: string, today: string): Promise<LiveWorkoutData> {
   await assertCanViewMember(db, principal, memberId);
-  const schedule = await getMemberSchedule(db, principal, memberId, new URLSearchParams({ from: today, to: today }));
-  const day = schedule.days[0];
-  const all: LiveItem[] = (day?.items ?? []).map((i) => ({
-    assignmentId: i.assignmentId,
-    planId: i.planId,
-    planTitle: i.planTitle,
-    planItemId: i.planItemId,
-    exerciseId: i.exerciseId,
-    exerciseName: i.exerciseName,
-    metricType: asMetric(i.metricType),
-    position: i.position,
-    sets: i.sets,
-    reps: i.reps,
-    durationSeconds: i.durationSeconds,
-    restSeconds: i.restSeconds,
-    targetWeightKg: i.targetWeightKg ?? null,
-    targetDistanceMeters: i.targetDistanceMeters ?? null,
-    supersetGroup: i.supersetGroup ?? null,
-    rounds: i.rounds ?? null,
-    notes: i.notes,
-    status: i.status,
+  // Only today's workout entries are needed: no sessions, bookings or holiday lookups (STAR-102).
+  const entries = (await loadScheduledEntries(db, [memberId], today, today)).sort(
+    (a, b) => a.planTitle.localeCompare(b.planTitle) || a.item.position - b.item.position,
+  );
+  const all: LiveItem[] = entries.map((e) => ({
+    assignmentId: e.assignmentId,
+    planId: e.planId,
+    planTitle: e.planTitle,
+    planItemId: e.item.id,
+    exerciseId: e.item.exerciseId,
+    exerciseName: e.item.exerciseName,
+    metricType: asMetric(e.item.metricType),
+    position: e.item.position,
+    sets: e.item.sets,
+    reps: e.item.reps,
+    durationSeconds: e.item.durationSeconds,
+    restSeconds: e.item.restSeconds,
+    targetWeightKg: e.item.targetWeightKg ?? null,
+    targetDistanceMeters: e.item.targetDistanceMeters ?? null,
+    supersetGroup: e.item.supersetGroup ?? null,
+    rounds: e.item.rounds ?? null,
+    notes: e.item.notes,
+    status: e.log?.status ?? "pending",
   }));
   const items = all.filter((i) => i.status !== "skipped");
 

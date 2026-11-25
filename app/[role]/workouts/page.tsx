@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { listPlanAssignments } from "@/lib/api/assignments";
 import { addDays, getMemberSchedule } from "@/lib/api/schedule";
-import { getWorkoutPlan } from "@/lib/api/workout-plans";
+import { getPlanBriefs } from "@/lib/api/workout-plans";
 import { ChildSwitcher } from "@/components/customer/ChildSwitcher";
 import { NoMember } from "@/components/customer/NoMember";
 import { TodayWorkouts } from "@/components/customer/workout/TodayWorkouts";
@@ -60,16 +60,8 @@ export default async function WorkoutsPage({
     listPlanAssignments(db, principal, new URLSearchParams({ memberId: selected.id, limit: "50" })),
   ]);
   const plans = assignments.items.filter((a) => a.status !== "ended");
-  const descriptions = new Map<string, string | null>();
-  await Promise.all(
-    plans.map(async (a) => {
-      try {
-        descriptions.set(a.planId, (await getWorkoutPlan(db, principal, a.planId)).description);
-      } catch {
-        descriptions.set(a.planId, null);
-      }
-    }),
-  );
+  const briefs = await getPlanBriefs(db, principal, plans.map((a) => a.planId));
+  const descriptions = new Map([...briefs].map(([id, b]) => [id, b.description]));
 
   const todayDay = schedule.days[0]!;
   const todayItems = toWorkoutItems(todayDay);

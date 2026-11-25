@@ -273,13 +273,21 @@ async function loadMemberSessions(db: TenantClient, p: Principal, memberId: stri
  * dated workout items with their log status, the member's sessions (enrolled batch or live
  * booking) and the holiday flag. Same visibility as getMember.
  */
-export async function getMemberSchedule(db: TenantClient, p: Principal, memberId: string, params: URLSearchParams, now = new Date()) {
+export async function getMemberSchedule(
+  db: TenantClient,
+  p: Principal,
+  memberId: string,
+  params: URLSearchParams,
+  now = new Date(),
+  /** Entries already loaded for a range that covers [from, to] (STAR-102: one load shared by schedule and stats). */
+  preloaded?: ScheduledEntry[] | Promise<ScheduledEntry[]>,
+) {
   await assertCanViewMember(db, p, memberId);
   const today = tenantDate(now);
   const { from, to } = parseRange(params, today, { from: 0, to: 6 }, SCHEDULE_MAX_DAYS);
 
   const [entries, sessions, holidays, unread] = await Promise.all([
-    loadScheduledEntries(db, [memberId], from, to),
+    preloaded ? Promise.resolve(preloaded).then((all) => all.filter((e) => e.date >= from && e.date <= to)) : loadScheduledEntries(db, [memberId], from, to),
     loadMemberSessions(db, p, memberId, from, to),
     db.holiday.findMany({ where: { date: { gte: dateToDb(from), lte: dateToDb(to) } }, select: { date: true, name: true } }),
     db.memberUpdate.count({ where: { memberId, readAt: null } }),

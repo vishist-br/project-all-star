@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
 import { DEMO_ROLE_COOKIE, DEMO_TENANT_COOKIE } from "../lib/demo";
+import { scratchUrl } from "./db";
 
 // STAR-93: per-page speed budget on the rich demo seed. Asserts the HTML size and the time to first
 // byte of each key page, and that every page response carries a well-formed Server-Timing header.
@@ -14,14 +16,29 @@ import { DEMO_ROLE_COOKIE, DEMO_TENANT_COOKIE } from "../lib/demo";
 
 type Budget = { role: "owner" | "coach" | "customer"; path: string; maxHtmlKb: number; maxTtfbMs: number };
 
+// Ids of rows in the seeded demo tenant for the pages with a route segment (read once in beforeAll).
+const ids = { planId: "", exerciseId: "" };
+const dyn = (f: () => string) => ({ toString: f });
+
 const PAGES: Budget[] = [
-  { role: "owner", path: "/owner/dashboard", maxHtmlKb: 250, maxTtfbMs: 2000 },
+  { role: "owner", path: "/owner/dashboard", maxHtmlKb: 230, maxTtfbMs: 2000 },
   { role: "owner", path: "/owner/members", maxHtmlKb: 70, maxTtfbMs: 1500 },
   { role: "owner", path: "/owner/workouts", maxHtmlKb: 90, maxTtfbMs: 1500 },
   { role: "coach", path: "/coach/today", maxHtmlKb: 45, maxTtfbMs: 1500 },
   { role: "coach", path: "/coach/members", maxHtmlKb: 60, maxTtfbMs: 1500 },
-  { role: "customer", path: "/customer/home", maxHtmlKb: 50, maxTtfbMs: 1500 },
-  { role: "customer", path: "/customer/workouts", maxHtmlKb: 80, maxTtfbMs: 1500 },
+  { role: "customer", path: "/customer/home", maxHtmlKb: 44, maxTtfbMs: 1500 },
+  { role: "customer", path: "/customer/workouts", maxHtmlKb: 76, maxTtfbMs: 1500 },
+  // STAR-102: the screens added after round 1.
+  { role: "customer", path: "/customer/workouts/live", maxHtmlKb: 50, maxTtfbMs: 1500 },
+  { role: "customer", path: "/customer/classes", maxHtmlKb: 30, maxTtfbMs: 1500 },
+  { role: "customer", path: "/customer/progress/exercises", maxHtmlKb: 72, maxTtfbMs: 1500 },
+  { role: "customer", path: "/customer/progress/skills", maxHtmlKb: 32, maxTtfbMs: 1500 },
+  { role: "customer", path: dyn(() => `/customer/exercise/${ids.exerciseId}`) as unknown as string, maxHtmlKb: 62, maxTtfbMs: 1500 },
+  { role: "customer", path: dyn(() => `/customer/exercise/${ids.exerciseId}?tab=history`) as unknown as string, maxHtmlKb: 85, maxTtfbMs: 1500 },
+  { role: "customer", path: dyn(() => `/customer/exercise/${ids.exerciseId}?tab=howto`) as unknown as string, maxHtmlKb: 46, maxTtfbMs: 1500 },
+  { role: "owner", path: "/owner/insights", maxHtmlKb: 44, maxTtfbMs: 1500 },
+  { role: "owner", path: dyn(() => `/owner/plans/${ids.planId}/results`) as unknown as string, maxHtmlKb: 36, maxTtfbMs: 1500 },
+  { role: "owner", path: dyn(() => `/owner/plans/${ids.planId}/send`) as unknown as string, maxHtmlKb: 44, maxTtfbMs: 1500 },
 ];
 
 const RUNS = 3;
@@ -30,8 +47,23 @@ const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.len
 test.describe.configure({ mode: "serial" });
 test.setTimeout(300_000);
 
+test.beforeAll(async () => {
+  const prisma = new PrismaClient({ datasources: { db: { url: scratchUrl() } } });
+  try {
+    const plan = await prisma.workoutPlan.findFirst({
+      where: { tenant: { slug: "demo-gym" }, assignments: { some: {} } },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, days: { select: { items: { select: { exerciseId: true }, take: 1 } }, take: 1 } },
+    });
+    ids.planId = plan?.id ?? "missing";
+    ids.exerciseId = plan?.days[0]?.items[0]?.exerciseId ?? "missing";
+  } finally {
+    await prisma.$disconnect();
+  }
+});
+
 for (const pg of PAGES) {
-  test(`${pg.role} ${pg.path}: HTML under ${pg.maxHtmlKb} KB, first byte under ${pg.maxTtfbMs} ms`, async ({ browser, baseURL }) => {
+  test(`${pg.role} ${String(pg.path).replace(/[0-9a-z]{20,}/g, ":id")}: HTML under ${pg.maxHtmlKb} KB, first byte under ${pg.maxTtfbMs} ms`, async ({ browser, baseURL }) => {
     const context = await browser.newContext({ baseURL });
     await context.addCookies([
       { name: DEMO_TENANT_COOKIE, value: "demo-gym", url: baseURL! },
@@ -39,7 +71,7 @@ for (const pg of PAGES) {
     ]);
     try {
       // First visit compiles the route in `next dev`; it is not what the budget measures.
-      const warm = await context.request.get(pg.path);
+      const warm = await context.request.get(String(pg.path));
       expect(warm.status(), "warm-up").toBe(200);
 
       const ttfb: number[] = [];
@@ -47,7 +79,7 @@ for (const pg of PAGES) {
       let timing = "";
       for (let i = 0; i < RUNS; i++) {
         const t0 = performance.now();
-        const res = await context.request.get(pg.path);
+        const res = await context.request.get(String(pg.path));
         // Headers resolve when the first bytes arrive, before the body is read.
         ttfb.push(performance.now() - t0);
         expect(res.status()).toBe(200);
@@ -56,10 +88,10 @@ for (const pg of PAGES) {
       }
       const kb = median(sizes) / 1024;
       const first = median(ttfb);
-      console.log(`PERF ${pg.path}: html ${kb.toFixed(1)} KB, ttfb ${first.toFixed(0)} ms, server-timing "${timing}"`);
+      console.log(`PERF ${String(pg.path)}: html ${kb.toFixed(1)} KB, ttfb ${first.toFixed(0)} ms, server-timing "${timing}"`);
 
-      expect(kb, `${pg.path} HTML is ${kb.toFixed(1)} KB`).toBeLessThanOrEqual(pg.maxHtmlKb);
-      expect(first, `${pg.path} first byte took ${first.toFixed(0)} ms`).toBeLessThanOrEqual(pg.maxTtfbMs);
+      expect(kb, `${String(pg.path)} HTML is ${kb.toFixed(1)} KB`).toBeLessThanOrEqual(pg.maxHtmlKb);
+      expect(first, `${String(pg.path)} first byte took ${first.toFixed(0)} ms`).toBeLessThanOrEqual(pg.maxTtfbMs);
       // Server-Timing: present, only `name;dur=<number>` entries, nothing else (no ids, urls or values).
       expect(timing).toMatch(/^[a-z]+;dur=\d+(\.\d+)?(, [a-z]+;dur=\d+(\.\d+)?)*$/);
     } finally {
