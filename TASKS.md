@@ -32,7 +32,6 @@ STAR-106 | Configurable no-show policy engine, off by default (stretch) | Backen
 STAR-109 | Workout engine phase 3: supersets and rounds in plan builder and live workout | Coach + Customer agents | STAR-108 | proposed
 STAR-111 | Workout engine phase 5: group class workout attach, after-class summary, absent catch-up | Coach agent | STAR-110 | proposed
 STAR-113 | Workout engine phase 7: owner class insights and timetable suggestions | Owner agent | STAR-111 | proposed
-STAR-114 | Workout engine phase 8: folders, templates, body measurements, muscle-group volume (gym) | Customer agent | STAR-112 | proposed
 STAR-98 | Parent OTP sign-in (skipped by the user for now; needs messaging provider and DPDP decision) | Auth agent | human decision | blocked
 
 ## In Progress
@@ -43,6 +42,8 @@ STAR-98 | Parent OTP sign-in (skipped by the user for now; needs messaging provi
 (none)
 
 ## Completed
+
+- STAR-114 | Gym extras: plan folders and templates, body measurements, muscle-group volume | Full-stack agent | merged 2026-11-26 | Notion In Review pending. Migration 20261126100000_gym_extras (additive; NOT applied to Neon). Screens /[role]/plans folders and templates, /customer/progress/body, /customer/progress/muscles. Gaps: no offline queue for measurements, no folder reorder UI.
 
 - STAR-102 | Speed round 2: customer home 85 to 44 queries, workouts 71 to 38, exercises overview 84 to 15, dashboard 78 to 62; query and size budgets for all new pages | Perf agent | merged 2026-11-26 | Notion In Review pending. Dashboard HTML not reduced (dev flight data is most of the 200 KB; real document about 56 KB). No migration.
 
