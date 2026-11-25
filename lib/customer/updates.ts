@@ -1,5 +1,5 @@
 import type { Locale, MessageKey, Params } from "../i18n";
-import { formatWhen } from "./format";
+import { formatDay, formatWhen } from "./format";
 
 export type FeedUpdate = {
   id: string;
@@ -30,6 +30,9 @@ const CATEGORY: Record<string, UpdateView["category"]> = {
   session_cancelled: "session",
   booking_confirmed: "booking",
   waitlist_promoted: "booking",
+  class_summary: "session",
+  class_catchup: "session",
+  class_catchup_excused: "session",
 };
 
 /** Renders an update from its kind and params. Unknown kinds get a friendly generic line. */
@@ -46,7 +49,7 @@ export function describeUpdate(u: Pick<FeedUpdate, "kind" | "params">, t: T, loc
     case "plan_assigned":
       return make(t("upd.plan_assigned", { plan }), true);
     case "plan_updated":
-      return make(p.status === "paused" ? t("upd.plan_paused", { plan }) : t("upd.plan_updated", { plan }));
+      return make(p.status === "paused" ? t("upd.plan_paused", { plan }) : t("upd.plan_updated", { plan }), true);
     case "plan_ended":
       return make(t("upd.plan_ended", { plan }));
     case "goal_set":
@@ -69,6 +72,10 @@ export function describeUpdate(u: Pick<FeedUpdate, "kind" | "params">, t: T, loc
       return make(t("upd.booking_confirmed", { batch, when }));
     case "waitlist_promoted":
       return make(t("upd.waitlist_promoted", { batch, when }));
+    case "class_summary":
+    case "class_catchup":
+    case "class_catchup_excused":
+      return make(t(`upd.${u.kind}` as MessageKey, { batchName: p.batchName || t("upd.aSession"), date: p.date ? formatDay(p.date, locale) : t("upd.soon") }));
     default:
       return make(t("upd.generic"));
   }

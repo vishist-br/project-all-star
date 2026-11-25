@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PlanActions } from "@/components/plans/PlanActions";
+import { PlanSendLinks } from "@/components/send/SendLinks";
 import s from "@/components/plans/plans.module.css";
 import { Badge, type Tone } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -115,6 +116,7 @@ export default async function PlansPage({ params, searchParams }: { params: Prom
                 ].filter(Boolean).join(" · ")}
               </p>
               <PlanActions role={role} plan={{ id: p.id, title: p.title, status: p.status }} />
+              {p.status !== "archived" && <PlanSendLinks role={role} plan={{ id: p.id, title: p.title, status: p.status }} />}
             </Card>
           ))}
         </ul>

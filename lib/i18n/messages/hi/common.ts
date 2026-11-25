@@ -21,6 +21,7 @@ export const common: Record<keyof typeof en, string> = {
   "nav.settings": "सेटिंग्स",
   "nav.today": "आज",
   "nav.myRecord": "मेरा रिकॉर्ड",
+  "nav.classes": "क्लासेस",
   "nav.progress": "प्रगति",
   "nav.schedule": "समय-सारणी",
   "nav.profile": "प्रोफ़ाइल",

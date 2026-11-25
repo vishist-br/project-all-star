@@ -6,6 +6,7 @@ import { getWorkoutPlan } from "@/lib/api/workout-plans";
 import { ChildSwitcher } from "@/components/customer/ChildSwitcher";
 import { NoMember } from "@/components/customer/NoMember";
 import { TodayWorkouts } from "@/components/customer/workout/TodayWorkouts";
+import { NewFromCoach } from "@/components/send/NewFromCoach";
 import { Badge, Card, EmptyState, PageHeader, SectionHeader } from "@/components/ui";
 import { WorkoutsScreen, type WorkoutFilters } from "@/components/WorkoutsScreen";
 import { formatDay } from "@/lib/customer/format";
@@ -78,6 +79,7 @@ export default async function WorkoutsPage({
     <div className={s.stack}>
       <PageHeader title={t("cu.wk.title")} subtitle={t("cu.wk.subtitle")} />
       <ChildSwitcher members={ctx.children} selectedId={selected.id} />
+      <NewFromCoach ctx={ctx} markRead />
 
       {plans.length === 0 ? (
         <EmptyState title={t("cu.wk.empty.title")} text={t("cu.wk.empty.body")} icon="✚" />

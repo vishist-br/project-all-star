@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Segmented } from "@/components/ui/Tabs";
 import { ErrorState } from "@/components/ui/States";
 import { CoachNoteCard } from "@/components/progress-card/CoachNoteCard";
+import { MemberWorkoutResults } from "@/components/send/MemberWorkoutResults";
 import { getProgressNote } from "@/lib/api/progress-card";
 import { mondayOf } from "@/lib/progress-card/rules";
 import { ApiError } from "@/lib/auth/errors";
@@ -215,6 +216,8 @@ export async function MemberDetail({ role, memberId, days }: { role: "coach" | "
           )}
         </Card>
       </div>
+
+      <MemberWorkoutResults db={db} principal={principal} role={role} memberId={memberId} memberName={m.name} />
 
       <Card title={t("member.updates")}>
         {updates.items.length === 0 ? (

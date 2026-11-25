@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { listMemberUpdates } from "@/lib/api/member-updates";
 import { ChildSwitcher } from "@/components/customer/ChildSwitcher";
 import { NoMember } from "@/components/customer/NoMember";
+import { LatestClasses } from "@/components/classes/LatestClasses";
 import { MarkRead } from "@/components/customer/updates/MarkRead";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader } from "@/components/ui";
 import { formatWhen } from "@/lib/customer/format";
@@ -34,6 +35,7 @@ export default async function UpdatesPage({ params }: { params: Promise<{ role: 
         actions={<ButtonLink href="/customer/home" variant="secondary">{t("upd.backHome")}</ButtonLink>}
       />
       <ChildSwitcher members={ctx.children} selectedId={selected.id} />
+      <LatestClasses ctx={ctx} limit={2} maxAgeDays={30} heading={t("csm.updates.title")} />
       {items.length === 0 ? (
         <EmptyState title={t("upd.empty.title")} text={t("upd.empty.body")} icon="✉" />
       ) : (

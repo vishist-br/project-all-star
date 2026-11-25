@@ -19,6 +19,7 @@ export const common = {
   "nav.settings": "Settings",
   "nav.today": "Today",
   "nav.myRecord": "My record",
+  "nav.classes": "Classes",
   "nav.progress": "Progress",
   "nav.schedule": "Schedule",
   "nav.profile": "Profile",
