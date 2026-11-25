@@ -10,7 +10,8 @@ import { plans } from "./en/plans";
 import { sessions } from "./en/sessions";
 import { analytics } from "./en/analytics";
 import { absences } from "./en/absences";
+import { workoutEngine } from "./en/workout-engine";
 
-export const en = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences } as const;
+export const en = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...workoutEngine } as const;
 
 export type MessageKey = keyof typeof en;

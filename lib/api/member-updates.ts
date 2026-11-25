@@ -5,7 +5,7 @@ import type { Principal } from "../auth/principal";
 import type { TenantClient } from "../tenant-scope";
 import { pageArgs, toPage } from "./pagination";
 
-export type MemberUpdateEntity = "plan" | "assignment" | "goal" | "session" | "booking";
+export type MemberUpdateEntity = "plan" | "assignment" | "goal" | "session" | "booking" | "class_summary";
 
 /** Minimal client surface so both a scoped client and a transaction client work. */
 type UpdateWriter = {
@@ -75,6 +75,12 @@ export function updateTitle(kind: MemberUpdateKind, params: Record<string, strin
       return when ? `Booking confirmed for ${when}` : "Your booking is confirmed";
     case "WAITLIST_PROMOTED":
       return when ? `You are in: spot confirmed for ${when}` : "A spot opened up and you are booked in";
+    case "CLASS_SUMMARY":
+      return `Your class summary is ready: ${params.batchName ?? "class"}${params.date ? `, ${params.date}` : ""}`;
+    case "CLASS_CATCHUP":
+      return `Here is what we covered in ${params.batchName ?? "your class"}${params.date ? ` (${params.date})` : ""}, to pick up at your pace`;
+    case "CLASS_CATCHUP_EXCUSED":
+      return `Class notes for ${params.batchName ?? "your class"}${params.date ? ` (${params.date})` : ""}, whenever you are ready`;
   }
 }
 

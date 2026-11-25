@@ -8,14 +8,19 @@
       "category": "technique",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["quadriceps"],
-      "secondaryMuscles": ["abdominals"],
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "abdominals"
+      ],
       "instructions": [
         "Stand with feet about shoulder width apart, knees soft and hands loosely closed in front of the belt.",
         "Keep the back tall and the eyes forward.",
         "Breathe in through the nose for a count of three and out through the mouth for a count of four.",
         "Hold for one minute, relaxing the shoulders on each out-breath."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "karate-front-stance-walk",
@@ -24,14 +29,20 @@
       "category": "technique",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["quadriceps", "glutes"],
-      "secondaryMuscles": ["calves"],
+      "primaryMuscles": [
+        "quadriceps",
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "calves"
+      ],
       "instructions": [
         "Step forward into a long, low stance with the front knee bent over the toes and the back leg straight.",
         "Keep both feet flat and the hips facing forward.",
         "Slide the back foot up and step into the next stance without bobbing up and down.",
         "Cross the training hall slowly, then return."
-      ]
+      ],
+      "metricType": "REPS"
     },
     {
       "id": "karate-straight-punch",
@@ -40,14 +51,20 @@
       "category": "technique",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["shoulders", "triceps"],
-      "secondaryMuscles": ["abdominals"],
+      "primaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "abdominals"
+      ],
       "instructions": [
         "Start in a front stance with one fist at the hip, palm up.",
         "Extend the other arm straight ahead while turning the fist palm down, stopping before the elbow locks hard.",
         "Pull the fist back to the hip as the other arm goes out.",
         "Do sets of ten on each side, focusing on a relaxed shoulder."
-      ]
+      ],
+      "metricType": "REPS"
     },
     {
       "id": "karate-block-set",
@@ -56,14 +73,20 @@
       "category": "technique",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["shoulders", "forearms"],
-      "secondaryMuscles": ["quadriceps"],
+      "primaryMuscles": [
+        "shoulders",
+        "forearms"
+      ],
+      "secondaryMuscles": [
+        "quadriceps"
+      ],
       "instructions": [
         "From a steady stance, sweep one forearm down across the body to guard the lower area.",
         "Return to the starting position, then raise the forearm to guard the middle, then the face level.",
         "Move slowly at first, naming each level out loud.",
         "Repeat on the other side."
-      ]
+      ],
+      "metricType": "REPS"
     },
     {
       "id": "karate-front-kick",
@@ -72,14 +95,21 @@
       "category": "technique",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["quadriceps", "hip flexors"],
-      "secondaryMuscles": ["glutes", "abdominals"],
+      "primaryMuscles": [
+        "quadriceps",
+        "hip flexors"
+      ],
+      "secondaryMuscles": [
+        "glutes",
+        "abdominals"
+      ],
       "instructions": [
         "Stand tall and lift the knee in front of the body.",
         "Snap the lower leg out, striking with the ball of the foot, then fold it back at once.",
         "Place the foot down under control, without leaning back.",
         "Do five slow kicks per leg, holding a wall or partner's shoulder for balance if needed."
-      ]
+      ],
+      "metricType": "REPS"
     },
     {
       "id": "karate-hip-mobility",
@@ -88,14 +118,20 @@
       "category": "mobility",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["hip flexors", "adductors"],
-      "secondaryMuscles": ["glutes"],
+      "primaryMuscles": [
+        "hip flexors",
+        "adductors"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
       "instructions": [
         "Stand holding a wall and swing one leg forward and back ten times.",
         "Swing the same leg side to side ten times.",
         "Draw ten slow circles with the knee in each direction.",
         "Switch legs."
-      ]
+      ],
+      "metricType": "REPS"
     },
     {
       "id": "karate-kata-walkthrough",
@@ -104,14 +140,20 @@
       "category": "technique",
       "level": "intermediate",
       "equipment": "body only",
-      "primaryMuscles": ["quadriceps"],
-      "secondaryMuscles": ["shoulders", "abdominals"],
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "abdominals"
+      ],
       "instructions": [
         "Pick the form your coach has assigned for your current belt.",
         "Perform it at half speed, pausing briefly at the end of every move to check stance and hand position.",
         "Repeat at full speed once, then once more with eyes on a fixed point ahead.",
         "Note any move that felt unsteady and tell your coach."
-      ]
+      ],
+      "metricType": "CHECKLIST"
     },
     {
       "id": "karate-partner-distance",
@@ -120,14 +162,20 @@
       "category": "partner",
       "level": "intermediate",
       "equipment": "body only",
-      "primaryMuscles": ["quadriceps", "calves"],
-      "secondaryMuscles": ["abdominals"],
+      "primaryMuscles": [
+        "quadriceps",
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "abdominals"
+      ],
       "instructions": [
         "Face a partner at arm's length plus one step.",
         "One partner steps in and out while the other mirrors the movement to keep the same gap.",
         "Switch the lead after thirty seconds.",
         "Keep the movements light and never make contact."
-      ]
+      ],
+      "metricType": "REPS"
     },
     {
       "id": "karate-core-plank",
@@ -136,14 +184,20 @@
       "category": "conditioning",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["abdominals"],
-      "secondaryMuscles": ["shoulders", "lower back"],
+      "primaryMuscles": [
+        "abdominals"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "lower back"
+      ],
       "instructions": [
         "Rest on the forearms and toes with the body in a straight line.",
         "Keep the neck long and the hips level.",
         "Hold for twenty seconds, rest, and repeat three times.",
         "Build up by five seconds each week as comfortable."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "karate-squat-hold",
@@ -152,14 +206,20 @@
       "category": "conditioning",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["quadriceps", "glutes"],
-      "secondaryMuscles": ["adductors"],
+      "primaryMuscles": [
+        "quadriceps",
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "adductors"
+      ],
       "instructions": [
         "Stand with feet wide, toes slightly out, and sink until the thighs are as low as feels comfortable.",
         "Keep the knees tracking over the toes and the chest upright.",
         "Hold for fifteen seconds, then stand and shake out the legs.",
         "Repeat three times."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "karate-cooldown-stretch",
@@ -168,14 +228,21 @@
       "category": "stretching",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["hamstrings", "quadriceps"],
-      "secondaryMuscles": ["calves", "shoulders"],
+      "primaryMuscles": [
+        "hamstrings",
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "calves",
+        "shoulders"
+      ],
       "instructions": [
         "Sit with legs straight and reach toward the toes for twenty seconds.",
         "Move to a seated butterfly position and lean forward gently for twenty seconds.",
         "Stand and pull each heel toward the hip for twenty seconds per side.",
         "Finish with ten slow breaths."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "karate-skipping-rope",
@@ -184,14 +251,20 @@
       "category": "cardio",
       "level": "beginner",
       "equipment": "other",
-      "primaryMuscles": ["calves"],
-      "secondaryMuscles": ["shoulders", "quadriceps"],
+      "primaryMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "shoulders",
+        "quadriceps"
+      ],
       "instructions": [
         "Hold the rope handles at hip height with elbows close to the body.",
         "Jump low, landing softly on the balls of the feet.",
         "Skip for thirty seconds, rest for thirty, and repeat five times.",
         "Stop if the lower legs hurt."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "yoga-mountain-pose",
@@ -200,13 +273,18 @@
       "category": "posture",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["quadriceps"],
-      "secondaryMuscles": ["abdominals"],
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "abdominals"
+      ],
       "instructions": [
         "Stand with feet hip width apart and weight spread evenly across both feet.",
         "Lengthen the spine and let the arms hang by the sides with palms forward.",
         "Breathe slowly for five to ten breaths."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "yoga-cat-cow",
@@ -215,14 +293,19 @@
       "category": "mobility",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["lower back"],
-      "secondaryMuscles": ["abdominals"],
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "secondaryMuscles": [
+        "abdominals"
+      ],
       "instructions": [
         "Come onto hands and knees with wrists under shoulders and knees under hips.",
         "Breathe in and let the belly drop while lifting the chest and tailbone.",
         "Breathe out and round the back toward the ceiling.",
         "Move with the breath for eight to ten rounds."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "yoga-downward-dog",
@@ -231,13 +314,19 @@
       "category": "posture",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["shoulders", "hamstrings"],
-      "secondaryMuscles": ["calves"],
+      "primaryMuscles": [
+        "shoulders",
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "calves"
+      ],
       "instructions": [
         "From hands and knees, tuck the toes and lift the hips up and back.",
         "Press the floor away and keep the knees slightly bent if the hamstrings feel tight.",
         "Hold for five slow breaths, then lower the knees to rest."
-      ]
+      ],
+      "metricType": "REPS"
     },
     {
       "id": "yoga-warrior-two",
@@ -246,14 +335,20 @@
       "category": "posture",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["quadriceps", "glutes"],
-      "secondaryMuscles": ["shoulders"],
+      "primaryMuscles": [
+        "quadriceps",
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "shoulders"
+      ],
       "instructions": [
         "Step the feet wide apart and turn the front foot out.",
         "Bend the front knee over the ankle and stretch the arms out to the sides at shoulder height.",
         "Look over the front hand and hold for five breaths.",
         "Switch sides."
-      ]
+      ],
+      "metricType": "REPS"
     },
     {
       "id": "yoga-tree-pose",
@@ -262,13 +357,19 @@
       "category": "balance",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["calves", "glutes"],
-      "secondaryMuscles": ["abdominals"],
+      "primaryMuscles": [
+        "calves",
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "abdominals"
+      ],
       "instructions": [
         "Stand on one leg and rest the other foot on the calf or inner thigh, never on the knee.",
         "Bring the palms together at the chest and fix the eyes on a still point.",
         "Hold for five breaths and switch sides."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "yoga-child-pose",
@@ -277,13 +378,18 @@
       "category": "relaxation",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["lower back"],
-      "secondaryMuscles": ["glutes"],
+      "primaryMuscles": [
+        "lower back"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
       "instructions": [
         "Kneel and sit back toward the heels, folding forward with the arms stretched ahead.",
         "Rest the forehead on the mat and let the shoulders soften.",
         "Stay for ten slow breaths."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "yoga-bridge",
@@ -292,13 +398,19 @@
       "category": "strength",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["glutes", "hamstrings"],
-      "secondaryMuscles": ["lower back"],
+      "primaryMuscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "lower back"
+      ],
       "instructions": [
         "Lie on the back with knees bent and feet flat, hip width apart.",
         "Press into the feet and lift the hips until the body forms a gentle slope.",
         "Hold for five breaths and lower slowly. Repeat three times."
-      ]
+      ],
+      "metricType": "REPS"
     },
     {
       "id": "yoga-relaxation-breath",
@@ -313,7 +425,8 @@
         "Lie on the back with arms slightly away from the body and palms up.",
         "Breathe in for a count of four and out for a count of six.",
         "Let each part of the body feel heavy, from feet to head, for about five minutes."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "zumba-march-warmup",
@@ -322,13 +435,18 @@
       "category": "warm-up",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["quadriceps"],
-      "secondaryMuscles": ["shoulders"],
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "shoulders"
+      ],
       "instructions": [
         "March in place to a steady beat, lifting the knees to a comfortable height.",
         "Add easy arm swings that follow the rhythm.",
         "Keep going for three minutes, gradually picking up the pace."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "zumba-grapevine",
@@ -337,13 +455,19 @@
       "category": "dance",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["adductors", "glutes"],
-      "secondaryMuscles": ["calves"],
+      "primaryMuscles": [
+        "adductors",
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "calves"
+      ],
       "instructions": [
         "Step to the right, cross the left foot behind, step right again and tap the left foot beside it.",
         "Repeat to the left.",
         "Do eight counts each way, then add a clap on the tap."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "zumba-side-step-reach",
@@ -352,13 +476,19 @@
       "category": "dance",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["glutes", "shoulders"],
-      "secondaryMuscles": ["abdominals"],
+      "primaryMuscles": [
+        "glutes",
+        "shoulders"
+      ],
+      "secondaryMuscles": [
+        "abdominals"
+      ],
       "instructions": [
         "Step wide to the side while the opposite arm reaches overhead.",
         "Bring the feet together and lower the arm.",
         "Alternate sides to the beat for two minutes."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "zumba-low-impact-bounce",
@@ -367,13 +497,18 @@
       "category": "cardio",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["quadriceps"],
-      "secondaryMuscles": ["abdominals"],
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "abdominals"
+      ],
       "instructions": [
         "Bounce gently on bent knees with one foot always touching the floor.",
         "Add a small twist of the torso to each side, arms relaxed.",
         "Continue for two minutes, then rest for thirty seconds."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "zumba-hip-sway-combo",
@@ -382,13 +517,19 @@
       "category": "dance",
       "level": "intermediate",
       "equipment": "body only",
-      "primaryMuscles": ["glutes", "abdominals"],
-      "secondaryMuscles": ["quadriceps"],
+      "primaryMuscles": [
+        "glutes",
+        "abdominals"
+      ],
+      "secondaryMuscles": [
+        "quadriceps"
+      ],
       "instructions": [
         "Take four slow side steps with a smooth sway of the hips.",
         "Follow with four quick steps in place.",
         "Repeat the pattern four times, keeping the knees soft."
-      ]
+      ],
+      "metricType": "TIME"
     },
     {
       "id": "zumba-cooldown-stretch",
@@ -397,13 +538,237 @@
       "category": "stretching",
       "level": "beginner",
       "equipment": "body only",
-      "primaryMuscles": ["hamstrings", "calves"],
-      "secondaryMuscles": ["shoulders"],
+      "primaryMuscles": [
+        "hamstrings",
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "shoulders"
+      ],
       "instructions": [
         "Sway slowly from side to side while the breathing settles.",
         "Stretch the calves against a wall for twenty seconds per leg.",
         "Reach both arms overhead and lean gently to each side for ten seconds."
-      ]
+      ],
+      "metricType": "TIME"
+    },
+    {
+      "id": "badminton-shadow-footwork",
+      "sport": "badminton",
+      "name": "Shadow footwork to six corners",
+      "category": "technique",
+      "level": "beginner",
+      "equipment": "body only",
+      "primaryMuscles": [
+        "quadriceps",
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "instructions": [
+        "Stand in the centre of the court in a ready stance with knees soft.",
+        "Move to a corner as called, lunge or step, and make a light swing in the air.",
+        "Push back to the centre after every corner before the next call.",
+        "Work for the set time at a pace you can keep tidy."
+      ],
+      "metricType": "TIME"
+    },
+    {
+      "id": "badminton-smash-drill",
+      "sport": "badminton",
+      "name": "Smash target drill",
+      "category": "technique",
+      "level": "intermediate",
+      "equipment": "racket",
+      "primaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "abdominals"
+      ],
+      "instructions": [
+        "A partner or feeder lifts shuttles to the rear court.",
+        "Hit overhead smashes at a marked target area on the other side.",
+        "Count the smashes that land in the target out of the number you attempt.",
+        "Rest between rounds and keep the wrist relaxed."
+      ],
+      "metricType": "SCORE"
+    },
+    {
+      "id": "badminton-clear-drill",
+      "sport": "badminton",
+      "name": "Overhead clear rally",
+      "category": "technique",
+      "level": "beginner",
+      "equipment": "racket",
+      "primaryMuscles": [
+        "shoulders",
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": [
+        "Stand at the rear court with a partner at the other baseline.",
+        "Hit high clears that land near the back line, taking the shuttle early.",
+        "Return to the centre after each shot.",
+        "Keep going for the target number of clears."
+      ],
+      "metricType": "REPS"
+    },
+    {
+      "id": "badminton-net-drops",
+      "sport": "badminton",
+      "name": "Net drop control",
+      "category": "technique",
+      "level": "beginner",
+      "equipment": "racket",
+      "primaryMuscles": [
+        "forearms"
+      ],
+      "secondaryMuscles": [
+        "quadriceps"
+      ],
+      "instructions": [
+        "Start at the mid-court and step forward to the net with a small lunge.",
+        "Use a soft, short push so the shuttle drops just over the tape.",
+        "Push back to the centre and repeat on both sides.",
+        "Aim for control first, then speed."
+      ],
+      "metricType": "REPS"
+    },
+    {
+      "id": "badminton-split-step",
+      "sport": "badminton",
+      "name": "Split-step and recover",
+      "category": "conditioning",
+      "level": "beginner",
+      "equipment": "body only",
+      "primaryMuscles": [
+        "calves",
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "instructions": [
+        "Stand in the ready stance.",
+        "Hop lightly and land on both feet as a partner signals a direction.",
+        "Push off in that direction, then return to the centre.",
+        "Work for the set time with quick, quiet feet."
+      ],
+      "metricType": "TIME"
+    },
+    {
+      "id": "swim-freestyle-laps",
+      "sport": "swimming",
+      "name": "Freestyle laps at steady pace",
+      "category": "endurance",
+      "level": "beginner",
+      "equipment": "pool",
+      "primaryMuscles": [
+        "lats",
+        "shoulders"
+      ],
+      "secondaryMuscles": [
+        "quadriceps"
+      ],
+      "instructions": [
+        "Push off the wall and swim front crawl with long, relaxed strokes.",
+        "Breathe every three strokes if you can, keeping the head low.",
+        "Touch the wall at the end of each length and rest as planned.",
+        "Note the distance and your time for each swim."
+      ],
+      "metricType": "DISTANCE_TIME"
+    },
+    {
+      "id": "swim-kick-set",
+      "sport": "swimming",
+      "name": "Kick set with a board",
+      "category": "technique",
+      "level": "beginner",
+      "equipment": "kickboard",
+      "primaryMuscles": [
+        "quadriceps",
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "calves"
+      ],
+      "instructions": [
+        "Hold a kickboard in front with straight arms.",
+        "Kick from the hips with loose ankles and small splashes.",
+        "Keep the face down and lift it only to breathe.",
+        "Record the distance and your time."
+      ],
+      "metricType": "DISTANCE_TIME"
+    },
+    {
+      "id": "swim-pull-set",
+      "sport": "swimming",
+      "name": "Pull set with a buoy",
+      "category": "technique",
+      "level": "intermediate",
+      "equipment": "pull buoy",
+      "primaryMuscles": [
+        "lats",
+        "shoulders"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "instructions": [
+        "Place the buoy between the thighs so the legs float.",
+        "Swim with arms only, reaching long and pulling under the body.",
+        "Keep the stroke rate steady and breathe to both sides.",
+        "Record the distance and your time."
+      ],
+      "metricType": "DISTANCE_TIME"
+    },
+    {
+      "id": "swim-breathing-drill",
+      "sport": "swimming",
+      "name": "Side breathing drill",
+      "category": "technique",
+      "level": "beginner",
+      "equipment": "pool",
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "abdominals"
+      ],
+      "instructions": [
+        "Kick on your side with one arm extended and the other resting on the thigh.",
+        "Turn the head to breathe without lifting it.",
+        "Hold for six kicks, then switch sides.",
+        "Count the clean breaths you manage."
+      ],
+      "metricType": "REPS"
+    },
+    {
+      "id": "swim-treading-water",
+      "sport": "swimming",
+      "name": "Treading water",
+      "category": "endurance",
+      "level": "beginner",
+      "equipment": "pool",
+      "primaryMuscles": [
+        "quadriceps",
+        "shoulders"
+      ],
+      "secondaryMuscles": [
+        "abdominals"
+      ],
+      "instructions": [
+        "Move into water over your depth near the wall.",
+        "Use a gentle egg-beater or scissor kick and sweep the hands.",
+        "Keep the chin above the water and breathe calmly.",
+        "Hold for the set time."
+      ],
+      "metricType": "TIME"
     }
   ]
 }

@@ -11,6 +11,7 @@ export function exerciseSummary(e: Exercise) {
     equipment: e.equipment,
     primaryMuscles: e.primaryMuscles,
     needsTrainerReview: e.needsTrainerReview,
+    metricType: e.metricType,
   };
 }
 

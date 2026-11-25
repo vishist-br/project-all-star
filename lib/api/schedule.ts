@@ -3,6 +3,7 @@ import { ApiError } from "../auth/errors";
 import type { Principal } from "../auth/principal";
 import type { TenantClient } from "../tenant-scope";
 import { expandSchedule, logKey, type Cadence } from "../workouts/expand";
+import { groupIntoBlocks } from "../workouts/supersets";
 import { dateFromDb, dateToDb, isDateString } from "../workouts/validate";
 import { tenantDate } from "./pagination";
 import { dateOnly } from "./session-detail";
@@ -78,6 +79,11 @@ export type ScheduledEntry = {
     durationSeconds: number | null;
     restSeconds: number | null;
     notes: string | null;
+    metricType: string;
+    supersetGroup: string | null;
+    rounds: number | null;
+    targetWeightKg: number | null;
+    targetDistanceMeters: number | null;
   };
   log: { id: string; status: ItemStatus; completedAt: Date | null } | null;
 };
@@ -105,7 +111,7 @@ export async function loadScheduledEntries(db: TenantClient, memberIds: string[]
   const days = await db.workoutPlanDay.findMany({
     where: { planId: { in: planIds } },
     include: {
-      items: { include: { exercise: { select: { id: true, name: true } } }, orderBy: [{ position: "asc" }, { id: "asc" }] },
+      items: { include: { exercise: { select: { id: true, name: true, metricType: true } } }, orderBy: [{ position: "asc" }, { id: "asc" }] },
     },
   });
   const daysByPlan = new Map<string, typeof days>();
@@ -152,6 +158,11 @@ export async function loadScheduledEntries(db: TenantClient, memberIds: string[]
             durationSeconds: it.durationSeconds,
             restSeconds: it.restSeconds,
             notes: it.notes,
+            metricType: it.exercise.metricType,
+            supersetGroup: it.supersetGroup,
+            rounds: it.rounds,
+            targetWeightKg: it.targetWeightKg === null ? null : Number(it.targetWeightKg.toString()),
+            targetDistanceMeters: it.targetDistanceMeters,
           },
           log: l ? { id: l.id, status: l.status.toLowerCase() as ItemStatus, completedAt: l.completedAt } : null,
         });
@@ -278,12 +289,7 @@ export async function getMemberSchedule(db: TenantClient, p: Principal, memberId
   const days = eachDate(from, to).map((date) => {
     const todays = entries.filter((e) => e.date === date);
     const dayTitle = todays.find((e) => e.dayTitle)?.dayTitle ?? null;
-    return {
-      date,
-      isHoliday: holidayBy.has(date),
-      holidayName: holidayBy.get(date) ?? null,
-      dayTitle,
-      items: todays
+    const items = todays
         .sort((a, b) => a.planTitle.localeCompare(b.planTitle) || a.item.position - b.item.position)
         .map((e) => ({
           assignmentId: e.assignmentId,
@@ -298,9 +304,21 @@ export async function getMemberSchedule(db: TenantClient, p: Principal, memberId
           durationSeconds: e.item.durationSeconds,
           restSeconds: e.item.restSeconds,
           notes: e.item.notes,
+          metricType: e.item.metricType,
+          supersetGroup: e.item.supersetGroup,
+          rounds: e.item.rounds,
+          targetWeightKg: e.item.targetWeightKg,
+          targetDistanceMeters: e.item.targetDistanceMeters,
           status: e.log?.status ?? ("pending" as ItemStatus),
           logId: e.log?.id ?? null,
-        })),
+        }));
+    return {
+      date,
+      isHoliday: holidayBy.has(date),
+      holidayName: holidayBy.get(date) ?? null,
+      dayTitle,
+      items,
+      blocks: groupIntoBlocks(items, (i) => i.assignmentId),
       sessions: sessions.filter((s) => tenantDate(new Date(s.startsAt)) === date),
     };
   });

@@ -43,6 +43,12 @@ model Tenant {
   coachAvailability CoachAvailability[]
   sessionBookings   SessionBooking[]
   goalCheckIns      GoalCheckIn[]
+  workoutSets       WorkoutSet[]
+  classSummaries    ClassSummary[]
+  classShares       ClassSummaryShare[]
+  skillChecklists   SkillChecklist[]
+  skillItems        SkillItem[]
+  skillSignOffs     SkillSignOff[]
 
   @@map("tenants")
 }
@@ -78,6 +84,9 @@ model User {
   updatesActed  MemberUpdate[]      @relation("MemberUpdateActor")
   availability  CoachAvailability[] @relation("CoachAvailability")
   bookingsBy    SessionBooking[]    @relation("BookingBy")
+  summariesBy   ClassSummary[]      @relation("SummaryPublishedBy")
+  signOffsBy    SkillSignOff[]      @relation("SignOffBy")
+  sharesBy      ClassSummaryShare[] @relation("ShareCreatedBy")
 
   @@unique([tenantId, email])
   @@index([tenantId, role])
@@ -116,10 +125,11 @@ model Sport {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  batches Batch[]
-  levels  Level[]
-  goals   Goal[]
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  batches         Batch[]
+  levels          Level[]
+  goals           Goal[]
+  skillChecklists SkillChecklist[]
 
   @@unique([tenantId, slug])
   @@index([tenantId])
@@ -219,9 +229,9 @@ model Member {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @default(now()) @updatedAt
 
-  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  guardian     Guardian?        @relation(fields: [guardianId], references: [id], onDelete: SetNull)
-  user         User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  guardian     Guardian?           @relation(fields: [guardianId], references: [id], onDelete: SetNull)
+  user         User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
   enrollments  BatchMember[]
   attendance   Attendance[]
   excused      ExcusedAbsence[]
@@ -232,6 +242,8 @@ model Member {
   workoutLogs  WorkoutLog[]
   updates      MemberUpdate[]
   bookings     SessionBooking[]
+  signOffs     SkillSignOff[]
+  shares       ClassSummaryShare[]
 
   @@index([tenantId, isActive])
   @@index([tenantId, guardianId])
@@ -294,6 +306,8 @@ model Session {
   title        String?
   cancelledAt  DateTime?     @map("cancelled_at")
   cancelReason String?       @map("cancel_reason")
+  // Class workout: the plan day the coach attached to this class (null = none).
+  planDayId    String?       @map("plan_day_id")
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @default(now()) @updatedAt
 
@@ -303,12 +317,15 @@ model Session {
   attendance Attendance[]
   bookings   SessionBooking[]
   excused    ExcusedAbsence[]
+  planDay    WorkoutPlanDay?  @relation(fields: [planDayId], references: [id], onDelete: SetNull)
+  summaries  ClassSummary[]
 
   @@unique([tenantId, batchId, startsAt])
   @@unique([tenantId, clientId])
   @@index([tenantId, startsAt])
   @@index([tenantId, coachId, startsAt])
   @@index([tenantId, status, startsAt])
+  @@index([tenantId, planDayId])
   @@map("sessions")
 }
 
@@ -415,10 +432,11 @@ model Level {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  tenant  Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  sport   Sport         @relation(fields: [sportId], references: [id], onDelete: Cascade)
-  history MemberLevel[]
-  goals   Goal[]
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sport           Sport            @relation(fields: [sportId], references: [id], onDelete: Cascade)
+  history         MemberLevel[]
+  goals           Goal[]
+  skillChecklists SkillChecklist[]
 
   @@unique([tenantId, sportId, rank])
   @@unique([tenantId, sportId, name])
@@ -607,6 +625,7 @@ model Exercise {
   licence            String // e.g. "Unlicense" or "Original (project)"
   sourceCommit       String?        @map("source_commit")
   // Drafts we wrote start true; a trainer clears it after reviewing. Re-imports never reset it.
+  metricType         MetricType     @default(WEIGHT_REPS) @map("metric_type")
   needsTrainerReview Boolean        @default(true) @map("needs_trainer_review")
   reviewedAt         DateTime?      @map("reviewed_at")
   createdAt          DateTime       @default(now())
@@ -675,6 +694,9 @@ enum MemberUpdateKind {
   SESSION_CANCELLED
   BOOKING_CONFIRMED
   WAITLIST_PROMOTED
+  CLASS_SUMMARY
+  CLASS_CATCHUP
+  CLASS_CATCHUP_EXCUSED
 }
 
 model WorkoutPlan {
@@ -712,29 +734,35 @@ model WorkoutPlanDay {
   tenant    Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   plan      WorkoutPlan       @relation(fields: [planId], references: [id], onDelete: Cascade)
   items     WorkoutPlanItem[]
+  sessions  Session[]
 
   @@unique([tenantId, planId, dayIndex])
   @@map("workout_plan_days")
 }
 
 model WorkoutPlanItem {
-  id              String         @id @default(cuid())
-  tenantId        String         @map("tenant_id")
-  dayId           String         @map("day_id")
-  exerciseId      String         @map("exercise_id")
-  position        Int
-  sets            Int?
-  reps            Int?
-  durationSeconds Int?           @map("duration_seconds")
-  restSeconds     Int?           @map("rest_seconds")
-  notes           String?
-  archivedAt      DateTime?      @map("archived_at") // kept for history when edited away
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @default(now()) @updatedAt
-  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  day             WorkoutPlanDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
-  exercise        Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
-  logs            WorkoutLog[]
+  id                   String         @id @default(cuid())
+  tenantId             String         @map("tenant_id")
+  dayId                String         @map("day_id")
+  exerciseId           String         @map("exercise_id")
+  position             Int
+  sets                 Int?
+  reps                 Int?
+  durationSeconds      Int?           @map("duration_seconds")
+  restSeconds          Int?           @map("rest_seconds")
+  // Superset: items of one day sharing a label ("A") are done back to back for `rounds` rounds.
+  supersetGroup        String?        @map("superset_group")
+  rounds               Int?
+  targetWeightKg       Decimal?       @map("target_weight_kg") @db.Decimal(7, 2)
+  targetDistanceMeters Int?           @map("target_distance_meters")
+  notes                String?
+  archivedAt           DateTime?      @map("archived_at") // kept for history when edited away
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @default(now()) @updatedAt
+  tenant               Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  day                  WorkoutPlanDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  exercise             Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  logs                 WorkoutLog[]
 
   @@index([tenantId, dayId, position])
   @@index([tenantId, exerciseId])
@@ -788,6 +816,7 @@ model WorkoutLog {
   planItem              WorkoutPlanItem  @relation(fields: [planItemId], references: [id], onDelete: Restrict)
   member                Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
   recordedBy            User             @relation("WorkoutLogBy", fields: [recordedById], references: [id], onDelete: Restrict)
+  sets                  WorkoutSet[]
 
   @@unique([tenantId, assignmentId, planItemId, scheduledFor])
   @@unique([tenantId, clientId])
@@ -869,6 +898,7 @@ model TenantSettings {
   @@unique([tenantId])
   @@map("tenant_settings")
 }
+
 // like TenantTheme: no row = defaults; plain tenantId column (no relation) is acceptable
 
 model GoalCheckIn {
@@ -885,4 +915,161 @@ model GoalCheckIn {
 
   @@index([tenantId, goalId, recordedOn])
   @@map("goal_check_ins")
+}
+
+// ---------------------------------------------------------------------------
+// Workout engine: metric types, per-set logging, class summaries, skill checklists
+// ---------------------------------------------------------------------------
+
+enum MetricType {
+  WEIGHT_REPS
+  REPS
+  TIME
+  DISTANCE_TIME
+  SCORE
+  CHECKLIST
+}
+
+enum SetType {
+  NORMAL
+  WARMUP
+  DROP
+  FAILURE
+}
+
+// One logged set (or run, or attempt block). Which columns are filled depends on the exercise's
+// metricType. `clientId` is generated on the device so offline retries are idempotent.
+model WorkoutSet {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  logId       String   @map("log_id")
+  setNumber   Int      @map("set_number")
+  setType     SetType  @default(NORMAL) @map("set_type")
+  weightKg    Decimal? @map("weight_kg") @db.Decimal(7, 2)
+  reps        Int?
+  seconds     Int?
+  meters      Int?
+  scoreMade   Int?     @map("score_made")
+  scoreOf     Int?     @map("score_of")
+  rating      Int? // 1-4, optional
+  completedAt DateTime @default(now()) @map("completed_at")
+  clientId    String   @map("client_id")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  tenant Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  log    WorkoutLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, clientId])
+  @@index([tenantId, logId, setNumber])
+  @@map("workout_sets")
+}
+
+// The after-class summary of a session. One per session; republishing updates it.
+// `workoutSnapshot` freezes the class workout (blocks with exercise names) at publish time.
+model ClassSummary {
+  id              String   @id @default(cuid())
+  tenantId        String   @map("tenant_id")
+  sessionId       String   @map("session_id")
+  coachNote       String?  @map("coach_note")
+  homePractice    String?  @map("home_practice")
+  workoutSnapshot Json?    @map("workout_snapshot")
+  publishedAt     DateTime @default(now()) @map("published_at")
+  publishedById   String?  @map("published_by_id")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  session     Session             @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  publishedBy User?               @relation("SummaryPublishedBy", fields: [publishedById], references: [id], onDelete: SetNull)
+  shares      ClassSummaryShare[]
+
+  @@unique([tenantId, sessionId])
+  @@index([tenantId, publishedAt])
+  @@map("class_summaries")
+}
+
+// Share link for one member's view of a class summary. Only the SHA-256 hash of the token is
+// stored; links expire after 30 days and can be revoked.
+model ClassSummaryShare {
+  id          String    @id @default(cuid())
+  tenantId    String    @map("tenant_id")
+  summaryId   String    @map("summary_id")
+  memberId    String    @map("member_id")
+  tokenHash   String    @unique @map("token_hash")
+  expiresAt   DateTime  @map("expires_at")
+  revokedAt   DateTime? @map("revoked_at")
+  createdById String?   @map("created_by_id")
+  createdAt   DateTime  @default(now())
+
+  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  summary   ClassSummary @relation(fields: [summaryId], references: [id], onDelete: Cascade)
+  member    Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdBy User?        @relation("ShareCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, summaryId])
+  @@index([tenantId, memberId])
+  @@map("class_summary_shares")
+}
+
+// A skill checklist: the requirements for a belt/level (levelId set) or a free-standing list
+// for a sport without belts (levelId null). Levels and the member level timeline are reused.
+model SkillChecklist {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  sportId   String   @map("sport_id")
+  levelId   String?  @map("level_id")
+  title     String
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  tenant Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sport  Sport       @relation(fields: [sportId], references: [id], onDelete: Cascade)
+  level  Level?      @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  items  SkillItem[]
+
+  @@index([tenantId, sportId, sortOrder])
+  @@index([tenantId, levelId])
+  @@map("skill_checklists")
+}
+
+model SkillItem {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  checklistId String   @map("checklist_id")
+  title       String
+  description String?
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  checklist SkillChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  signOffs  SkillSignOff[]
+
+  @@index([tenantId, checklistId, sortOrder])
+  @@map("skill_items")
+}
+
+model SkillSignOff {
+  id            String   @id @default(cuid())
+  tenantId      String   @map("tenant_id")
+  memberId      String   @map("member_id")
+  skillItemId   String   @map("skill_item_id")
+  rating        Int // 1-4
+  note          String?
+  signedOffById String?  @map("signed_off_by_id")
+  signedOffAt   DateTime @default(now()) @map("signed_off_at")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member      Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  skillItem   SkillItem @relation(fields: [skillItemId], references: [id], onDelete: Cascade)
+  signedOffBy User?     @relation("SignOffBy", fields: [signedOffById], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, memberId, skillItemId])
+  @@index([tenantId, memberId])
+  @@map("skill_sign_offs")
 }

@@ -9,5 +9,6 @@ import { plans } from "./hi/plans";
 import { sessions } from "./hi/sessions";
 import { analytics } from "./hi/analytics";
 import { absences } from "./hi/absences";
+import { workoutEngine } from "./hi/workout-engine";
 
-export const hi: Record<MessageKey, string> = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences };
+export const hi: Record<MessageKey, string> = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...workoutEngine };

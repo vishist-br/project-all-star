@@ -3,6 +3,7 @@ import { assertCanEditPlan, planViewWhere, planWhere } from "../auth/access";
 import { ApiError } from "../auth/errors";
 import type { Principal } from "../auth/principal";
 import type { TenantClient } from "../tenant-scope";
+import { expandPlanDay, validateSupersets } from "../workouts/supersets";
 import { Problems, dateToDb, intField, isRecord, textField } from "../workouts/validate";
 import { recordMemberUpdates } from "./member-updates";
 import { enumParam, pageArgs, tenantDate, toPage } from "./pagination";
@@ -24,6 +25,10 @@ type ItemInput = {
   reps: number | null;
   durationSeconds: number | null;
   restSeconds: number | null;
+  supersetGroup: string | null;
+  rounds: number | null;
+  targetWeightKg: number | null;
+  targetDistanceMeters: number | null;
   notes: string | null;
 };
 type DayInput = { dayIndex: number; title: string | null; notes: string | null; items: ItemInput[] };
@@ -97,7 +102,22 @@ export function parsePlanInput(body: unknown, requireVersion: boolean): PlanInpu
           const reps = intField(p, it, "reps", ip, 1, 200);
           const durationSeconds = intField(p, it, "durationSeconds", ip, 1, 7200);
           const restSeconds = intField(p, it, "restSeconds", ip, 0, 900);
-          if (reps === null && durationSeconds === null) p.add(ip, "reps or durationSeconds is required");
+          const targetDistanceMeters = intField(p, it, "targetDistanceMeters", ip, 1, 100_000);
+          if (reps === null && durationSeconds === null && targetDistanceMeters === null) {
+            p.add(ip, "reps or durationSeconds is required (targetDistanceMeters also works for distance work)");
+          }
+          const rounds = intField(p, it, "rounds", ip, 1, 20);
+          let supersetGroup: string | null = null;
+          if (it.supersetGroup !== undefined && it.supersetGroup !== null) {
+            if (typeof it.supersetGroup === "string" && it.supersetGroup.length > 0) supersetGroup = it.supersetGroup;
+            else p.add(`${ip}.supersetGroup`, "Label such as A, or null");
+          }
+          let targetWeightKg: number | null = null;
+          if (it.targetWeightKg !== undefined && it.targetWeightKg !== null) {
+            if (typeof it.targetWeightKg === "number" && it.targetWeightKg > 0 && it.targetWeightKg <= 1000) {
+              targetWeightKg = Math.round(it.targetWeightKg * 100) / 100;
+            } else p.add(`${ip}.targetWeightKg`, "Number above 0, up to 1000");
+          }
           const notes = textField(p, it, "notes", ip, 280);
           items.push({
             ...(typeof it.id === "string" ? { id: it.id } : {}),
@@ -107,9 +127,14 @@ export function parsePlanInput(body: unknown, requireVersion: boolean): PlanInpu
             reps,
             durationSeconds,
             restSeconds,
+            supersetGroup,
+            rounds,
+            targetWeightKg,
+            targetDistanceMeters,
             notes,
           });
         });
+        validateSupersets(items).forEach((pr) => p.add(`${path}.items[${pr.index}].${pr.field}`, pr.message));
       }
       days.push({ dayIndex: typeof dayIndex === "number" ? dayIndex : 0, title: dayTitle, notes: dayNotes, items });
     });
@@ -147,13 +172,46 @@ const planInclude = {
   days: {
     orderBy: { dayIndex: "asc" },
     include: {
-      items: { orderBy: [{ position: "asc" }, { id: "asc" }], include: { exercise: { select: { name: true } } } },
+      items: { orderBy: [{ position: "asc" }, { id: "asc" }], include: { exercise: { select: { name: true, metricType: true } } } },
     },
   },
   _count: { select: { assignments: { where: { status: "ACTIVE" } } } },
 } satisfies Prisma.WorkoutPlanInclude;
 
 type PlanRow = Prisma.WorkoutPlanGetPayload<{ include: typeof planInclude }>;
+
+export function planItemDto(i: {
+  id: string;
+  exerciseId: string;
+  exercise: { name: string; metricType: string };
+  position: number;
+  sets: number | null;
+  reps: number | null;
+  durationSeconds: number | null;
+  restSeconds: number | null;
+  supersetGroup: string | null;
+  rounds: number | null;
+  targetWeightKg: { toString(): string } | null;
+  targetDistanceMeters: number | null;
+  notes: string | null;
+}) {
+  return {
+    id: i.id,
+    exerciseId: i.exerciseId,
+    exerciseName: i.exercise.name,
+    metricType: i.exercise.metricType,
+    position: i.position,
+    sets: i.sets,
+    reps: i.reps,
+    durationSeconds: i.durationSeconds,
+    restSeconds: i.restSeconds,
+    supersetGroup: i.supersetGroup,
+    rounds: i.rounds,
+    targetWeightKg: i.targetWeightKg === null ? null : Number(i.targetWeightKg.toString()),
+    targetDistanceMeters: i.targetDistanceMeters,
+    notes: i.notes,
+  };
+}
 
 export function planDto(plan: PlanRow) {
   return {
@@ -176,19 +234,10 @@ export function planDto(plan: PlanRow) {
         dayIndex: d.dayIndex,
         title: d.title,
         notes: d.notes,
-        items: d.items
-          .filter((i) => !i.archivedAt)
-          .map((i) => ({
-            id: i.id,
-            exerciseId: i.exerciseId,
-            exerciseName: i.exercise.name,
-            position: i.position,
-            sets: i.sets,
-            reps: i.reps,
-            durationSeconds: i.durationSeconds,
-            restSeconds: i.restSeconds,
-            notes: i.notes,
-          })),
+        ...(() => {
+          const items = d.items.filter((i) => !i.archivedAt).map(planItemDto);
+          return { items, blocks: expandPlanDay(items) };
+        })(),
       })),
   };
 }
@@ -268,6 +317,10 @@ export async function createWorkoutPlan(db: TenantClient, p: Principal, body: un
               reps: i.reps,
               durationSeconds: i.durationSeconds,
               restSeconds: i.restSeconds,
+              supersetGroup: i.supersetGroup,
+              rounds: i.rounds,
+              targetWeightKg: i.targetWeightKg,
+              targetDistanceMeters: i.targetDistanceMeters,
               notes: i.notes,
             })),
           },
@@ -356,6 +409,10 @@ export async function updateWorkoutPlan(db: TenantClient, p: Principal, planId: 
           reps: it.reps,
           durationSeconds: it.durationSeconds,
           restSeconds: it.restSeconds,
+          supersetGroup: it.supersetGroup,
+          rounds: it.rounds,
+          targetWeightKg: it.targetWeightKg,
+          targetDistanceMeters: it.targetDistanceMeters,
           notes: it.notes,
         };
         if (it.id && live.get(it.id) === dayId && !kept.has(it.id)) {

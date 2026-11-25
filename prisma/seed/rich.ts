@@ -3,6 +3,7 @@ import { importCatalog, loadAllEntries } from "../catalog/import";
 import { expandSchedule } from "../../lib/workouts/expand";
 import { TENANTS, type SeedTenant } from "./data";
 import { RICH, type Archetype, type AssignmentDef, type PlanDef, type RichTenant } from "./rich-data";
+import { clearWorkoutEngine, clearWorkoutEngineSports, seedWorkoutEngine } from "./workout-engine";
 import { addDays, addMinutesHHmm, daysBetween, dbDate, isoDow, istAt, rnd, seedToday } from "./dates";
 
 // Rich demo layer (STAR-63). Runs on top of the base seed (demo.ts): same three tenants, but
@@ -25,10 +26,12 @@ export async function clearRich(prisma: PrismaClient): Promise<void> {
   for (const t of tenants) {
     const p = prefix(t.slug);
     const byId = { id: { startsWith: p } };
+    await clearWorkoutEngine(prisma, t.id, t.slug);
     await prisma.memberUpdate.deleteMany({ where: byId });
     await prisma.workoutLog.deleteMany({ where: byId });
     await prisma.planAssignment.deleteMany({ where: { OR: [byId, { planId: { startsWith: p } }] } });
     await prisma.workoutPlan.deleteMany({ where: byId });
+    await clearWorkoutEngineSports(prisma, t.slug);
     await prisma.goalCheckIn.deleteMany({ where: byId });
     await prisma.achievement.deleteMany({ where: byId });
     await prisma.goal.deleteMany({ where: byId });
@@ -682,7 +685,8 @@ export async function seedRich(prisma: PrismaClient, today = seedToday()): Promi
   const out: Record<string, RichCounts> = {};
   for (const t of TENANTS) {
     const r = RICH.find((x) => x.slug === t.slug)!;
-    out[t.slug] = await seedRichTenant(prisma, t, r, today);
+    out[t.slug] = { ...(await seedRichTenant(prisma, t, r, today)) };
+    for (const [k, v] of Object.entries(await seedWorkoutEngine(prisma, t.slug, today))) out[t.slug][`we_${k}`] = v;
   }
   return out;
 }

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Project All Star API
-  version: 0.2.0
+  version: 0.3.0
   description: |
     Contract for the white-label visibility tool (owner, coach, customer).
     Contract-first: Backend and Frontend build in parallel against this file.
@@ -1354,6 +1354,394 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
         '403': {$ref: '#/components/responses/Forbidden'}
         '404': {$ref: '#/components/responses/NotFound'}
+  /workout-sets:
+    put:
+      tags: [Workouts]
+      operationId: recordWorkoutSets
+      x-roles: [coach, customer]
+      summary: Log the sets of one assigned item for one date (idempotent batch upsert by set clientId)
+      description: |
+        Customer only for self or child; coach only for members in own batches (same rules as
+        `recordWorkoutLog`). Creates the workout log for (assignmentId, planItemId, scheduledFor)
+        when it does not exist yet (status started); an existing log keeps its status unless
+        `complete` is true. `clientId` (log) and every set `clientId` are generated on the device
+        so offline retries converge: a repeated set updates the stored one, a set `clientId`
+        already stored on another log is 409. The log's `actualSets`, `actualReps` and
+        `actualDurationSeconds` are derived from its sets (warm-up sets are not counted). 409 when
+        the log is skipped. The response carries every set of the log and the records this
+        log broke (`newBests`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/WorkoutSetsInput'}
+      responses:
+        '200':
+          description: The log with all its sets
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/WorkoutLogWithSets'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /members/{memberId}/workout-sets:
+    get:
+      tags: [Members]
+      operationId: listWorkoutSets
+      x-roles: [owner, coach, customer]
+      summary: Logged sets of a member, newest day first (filter by log, exercise or dates)
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - {name: logId, in: query, schema: {type: string}}
+        - {name: exerciseId, in: query, schema: {type: string}}
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Page of sets
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/WorkoutSetPage'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /members/{memberId}/exercises/{exerciseId}/history:
+    get:
+      tags: [Members]
+      operationId: getExerciseHistory
+      x-roles: [owner, coach, customer]
+      summary: One exercise for one member over time - sessions with sets, a series per metric and records
+      description: |
+        `range` is 3m (default), 1y or all and limits `sessions`, `series` and `newBests`.
+        `records` always cover the whole history (a best is a best). Warm-up sets never count.
+        Estimated one-rep max uses the Epley formula. See docs/WORKOUT-ENGINE-CONTRACT.md.
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - $ref: '#/components/parameters/ExerciseId'
+        - {name: range, in: query, schema: {type: string, enum: ['3m', '1y', all], default: '3m'}}
+      responses:
+        '200':
+          description: History
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseHistory'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /sessions/{sessionId}/workout:
+    get:
+      tags: [Sessions]
+      operationId: getSessionWorkout
+      x-roles: [owner, coach, customer]
+      summary: The class workout attached to a session (blocks ready to render), or null
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Class workout
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SessionWorkout'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    put:
+      tags: [Sessions]
+      operationId: attachSessionWorkout
+      x-roles: [owner, coach]
+      summary: Attach a plan day as the class workout of a session (planDayId null detaches)
+      description: |
+        The plan must be one the caller can see and not archived; the day needs at least one
+        exercise. 409 for a cancelled session. When the roll call is completed and a workout is
+        attached, the after-class summary is published automatically (see `recordAttendance`).
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SessionWorkoutInput'}
+      responses:
+        '200':
+          description: Class workout
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SessionWorkout'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /sessions/{sessionId}/summary:
+    get:
+      tags: [Sessions]
+      operationId: getClassSummary
+      x-roles: [owner, coach, customer]
+      summary: The published after-class summary of a session
+      description: |
+        Customers must pass `memberId` (self or child; 400 otherwise) and get the summary as that
+        member sees it (`forMember`: status plus message keys and params to translate). Owner and
+        coach may omit `memberId` and then also get attendance `counts`. 404 until a summary is
+        published, or when the member was not marked in that class. Never contains another
+        member's name.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+        - {name: memberId, in: query, schema: {type: string}}
+      responses:
+        '200':
+          description: Summary
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ClassSummary'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    post:
+      tags: [Sessions]
+      operationId: publishClassSummary
+      x-roles: [owner, coach]
+      summary: Publish (or update) the after-class summary and tell the members
+      description: |
+        Allowed once the class has started or is completed (409 before, and for a cancelled
+        session). Snapshots the attached class workout. Writes one member update per marked
+        member who was not told yet: present `class_summary`, absent `class_catchup`, excused
+        `class_catchup_excused` (softer wording). Repeating it updates the text and never tells a
+        member twice. Finishing the roll call does this automatically when a workout is attached.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ClassSummaryInput'}
+      responses:
+        '200':
+          description: Published summary
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ClassSummary'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /sessions/{sessionId}/summary/shares:
+    post:
+      tags: [Sessions]
+      operationId: createClassSummaryShare
+      x-roles: [owner, coach, customer]
+      summary: Create a shareable link (30 days) to one member's view of a class summary
+      description: |
+        Only the hash of the token is stored. The link opens a page that calls `getSharedClassSummary`.
+        Customers only for self or child.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ClassSummaryShareInput'}
+      responses:
+        '201':
+          description: Share link
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ClassSummaryShare'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /public/class-summaries/{token}:
+    get:
+      tags: [Sessions]
+      operationId: getSharedClassSummary
+      x-roles: [public]
+      security: []
+      summary: Public view of one member's class summary through a share link
+      description: |
+        No sign-in. Unknown, revoked and expired tokens are all 404. First name only, no ids of
+        members or sessions. Responses carry `X-Robots-Tag: noindex, nofollow` and
+        `Cache-Control: no-store`; the page that shows it must also set a noindex robots meta.
+      parameters:
+        - {name: token, in: path, required: true, schema: {type: string}}
+      responses:
+        '200':
+          description: Shared summary
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SharedClassSummary'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /members/{memberId}/class-summaries:
+    get:
+      tags: [Members]
+      operationId: getMemberClassSummaries
+      x-roles: [owner, coach, customer]
+      summary: Class summaries a member was part of, newest class first
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Page of summaries, each with `forMember` set
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ClassSummaryPage'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /skill-checklists:
+    get:
+      tags: [Members]
+      operationId: listSkillChecklists
+      x-roles: [owner, coach, customer]
+      summary: Belt and skill checklists of the tenant, in order
+      parameters:
+        - {name: sportId, in: query, schema: {type: string}}
+        - {name: levelId, in: query, schema: {type: string}}
+      responses:
+        '200':
+          description: Checklists
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SkillChecklistList'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /members/{memberId}/skill-progress:
+    get:
+      tags: [Members]
+      operationId: getMemberSkillProgress
+      x-roles: [owner, coach, customer]
+      summary: A member's skills per checklist with sign-offs, counts and the next belt
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - {name: sportId, in: query, schema: {type: string}}
+      responses:
+        '200':
+          description: Progress
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MemberSkillProgress'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /members/{memberId}/skill-sign-offs/{skillItemId}:
+    put:
+      tags: [Members]
+      operationId: signOffSkill
+      x-roles: [owner, coach]
+      summary: Sign a skill off with a 1-4 rating (replaces an earlier sign-off)
+      description: Coach only for members in own batches.
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - {name: skillItemId, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SkillSignOffInput'}
+      responses:
+        '200':
+          description: Sign-off
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SkillSignOff'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+    delete:
+      tags: [Members]
+      operationId: clearSkillSignOff
+      x-roles: [owner, coach]
+      summary: Clear a skill sign-off (204 also when there was none)
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - {name: skillItemId, in: path, required: true, schema: {type: string}}
+      responses:
+        '204': {description: Cleared}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /plan-assignments/bulk:
+    post:
+      tags: [Workouts]
+      operationId: sendPlanToMembers
+      x-roles: [owner, coach]
+      summary: Send a plan to several members in one call (idempotent on plan, member and start date)
+      description: |
+        One transaction, one `plan_assigned` update per member. Per member: `sent`,
+        `already_sent` (same plan, member and startsOn: nothing changes) or `skipped_active`
+        (the plan is still active for the member from another start date). An unknown plan or
+        member is 404, a plan or member outside the caller's own view is 403, and then nothing is
+        written. `repeat` decides when the assignment ends; which weekdays or days of the month
+        are used comes from the plan's own days.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BulkSendInput'}
+      responses:
+        '200':
+          description: Per-member result
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BulkSendResult'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /workout-plans/{planId}/results:
+    get:
+      tags: [Workouts]
+      operationId: getPlanResults
+      x-roles: [owner, coach]
+      summary: What every member logged on a plan - items, sets, notes and new bests (one call)
+      description: Date range defaults to the last 28 days, at most 92 days. Owner, or the coach who owns the plan.
+      parameters:
+        - $ref: '#/components/parameters/PlanId'
+        - {name: memberId, in: query, schema: {type: string}}
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Results per assignment
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PlanResults'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /analytics/classes:
+    get:
+      tags: [Analytics]
+      operationId: getClassInsights
+      x-roles: [owner]
+      summary: Class slots - fill, attendance, waitlist, quiet slots, workouts sent - with plain suggestions
+      description: |
+        Positive, visibility-only framing: no coach is named or ranked. `range` is 7d, 28d (default) or 90d.
+        Suggestions are message keys plus params for the UI to translate.
+      parameters:
+        - {name: range, in: query, schema: {type: string, enum: [7d, 28d, 90d], default: 28d}}
+      responses:
+        '200':
+          description: Insights
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ClassInsights'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
 components:
   securitySchemes:
     bearerAuth:
@@ -1856,6 +2244,7 @@ components:
         instructions: {type: array, items: {type: string}}
         needsTrainerReview: {type: boolean}
         licence: {type: string}
+        metricType: {$ref: '#/components/schemas/MetricType'}
     ExerciseSummary:
       type: object
       required: [id, name, sportSlug]
@@ -1866,6 +2255,7 @@ components:
         equipment: {type: string, nullable: true}
         primaryMuscles: {type: array, items: {type: string}}
         needsTrainerReview: {type: boolean}
+        metricType: {$ref: '#/components/schemas/MetricType'}
     ExercisePage:
       type: object
       required: [items]
@@ -1978,8 +2368,13 @@ components:
         reps: {type: integer, minimum: 1, maximum: 200, nullable: true}
         durationSeconds: {type: integer, minimum: 1, maximum: 7200, nullable: true}
         restSeconds: {type: integer, minimum: 0, maximum: 900, nullable: true}
+        metricType: {$ref: '#/components/schemas/MetricType'}
+        supersetGroup: {type: string, maxLength: 4, nullable: true, description: 'Superset label such as A. A group needs 2+ items next to each other (by position) with the same rounds.'}
+        rounds: {type: integer, minimum: 1, maximum: 20, nullable: true, description: Rounds of a superset (needs supersetGroup)}
+        targetWeightKg: {type: number, minimum: 0, maximum: 1000, nullable: true}
+        targetDistanceMeters: {type: integer, minimum: 1, maximum: 100000, nullable: true}
         notes: {type: string, maxLength: 280, nullable: true}
-      description: At least one of reps or durationSeconds is required.
+      description: At least one of reps, durationSeconds or targetDistanceMeters is required.
     PlanDay:
       type: object
       required: [dayIndex, items]
@@ -1992,6 +2387,11 @@ components:
           type: array
           maxItems: 30
           items: {$ref: '#/components/schemas/PlanItem'}
+        blocks:
+          type: array
+          readOnly: true
+          description: The same items grouped for rendering (single exercises and supersets). Not sent on create or update.
+          items: {$ref: '#/components/schemas/PlanBlock'}
     WorkoutPlanInput:
       type: object
       required: [title, cadence, days]
@@ -2163,6 +2563,11 @@ components:
         durationSeconds: {type: integer, nullable: true}
         restSeconds: {type: integer, nullable: true}
         notes: {type: string, nullable: true}
+        metricType: {$ref: '#/components/schemas/MetricType'}
+        supersetGroup: {type: string, nullable: true}
+        rounds: {type: integer, nullable: true}
+        targetWeightKg: {type: number, nullable: true}
+        targetDistanceMeters: {type: integer, nullable: true}
         status:
           type: string
           enum: [pending, started, stopped, completed, skipped]
@@ -2179,6 +2584,10 @@ components:
         items:
           type: array
           items: {$ref: '#/components/schemas/ScheduledItem'}
+        blocks:
+          type: array
+          description: The same items grouped for rendering. A superset only groups items of the same assignment.
+          items: {$ref: '#/components/schemas/ScheduledBlock'}
         sessions:
           type: array
           items: {$ref: '#/components/schemas/Session'}
@@ -2317,7 +2726,7 @@ components:
         updatedAt: {type: string, format: date-time}
     MemberUpdateKind:
       type: string
-      enum: [plan_assigned, plan_updated, plan_ended, goal_set, goal_updated, session_scheduled, session_rescheduled, session_cancelled, booking_confirmed, waitlist_promoted]
+      enum: [plan_assigned, plan_updated, plan_ended, goal_set, goal_updated, session_scheduled, session_rescheduled, session_cancelled, booking_confirmed, waitlist_promoted, class_summary, class_catchup, class_catchup_excused]
     MemberUpdate:
       type: object
       required: [id, memberId, kind, createdAt, read]
@@ -2327,7 +2736,7 @@ components:
         kind: {$ref: '#/components/schemas/MemberUpdateKind'}
         entityType:
           type: string
-          enum: [plan, assignment, goal, session, booking]
+          enum: [plan, assignment, goal, session, booking, class_summary]
         entityId: {type: string}
         actorName: {type: string, nullable: true}
         title: {type: string, description: Short English fallback; UI renders from kind + params via i18n}
@@ -2697,3 +3106,581 @@ components:
               params:
                 type: object
                 additionalProperties: {type: string}
+    MetricType:
+      type: string
+      enum: [WEIGHT_REPS, REPS, TIME, DISTANCE_TIME, SCORE, CHECKLIST]
+      description: |
+        What is logged per set. WEIGHT_REPS (kg and reps: gym), REPS (karate kihon, yoga), TIME (seconds: drills,
+        holds), DISTANCE_TIME (metres and seconds: swimming, running), SCORE (made out of attempts), CHECKLIST (coach rating 1-4).
+    SetType:
+      type: string
+      enum: [normal, warmup, drop, failure]
+    PlanBlock:
+      type: object
+      required: [type, label, rounds, items]
+      description: A single exercise, or a superset (2+ items done back to back for `rounds` rounds). Render blocks as they come.
+      properties:
+        type: {type: string, enum: [single, superset]}
+        label: {type: string, nullable: true, description: Superset label such as A; null for a single}
+        rounds: {type: integer, nullable: true}
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/PlanItem'}
+    ScheduledBlock:
+      type: object
+      required: [type, label, rounds, items]
+      properties:
+        type: {type: string, enum: [single, superset]}
+        label: {type: string, nullable: true}
+        rounds: {type: integer, nullable: true}
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/ScheduledItem'}
+    WorkoutSetInput:
+      type: object
+      required: [clientId, setNumber]
+      description: Give at least one of weightKg, reps, seconds, meters, scoreMade with scoreOf, rating.
+      properties:
+        clientId: {type: string, minLength: 8, maxLength: 64, description: Generated on the device (UUID)}
+        setNumber: {type: integer, minimum: 1, maximum: 200}
+        setType: {$ref: '#/components/schemas/SetType'}
+        weightKg: {type: number, minimum: 0, maximum: 1000, nullable: true}
+        reps: {type: integer, minimum: 0, maximum: 1000, nullable: true}
+        seconds: {type: integer, minimum: 0, maximum: 86400, nullable: true}
+        meters: {type: integer, minimum: 0, maximum: 100000, nullable: true}
+        scoreMade: {type: integer, minimum: 0, nullable: true}
+        scoreOf: {type: integer, minimum: 1, nullable: true}
+        rating: {type: integer, minimum: 1, maximum: 4, nullable: true}
+        completedAt: {type: string, format: date-time, description: Device time of the set (offline replay); defaults to server time}
+    WorkoutSetsInput:
+      type: object
+      required: [clientId, assignmentId, planItemId, scheduledFor, sets]
+      properties:
+        clientId: {type: string, minLength: 8, maxLength: 64, description: Client id of the log (used when the log is created)}
+        assignmentId: {type: string}
+        planItemId: {type: string}
+        memberId: {type: string, description: Optional; must match the assignment's member}
+        scheduledFor: {type: string, format: date}
+        note: {type: string, maxLength: 280, nullable: true, description: The member's note on this item and day}
+        complete: {type: boolean, description: Mark the item completed}
+        sets:
+          type: array
+          minItems: 1
+          maxItems: 60
+          items: {$ref: '#/components/schemas/WorkoutSetInput'}
+    WorkoutSet:
+      type: object
+      required: [id, logId, clientId, setNumber, setType, completedAt]
+      properties:
+        id: {type: string}
+        logId: {type: string}
+        clientId: {type: string}
+        setNumber: {type: integer}
+        setType: {$ref: '#/components/schemas/SetType'}
+        weightKg: {type: number, nullable: true}
+        reps: {type: integer, nullable: true}
+        seconds: {type: integer, nullable: true}
+        meters: {type: integer, nullable: true}
+        scoreMade: {type: integer, nullable: true}
+        scoreOf: {type: integer, nullable: true}
+        rating: {type: integer, nullable: true}
+        completedAt: {type: string, format: date-time}
+    WorkoutSetListItem:
+      allOf:
+        - $ref: '#/components/schemas/WorkoutSet'
+        - type: object
+          required: [scheduledFor, exerciseId, exerciseName]
+          properties:
+            scheduledFor: {type: string, format: date}
+            exerciseId: {type: string}
+            exerciseName: {type: string}
+    WorkoutSetPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/WorkoutSetListItem'}
+        nextCursor: {type: string, nullable: true}
+    BestKind:
+      type: string
+      enum: [heaviest_weight, one_rep_max, best_set_volume, session_volume, most_reps, longest_time, best_split, best_score]
+    NewBest:
+      type: object
+      required: [metric, value, previous]
+      properties:
+        metric: {$ref: '#/components/schemas/BestKind'}
+        value: {type: number}
+        previous: {type: number, description: The best before this session}
+    NewBestOnDate:
+      allOf:
+        - $ref: '#/components/schemas/NewBest'
+        - type: object
+          required: [logId, date]
+          properties:
+            logId: {type: string}
+            date: {type: string, format: date}
+    WorkoutLogWithSets:
+      allOf:
+        - $ref: '#/components/schemas/WorkoutLog'
+        - type: object
+          required: [sets, newBests]
+          properties:
+            sets:
+              type: array
+              items: {$ref: '#/components/schemas/WorkoutSet'}
+            newBests:
+              type: array
+              items: {$ref: '#/components/schemas/NewBest'}
+    SeriesPoint:
+      type: object
+      required: [date, value]
+      properties:
+        date: {type: string, format: date}
+        value: {type: number}
+    ExerciseSeries:
+      type: object
+      description: One point per session, oldest first. Empty when the metric has no data. bestScore is a percent; bestSplit is seconds per 100 m (lower is better).
+      required: [heaviestWeight, oneRepMax, bestSetVolume, sessionVolume, totalReps, bestTime, bestSplit, bestScore]
+      properties:
+        heaviestWeight: {type: array, items: {$ref: '#/components/schemas/SeriesPoint'}}
+        oneRepMax: {type: array, items: {$ref: '#/components/schemas/SeriesPoint'}}
+        bestSetVolume: {type: array, items: {$ref: '#/components/schemas/SeriesPoint'}}
+        sessionVolume: {type: array, items: {$ref: '#/components/schemas/SeriesPoint'}}
+        totalReps: {type: array, items: {$ref: '#/components/schemas/SeriesPoint'}}
+        bestTime: {type: array, items: {$ref: '#/components/schemas/SeriesPoint'}}
+        bestSplit: {type: array, items: {$ref: '#/components/schemas/SeriesPoint'}}
+        bestScore: {type: array, items: {$ref: '#/components/schemas/SeriesPoint'}}
+    RecordValue:
+      type: object
+      required: [value, date]
+      properties:
+        value: {type: number}
+        date: {type: string, format: date}
+    RepRecord:
+      type: object
+      required: [reps, weightKg, date]
+      properties:
+        reps: {type: integer}
+        weightKg: {type: number}
+        date: {type: string, format: date}
+    ExerciseRecords:
+      type: object
+      required: [heaviestWeight, oneRepMax, bestSetVolume, bestSessionVolume, mostReps, longestTime, bestSplit, bestScore, weightAtReps]
+      properties:
+        heaviestWeight: {nullable: true, allOf: [{$ref: '#/components/schemas/RecordValue'}]}
+        oneRepMax: {nullable: true, allOf: [{$ref: '#/components/schemas/RecordValue'}]}
+        bestSetVolume: {nullable: true, allOf: [{$ref: '#/components/schemas/RecordValue'}]}
+        bestSessionVolume: {nullable: true, allOf: [{$ref: '#/components/schemas/RecordValue'}]}
+        mostReps: {nullable: true, allOf: [{$ref: '#/components/schemas/RecordValue'}]}
+        longestTime: {nullable: true, allOf: [{$ref: '#/components/schemas/RecordValue'}]}
+        bestSplit: {nullable: true, allOf: [{$ref: '#/components/schemas/RecordValue'}]}
+        bestScore: {nullable: true, allOf: [{$ref: '#/components/schemas/RecordValue'}]}
+        weightAtReps:
+          type: array
+          description: Heaviest weight at each rep count, ascending by reps
+          items: {$ref: '#/components/schemas/RepRecord'}
+    ExerciseHistorySession:
+      type: object
+      required: [logId, date, status, sets]
+      properties:
+        logId: {type: string}
+        date: {type: string, format: date}
+        status: {$ref: '#/components/schemas/WorkoutLogStatus'}
+        note: {type: string, nullable: true}
+        sets:
+          type: array
+          items: {$ref: '#/components/schemas/WorkoutSet'}
+    ExerciseHistory:
+      type: object
+      required: [memberId, exerciseId, exerciseName, metricType, range, from, sessions, series, records, newBests]
+      properties:
+        memberId: {type: string}
+        exerciseId: {type: string}
+        exerciseName: {type: string}
+        metricType: {$ref: '#/components/schemas/MetricType'}
+        range: {type: string, enum: ['3m', '1y', all]}
+        from: {type: string, format: date, nullable: true, description: First date included; null for all}
+        sessions:
+          type: array
+          description: Newest first
+          items: {$ref: '#/components/schemas/ExerciseHistorySession'}
+        series: {$ref: '#/components/schemas/ExerciseSeries'}
+        records: {$ref: '#/components/schemas/ExerciseRecords'}
+        newBests:
+          type: array
+          items: {$ref: '#/components/schemas/NewBestOnDate'}
+    ClassWorkoutItem:
+      type: object
+      required: [id, exerciseId, exerciseName, metricType, position]
+      properties:
+        id: {type: string}
+        exerciseId: {type: string}
+        exerciseName: {type: string}
+        metricType: {$ref: '#/components/schemas/MetricType'}
+        position: {type: integer}
+        sets: {type: integer, nullable: true}
+        reps: {type: integer, nullable: true}
+        durationSeconds: {type: integer, nullable: true}
+        restSeconds: {type: integer, nullable: true}
+        supersetGroup: {type: string, nullable: true}
+        rounds: {type: integer, nullable: true}
+        targetWeightKg: {type: number, nullable: true}
+        targetDistanceMeters: {type: integer, nullable: true}
+        notes: {type: string, nullable: true}
+    ClassWorkoutBlock:
+      type: object
+      required: [type, label, rounds, items]
+      properties:
+        type: {type: string, enum: [single, superset]}
+        label: {type: string, nullable: true}
+        rounds: {type: integer, nullable: true}
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/ClassWorkoutItem'}
+    ClassWorkout:
+      type: object
+      required: [planId, planTitle, dayTitle, blocks]
+      properties:
+        planId: {type: string}
+        planTitle: {type: string}
+        dayTitle: {type: string, nullable: true}
+        blocks:
+          type: array
+          items: {$ref: '#/components/schemas/ClassWorkoutBlock'}
+    SessionWorkoutInput:
+      type: object
+      required: [planDayId]
+      properties:
+        planDayId: {type: string, nullable: true, description: A plan day id, or null to detach}
+    SessionWorkout:
+      type: object
+      required: [sessionId, planDayId, workout]
+      properties:
+        sessionId: {type: string}
+        planDayId: {type: string, nullable: true}
+        workout: {nullable: true, allOf: [{$ref: '#/components/schemas/ClassWorkout'}]}
+    ClassSummaryInput:
+      type: object
+      properties:
+        coachNote: {type: string, maxLength: 1000, nullable: true, description: Defaults to the session's coach note on the first publish}
+        homePractice: {type: string, maxLength: 1000, nullable: true}
+    ClassSummaryMemberView:
+      type: object
+      required: [memberId, status, titleKey, bodyKey, params]
+      description: Message keys (see lib/i18n/messages/en/workout-engine.ts) and params to translate. params.firstName is the member's own first name.
+      properties:
+        memberId: {type: string}
+        status: {type: string, enum: [present, absent, excused]}
+        titleKey: {type: string, example: cs.present.title}
+        bodyKey: {type: string, example: cs.present.body}
+        params:
+          type: object
+          additionalProperties: {type: string}
+    ClassSummary:
+      type: object
+      required: [id, sessionId, batchName, startsAt, endsAt, coachNote, homePractice, publishedAt, workout, counts, forMember]
+      properties:
+        id: {type: string}
+        sessionId: {type: string}
+        batchName: {type: string}
+        startsAt: {type: string, format: date-time}
+        endsAt: {type: string, format: date-time}
+        coachNote: {type: string, nullable: true}
+        homePractice: {type: string, nullable: true}
+        publishedAt: {type: string, format: date-time}
+        workout: {nullable: true, allOf: [{$ref: '#/components/schemas/ClassWorkout'}], description: Frozen when the summary was published}
+        counts:
+          nullable: true
+          type: object
+          description: Owner and coach only (null for customers)
+          required: [present, absent, excused]
+          properties:
+            present: {type: integer}
+            absent: {type: integer}
+            excused: {type: integer}
+        forMember: {nullable: true, allOf: [{$ref: '#/components/schemas/ClassSummaryMemberView'}]}
+    ClassSummaryPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/ClassSummary'}
+        nextCursor: {type: string, nullable: true}
+    ClassSummaryShareInput:
+      type: object
+      required: [memberId]
+      properties:
+        memberId: {type: string}
+    ClassSummaryShare:
+      type: object
+      required: [url, expiresAt]
+      properties:
+        url: {type: string, description: 'APP_BASE_URL + /share/class/{token}'}
+        expiresAt: {type: string, format: date-time}
+    SharedClassSummary:
+      type: object
+      required: [tenantName, tenantSlug, firstName, batchName, startsAt, endsAt, status, titleKey, bodyKey, params, coachNote, homePractice, workout, expiresAt]
+      properties:
+        tenantName: {type: string}
+        tenantSlug: {type: string, description: Use with getTenantTheme to brand the page}
+        firstName: {type: string}
+        batchName: {type: string}
+        startsAt: {type: string, format: date-time}
+        endsAt: {type: string, format: date-time}
+        status: {type: string, enum: [present, absent, excused]}
+        titleKey: {type: string}
+        bodyKey: {type: string}
+        params:
+          type: object
+          additionalProperties: {type: string}
+        coachNote: {type: string, nullable: true}
+        homePractice: {type: string, nullable: true}
+        workout: {nullable: true, allOf: [{$ref: '#/components/schemas/ClassWorkout'}]}
+        expiresAt: {type: string, format: date-time}
+    SkillChecklistItem:
+      type: object
+      required: [id, title, description, sortOrder]
+      properties:
+        id: {type: string}
+        title: {type: string}
+        description: {type: string, nullable: true}
+        sortOrder: {type: integer}
+    SkillChecklist:
+      type: object
+      required: [id, sportId, sportSlug, sportName, levelId, levelName, levelRank, levelColorHex, title, sortOrder, items]
+      properties:
+        id: {type: string}
+        sportId: {type: string}
+        sportSlug: {type: string}
+        sportName: {type: string}
+        levelId: {type: string, nullable: true, description: The belt or level this checklist leads to; null for a free-standing list}
+        levelName: {type: string, nullable: true}
+        levelRank: {type: integer, nullable: true}
+        levelColorHex: {type: string, nullable: true}
+        title: {type: string}
+        sortOrder: {type: integer}
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/SkillChecklistItem'}
+    SkillChecklistList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/SkillChecklist'}
+    MemberSkillItem:
+      type: object
+      required: [skillItemId, title, description, sortOrder, signedOff, rating, note, signedOffAt, signedOffByName]
+      properties:
+        skillItemId: {type: string}
+        title: {type: string}
+        description: {type: string, nullable: true}
+        sortOrder: {type: integer}
+        signedOff: {type: boolean}
+        rating: {type: integer, minimum: 1, maximum: 4, nullable: true}
+        note: {type: string, nullable: true}
+        signedOffAt: {type: string, format: date-time, nullable: true}
+        signedOffByName: {type: string, nullable: true}
+    MemberSkillChecklist:
+      type: object
+      required: [checklistId, sportId, sportName, levelId, levelName, levelRank, levelColorHex, title, isNextLevel, doneCount, totalCount, percent, complete, items]
+      properties:
+        checklistId: {type: string}
+        sportId: {type: string}
+        sportName: {type: string}
+        levelId: {type: string, nullable: true}
+        levelName: {type: string, nullable: true}
+        levelRank: {type: integer, nullable: true}
+        levelColorHex: {type: string, nullable: true}
+        title: {type: string}
+        isNextLevel: {type: boolean, description: This checklist leads to the member's next belt}
+        doneCount: {type: integer}
+        totalCount: {type: integer}
+        percent: {type: integer, minimum: 0, maximum: 100}
+        complete: {type: boolean, description: Every skill signed off}
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/MemberSkillItem'}
+    MemberSkillProgress:
+      type: object
+      required: [memberId, currentLevels, checklists]
+      properties:
+        memberId: {type: string}
+        currentLevels:
+          type: array
+          items:
+            type: object
+            required: [sportId, levelId, levelName, rank, achievedOn]
+            properties:
+              sportId: {type: string}
+              levelId: {type: string}
+              levelName: {type: string}
+              rank: {type: integer}
+              achievedOn: {type: string, format: date}
+        checklists:
+          type: array
+          items: {$ref: '#/components/schemas/MemberSkillChecklist'}
+    SkillSignOffInput:
+      type: object
+      required: [rating]
+      properties:
+        rating: {type: integer, minimum: 1, maximum: 4}
+        note: {type: string, maxLength: 280, nullable: true}
+    SkillSignOff:
+      type: object
+      required: [memberId, skillItemId, rating, note, signedOffAt, signedOffById, signedOffByName]
+      properties:
+        memberId: {type: string}
+        skillItemId: {type: string}
+        rating: {type: integer}
+        note: {type: string, nullable: true}
+        signedOffAt: {type: string, format: date-time}
+        signedOffById: {type: string, nullable: true}
+        signedOffByName: {type: string, nullable: true}
+    BulkSendInput:
+      type: object
+      required: [planId, memberIds, startsOn]
+      properties:
+        planId: {type: string}
+        memberIds:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: {type: string}
+        startsOn: {type: string, format: date}
+        repeat:
+          type: object
+          description: When the assignment ends. Default ongoing.
+          required: [mode]
+          properties:
+            mode: {type: string, enum: [ongoing, once, weeks, until]}
+            weeks: {type: integer, minimum: 1, maximum: 52, description: For mode weeks}
+            endsOn: {type: string, format: date, description: For mode until}
+        note: {type: string, maxLength: 280, nullable: true, description: Shown to every member in the update}
+    BulkSendResult:
+      type: object
+      required: [planId, planTitle, startsOn, endsOn, results, sentCount, alreadySentCount, skippedCount]
+      properties:
+        planId: {type: string}
+        planTitle: {type: string}
+        startsOn: {type: string, format: date}
+        endsOn: {type: string, format: date, nullable: true}
+        results:
+          type: array
+          items:
+            type: object
+            required: [memberId, memberName, status, assignmentId]
+            properties:
+              memberId: {type: string}
+              memberName: {type: string}
+              status: {type: string, enum: [sent, already_sent, skipped_active]}
+              assignmentId: {type: string}
+        sentCount: {type: integer}
+        alreadySentCount: {type: integer}
+        skippedCount: {type: integer}
+    PlanResultItem:
+      type: object
+      required: [logId, planItemId, exerciseId, exerciseName, metricType, status, note, actualSets, actualReps, actualDurationSeconds, sets, newBests]
+      properties:
+        logId: {type: string}
+        planItemId: {type: string}
+        exerciseId: {type: string}
+        exerciseName: {type: string}
+        metricType: {$ref: '#/components/schemas/MetricType'}
+        status: {$ref: '#/components/schemas/WorkoutLogStatus'}
+        note: {type: string, nullable: true, description: The member's note}
+        actualSets: {type: integer, nullable: true}
+        actualReps: {type: integer, nullable: true}
+        actualDurationSeconds: {type: integer, nullable: true}
+        sets:
+          type: array
+          items: {$ref: '#/components/schemas/WorkoutSet'}
+        newBests:
+          type: array
+          items: {$ref: '#/components/schemas/NewBest'}
+    PlanResults:
+      type: object
+      required: [planId, from, to, items]
+      properties:
+        planId: {type: string}
+        from: {type: string, format: date}
+        to: {type: string, format: date}
+        items:
+          type: array
+          items:
+            type: object
+            required: [assignmentId, memberId, memberName, status, startsOn, endsOn, note, itemsCompleted, itemsSkipped, daysLogged, setCount, newBestCount, days]
+            properties:
+              assignmentId: {type: string}
+              memberId: {type: string}
+              memberName: {type: string}
+              status: {$ref: '#/components/schemas/AssignmentStatus'}
+              startsOn: {type: string, format: date}
+              endsOn: {type: string, format: date, nullable: true}
+              note: {type: string, nullable: true}
+              itemsCompleted: {type: integer}
+              itemsSkipped: {type: integer}
+              daysLogged: {type: integer}
+              setCount: {type: integer}
+              newBestCount: {type: integer}
+              days:
+                type: array
+                description: Newest first
+                items:
+                  type: object
+                  required: [date, items]
+                  properties:
+                    date: {type: string, format: date}
+                    items:
+                      type: array
+                      items: {$ref: '#/components/schemas/PlanResultItem'}
+    ClassInsights:
+      type: object
+      required: [range, from, to, overall, slots, suggestions]
+      properties:
+        range: {type: string, enum: [7d, 28d, 90d]}
+        from: {type: string, format: date}
+        to: {type: string, format: date}
+        overall:
+          type: object
+          required: [classesHeld, avgFillRate, attendanceRate, workoutSentShare]
+          properties:
+            classesHeld: {type: integer}
+            avgFillRate: {$ref: '#/components/schemas/Percent'}
+            attendanceRate: {$ref: '#/components/schemas/Percent'}
+            workoutSentShare: {$ref: '#/components/schemas/Percent'}
+        slots:
+          type: array
+          items:
+            type: object
+            required: [batchId, batchName, sportId, sportName, daysOfWeek, startTime, endTime, capacity, sessionCount, avgFillRate, attendanceRate, workoutSentShare, waitlistCount, quietSlot]
+            properties:
+              batchId: {type: string}
+              batchName: {type: string}
+              sportId: {type: string}
+              sportName: {type: string}
+              daysOfWeek: {type: array, items: {type: integer}}
+              startTime: {type: string}
+              endTime: {type: string}
+              capacity: {type: integer, nullable: true}
+              sessionCount: {type: integer, description: Classes held (roll call completed) in the range}
+              avgFillRate: {$ref: '#/components/schemas/Percent'}
+              attendanceRate: {$ref: '#/components/schemas/Percent'}
+              workoutSentShare: {$ref: '#/components/schemas/Percent'}
+              waitlistCount: {type: integer, description: People currently waitlisted for upcoming classes of this slot}
+              quietSlot: {type: boolean, description: 'Room to grow: at least 3 classes held and average fill under 40 percent'}
+        suggestions:
+          type: array
+          items:
+            type: object
+            required: [kind, messageKey, batchId, params]
+            properties:
+              kind: {type: string, enum: [add_class, move_slot]}
+              messageKey: {type: string, enum: [ci.addClass, ci.moveSlot]}
+              batchId: {type: string}
+              params:
+                type: object
+                additionalProperties: true

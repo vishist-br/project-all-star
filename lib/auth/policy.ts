@@ -68,6 +68,24 @@ export const OPERATION_ROLES = {
   listExcusedAbsences: ["owner", "coach", "customer"],
   createExcusedAbsence: ["customer"],
   cancelExcusedAbsence: ["customer"],
+  // STAR-107: workout engine (per-set logging, class workouts and summaries, skills, bulk send, class insights)
+  recordWorkoutSets: ["coach", "customer"],
+  listWorkoutSets: ["owner", "coach", "customer"],
+  getExerciseHistory: ["owner", "coach", "customer"],
+  attachSessionWorkout: ["owner", "coach"],
+  getSessionWorkout: ["owner", "coach", "customer"],
+  publishClassSummary: ["owner", "coach"],
+  getClassSummary: ["owner", "coach", "customer"],
+  getMemberClassSummaries: ["owner", "coach", "customer"],
+  createClassSummaryShare: ["owner", "coach", "customer"],
+  getSharedClassSummary: "public",
+  listSkillChecklists: ["owner", "coach", "customer"],
+  getMemberSkillProgress: ["owner", "coach", "customer"],
+  signOffSkill: ["owner", "coach"],
+  clearSkillSignOff: ["owner", "coach"],
+  sendPlanToMembers: ["owner", "coach"],
+  getPlanResults: ["owner", "coach"],
+  getClassInsights: ["owner"],
 } as const satisfies Record<string, RoleRule>;
 
 export type OperationId = keyof typeof OPERATION_ROLES;
