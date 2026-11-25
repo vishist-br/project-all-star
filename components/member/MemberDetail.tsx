@@ -14,6 +14,7 @@ import { SkillsPanel } from "@/components/skills/SkillsPanel";
 import { getMemberSkillProgress } from "@/lib/api/skills";
 import type { SkillProgress } from "@/lib/skills/view";
 import { CoachNoteCard } from "@/components/progress-card/CoachNoteCard";
+import { MemberGymExtras } from "@/components/gym-extras/MemberGymExtras";
 import { MemberWorkoutResults } from "@/components/send/MemberWorkoutResults";
 import { getProgressNote } from "@/lib/api/progress-card";
 import { mondayOf } from "@/lib/progress-card/rules";
@@ -227,6 +228,8 @@ export async function MemberDetail({ role, memberId, days }: { role: "coach" | "
           )}
         </Card>
       </div>
+
+      <MemberGymExtras db={db} principal={principal} memberId={memberId} />
 
       <MemberWorkoutResults db={db} principal={principal} role={role} memberId={memberId} memberName={m.name} />
 

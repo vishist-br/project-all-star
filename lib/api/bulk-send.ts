@@ -62,10 +62,10 @@ export async function sendPlanToMembers(db: TenantClient, p: Principal, body: un
   const note = textField(v, body, "note", "", 280);
   v.throwIfAny();
 
-  const plan = await db.workoutPlan.findFirst({ where: { id: planId! }, select: { id: true, title: true, status: true, version: true } });
+  const plan = await db.workoutPlan.findFirst({ where: { id: planId! }, select: { id: true, title: true, status: true, version: true, isTemplate: true } });
   if (!plan) throw new ApiError("not_found", "Plan not found");
   if (!(await db.workoutPlan.findFirst({ where: { id: plan.id, ...planWhere(p) }, select: { id: true } }))) throw new ApiError("forbidden", "This plan is not yours");
-  if (plan.status !== "ACTIVE") throw new ApiError("conflict", "Only an active plan can be sent");
+  if (plan.status !== "ACTIVE" || plan.isTemplate) throw new ApiError("conflict", "Only an active plan can be sent (a template is a starting point: use it to make a plan first)");
 
   const members = await db.member.findMany({ where: { id: { in: memberIds } }, select: { id: true, displayName: true, isActive: true } });
   if (members.length !== memberIds.length) throw new ApiError("not_found", "Member not found");

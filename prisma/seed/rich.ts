@@ -3,6 +3,7 @@ import { importCatalog, loadAllEntries } from "../catalog/import";
 import { expandSchedule } from "../../lib/workouts/expand";
 import { TENANTS, type SeedTenant } from "./data";
 import { RICH, type Archetype, type AssignmentDef, type PlanDef, type RichTenant } from "./rich-data";
+import { clearGymExtras, seedGymExtras } from "./gym-extras";
 import { clearWorkoutEngine, clearWorkoutEngineSports, seedWorkoutEngine } from "./workout-engine";
 import { addDays, addMinutesHHmm, daysBetween, dbDate, isoDow, istAt, rnd, seedToday } from "./dates";
 
@@ -27,6 +28,7 @@ export async function clearRich(prisma: PrismaClient): Promise<void> {
     const p = prefix(t.slug);
     const byId = { id: { startsWith: p } };
     await clearWorkoutEngine(prisma, t.id, t.slug);
+    await clearGymExtras(prisma, t.id, t.slug);
     await prisma.memberUpdate.deleteMany({ where: byId });
     await prisma.workoutLog.deleteMany({ where: byId });
     await prisma.planAssignment.deleteMany({ where: { OR: [byId, { planId: { startsWith: p } }] } });
@@ -709,6 +711,7 @@ export async function seedRich(prisma: PrismaClient, today = seedToday()): Promi
     const r = RICH.find((x) => x.slug === t.slug)!;
     out[t.slug] = { ...(await seedRichTenant(prisma, t, r, today)) };
     for (const [k, v] of Object.entries(await seedWorkoutEngine(prisma, t.slug, today))) out[t.slug][`we_${k}`] = v;
+    for (const [k, v] of Object.entries(await seedGymExtras(prisma, t.slug, today))) out[t.slug][`gx_${k}`] = v;
   }
   return out;
 }

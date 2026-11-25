@@ -1,15 +1,12 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PlanActions } from "@/components/plans/PlanActions";
-import { PlanSendLinks } from "@/components/send/SendLinks";
+import { PlansLibrary } from "@/components/plans-library/PlansLibrary";
 import s from "@/components/plans/plans.module.css";
-import { Badge, type Tone } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { Select, TextInput } from "@/components/ui/Form";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState, ErrorState } from "@/components/ui/States";
-import { listWorkoutPlans } from "@/lib/api/workout-plans";
+import { listPlanFolders } from "@/lib/api/plan-folders";
+import { listPlanTemplates, listWorkoutPlans } from "@/lib/api/workout-plans";
 import { ApiError } from "@/lib/auth/errors";
 import { checkRole } from "@/lib/auth/guard";
 import { getT } from "@/lib/i18n/server";
@@ -18,7 +15,6 @@ import { isRole } from "@/lib/nav";
 import { getViewer } from "@/lib/viewer";
 
 const STATUSES = ["draft", "active", "archived"] as const;
-const TONE: Record<string, Tone> = { draft: "neutral", active: "ok", archived: "warn" };
 
 type Search = Record<string, string | string[] | undefined>;
 
@@ -32,7 +28,7 @@ export default async function PlansPage({ params, searchParams }: { params: Prom
   const status = (STATUSES as readonly string[]).includes(one("status")) ? one("status") : "";
   const cursor = one("cursor");
 
-  const { t, locale } = await getT();
+  const { t } = await getT();
   const { db, principal } = await getViewer();
   // The role layout already shows "not available" to other roles; stop quietly here instead of throwing.
   if (principal.role === "customer") notFound();
@@ -50,7 +46,7 @@ export default async function PlansPage({ params, searchParams }: { params: Prom
   }
 
   const filtered = Boolean(q || status);
-  const date = (iso: string) => new Date(iso).toLocaleDateString(locale === "en" ? "en-IN" : locale, { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
+  const [folders, templates] = await Promise.all([listPlanFolders(db, principal), listPlanTemplates(db, principal)]);
   const nextHref = (c: string) => {
     const p = new URLSearchParams();
     if (q) p.set("q", q);
@@ -93,33 +89,8 @@ export default async function PlansPage({ params, searchParams }: { params: Prom
           />
         )
       )}
-      {result && result.items.length > 0 && (
-        <ul className="card-list" aria-label={t("plans.title")}>
-          {result.items.map((p) => (
-            <Card as="li" key={p.id} className={s.planCard}>
-              <div className={s.planTop}>
-                <h2 className={s.planTitle}>
-                  {p.status === "archived" ? p.title : <Link href={`/${role}/plans/${p.id}`}>{p.title}</Link>}
-                </h2>
-                <div className={s.chips}>
-                  <Badge tone={TONE[p.status] ?? "neutral"}>{t(`plans.status.${p.status}` as MessageKey)}</Badge>
-                  <Badge tone="info">{t(`plans.cadence.${p.cadence}` as MessageKey)}</Badge>
-                </div>
-              </div>
-              <p className={s.meta}>
-                {[
-                  t("plans.exercisesCount", { n: p.itemCount }),
-                  t("plans.daysCount", { n: p.dayCount }),
-                  t("plans.assigneesCount", { n: p.activeAssignmentCount }),
-                  role === "owner" ? t("plans.by", { coach: p.coachName }) : null,
-                  t("plans.updated", { date: date(p.updatedAt) }),
-                ].filter(Boolean).join(" · ")}
-              </p>
-              <PlanActions role={role} plan={{ id: p.id, title: p.title, status: p.status }} />
-              {p.status !== "archived" && <PlanSendLinks role={role} plan={{ id: p.id, title: p.title, status: p.status }} />}
-            </Card>
-          ))}
-        </ul>
+      {result && (result.items.length > 0 || !filtered) && (
+        <PlansLibrary role={role} plans={result.items} folders={folders.items} templates={filtered ? [] : templates.items} />
       )}
       {result?.nextCursor && (
         <nav className={s.pager} aria-label={t("plans.title")}>
