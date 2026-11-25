@@ -14,6 +14,8 @@ async function rootVar(page: Page, name: string) {
 
 async function pick(page: Page, label: "Business" | "View as", value: string) {
   await page.getByRole("combobox", { name: label, exact: true }).selectOption(value);
+  // Choosing a role navigates to that role's home (router.push): wait for it, or a following goto races it.
+  if (label === "View as") await page.waitForURL(new RegExp(`/${value}(/|$)`), { timeout: 60_000 });
   // The switcher sets a cookie then router.refresh(); wait for the server render to settle.
   await page.waitForLoadState("networkidle");
 }

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { NAV } from "../lib/nav";
 import {
   BASE_URL,
   GYM_NAME,
@@ -713,7 +714,8 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 360, height: 780 
         // Real clicks on each nav item (at 360px the dev indicator can cover the left-most item, so click through the DOM).
         const nav = p.getByRole("navigation", { name: "Main navigation" }).locator("a");
         const n = await nav.count();
-        expect(n).toBe(5);
+        // Every screen of the role plus More (phones hide the extras in the bar, but they stay in the DOM and on /more).
+        expect(n).toBe(NAV[actor.role as "owner" | "coach" | "customer"].length + 1);
         const hrefs: string[] = [];
         for (let i = 0; i < n; i++) hrefs.push((await nav.nth(i).getAttribute("href"))!);
         for (const href of hrefs) {

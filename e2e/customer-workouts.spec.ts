@@ -72,6 +72,14 @@ test("home shows today's items, start/complete/skip persist after a reload, with
 });
 
 test("updates: unread badge on home, feed rendered through i18n, opening marks everything read", async ({ page, request }) => {
+  // Start from the seeded state (unread updates): an earlier spec in the same run may have opened this member's feed.
+  const db = new PrismaClient({ datasources: { db: { url: scratchUrl() } } });
+  try {
+    const unread = await db.memberUpdate.updateMany({ where: { member: { user: { email: A1.email } } }, data: { readAt: null } });
+    expect(unread.count, "the member has updates in the seed").toBeGreaterThan(2);
+  } finally {
+    await db.$disconnect();
+  }
   await signIn(page, request, A1);
   const badge = page.locator("main").getByText(/^\d+ new$/);
   await expect(badge).toBeVisible();
