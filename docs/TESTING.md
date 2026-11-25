@@ -114,6 +114,11 @@ Environment variables:
 
 Rules of thumb:
 
+- Run the whole suite as shards with `scripts/e2e-sharded.sh` (four shards, each with its own dev server and scratch database; ux-audit excluded). One `playwright test` over every spec keeps a single `next dev` alive while it compiles every route; on an 8 GB machine Next then restarts it ("approaching the used memory threshold") or it dies, and the rest of the run fails with ECONNRESET, ERR_CONNECTION_REFUSED or pages stuck on Loading.
+- Open POC mode versus sign-in: the harness runs with `POC_OPEN` unset, so the demo role cookie decides the role and another role's screens are refused. Run `POC_OPEN=true npx playwright test e2e/smoke.spec.ts -g "\(d\)"` to check open mode (the URL decides the role, every screen opens).
+- The default `expect` timeout is 30 s because the first visit to a route compiles it in `next dev`.
+- `e2e/ux-new-screens.spec.ts` is the short audit of the workout-engine screens (360 px, en and hi: axe, overflow, touch targets, focus); `e2e/ux-audit.spec.ts` is the full 40 minute crawl.
+
 - To run one spec, or several specs at the same time, give each its own database and port: `E2E_WEBPACK=1 E2E_DB_NAME=allstar_e2e_qa75 E2E_PORT=3275 npx playwright test e2e/cross-role.spec.ts`.
 - Delete `.next` between `npm run build` and the e2e run (`rm -rf .next`): a production build in `.next` conflicts with `next dev`.
 - The first run compiles every route on demand, so it is slow; a timing flake on a cold compile passes when re-run alone.
