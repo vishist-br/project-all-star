@@ -14,6 +14,8 @@ export type ExerciseSummary = {
   equipment: string | null;
   primaryMuscles: string[];
   needsTrainerReview: boolean;
+  /** How the exercise is logged: WEIGHT_REPS, REPS, TIME, DISTANCE_TIME, SCORE or CHECKLIST. */
+  metricType: "WEIGHT_REPS" | "REPS" | "TIME" | "DISTANCE_TIME" | "SCORE" | "CHECKLIST";
 };
 export type ExerciseDetail = ExerciseSummary & { category: string | null; level: string | null; secondaryMuscles: string[]; instructions: string[]; licence: string };
 export type ExercisePage = { items: ExerciseSummary[]; nextCursor: string | null };

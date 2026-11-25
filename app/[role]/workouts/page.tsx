@@ -6,7 +6,7 @@ import { getWorkoutPlan } from "@/lib/api/workout-plans";
 import { ChildSwitcher } from "@/components/customer/ChildSwitcher";
 import { NoMember } from "@/components/customer/NoMember";
 import { TodayWorkouts } from "@/components/customer/workout/TodayWorkouts";
-import { Badge, Card, EmptyState, PageHeader, SectionHeader } from "@/components/ui";
+import { Badge, ButtonLink, Card, EmptyState, PageHeader, SectionHeader } from "@/components/ui";
 import { WorkoutsScreen, type WorkoutFilters } from "@/components/WorkoutsScreen";
 import { formatDay } from "@/lib/customer/format";
 import { targetParts, toWorkoutItems } from "@/lib/customer/items";
@@ -109,7 +109,16 @@ export default async function WorkoutsPage({
           <section aria-labelledby="wk-today-h" className={s.stack}>
             <SectionHeader title={<span id="wk-today-h">{t("cu.wk.today")} · {formatDay(today, locale)}</span>} />
             {todayItems.length > 0 ? (
-              <TodayWorkouts memberId={selected.id} date={today} items={todayItems} />
+              <>
+                <div className={s.liveCta}>
+                  <div>
+                    <strong>{t("lw.title")}</strong>
+                    <p className={s.meta}>{t("lw.startHint")}</p>
+                  </div>
+                  <ButtonLink href="/customer/workouts/live" size="lg">{t("lw.start")}</ButtonLink>
+                </div>
+                <TodayWorkouts memberId={selected.id} date={today} items={todayItems} />
+              </>
             ) : (
               <p className="muted">{t("cu.wk.rest")}</p>
             )}

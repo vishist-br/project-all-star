@@ -36,3 +36,7 @@
 .feedItem { display: grid; gap: var(--s1); }
 .feedItem[data-new="true"] { border-left: 4px solid var(--primary); }
 .quote { margin: 0; padding-inline-start: var(--s3); border-inline-start: 3px solid var(--line-strong); color: var(--muted); font-style: italic; }
+
+.liveCta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3); padding: var(--s3) var(--s4); background: var(--primary-soft); border: 1px solid var(--primary); border-radius: var(--r-lg); }
+.liveCta p { margin: 0; }
+.liveCta > div { min-width: 0; flex: 1 1 12rem; }

@@ -3,10 +3,13 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   buildLogPayload,
+  buildSetsPayload,
   effectiveStatus,
   enqueue,
+  isSetOp,
   itemKey,
   makeOp,
+  makeSetsOp,
   opsFor,
   replayQueue,
   sameOp,
@@ -14,6 +17,7 @@ import {
   type LogAction,
   type QueuedOp,
   type SendResult,
+  type SetPayload,
 } from "@/lib/customer/queue";
 import { queueStore } from "./queueStore";
 
@@ -32,14 +36,15 @@ function subscribeOnline(cb: () => void) {
   };
 }
 
-/** Sends one queued tap through the same-origin bridge. Network trouble, 5xx and 401 keep the op queued. */
+/** Sends one queued tap or set save through the same-origin bridge. Network trouble, 5xx and 401 keep the op queued. */
 async function sendOp(op: QueuedOp): Promise<SendResult> {
   let res: Response;
+  const sets = isSetOp(op);
   try {
-    res = await fetch("/ui/workout-log", {
+    res = await fetch(sets ? "/ui/workout-sets" : "/ui/workout-log", {
       method: "PUT",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(buildLogPayload(op)),
+      body: JSON.stringify(sets ? buildSetsPayload(op) : buildLogPayload(op)),
       cache: "no-store",
     });
   } catch {
@@ -49,7 +54,7 @@ async function sendOp(op: QueuedOp): Promise<SendResult> {
   if (res.ok) {
     try {
       const body = (await res.json()) as { status?: ItemStatus };
-      return { kind: "ok", status: body.status };
+      return { kind: "ok", status: body.status, data: body };
     } catch {
       return { kind: "ok" };
     }
@@ -74,7 +79,7 @@ async function sendOp(op: QueuedOp): Promise<SendResult> {
  * for good is dropped, which rolls the item back to the server's status. `serverData` is any value
  * whose identity changes when the page's server data is refreshed.
  */
-export function useWorkoutLogger(serverData: unknown) {
+export function useWorkoutLogger(serverData: unknown, options?: { onSynced?: (op: QueuedOp, data: unknown) => void; onRejected?: (op: QueuedOp, code: string) => void; refreshOnSync?: boolean }) {
   const router = useRouter();
   const queue = useSyncExternalStore(queueStore.subscribe, queueStore.getSnapshot, queueStore.getServerSnapshot);
   const online = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
@@ -83,9 +88,11 @@ export function useWorkoutLogger(serverData: unknown) {
   const [confirmed, setConfirmed] = useState<{ forData: unknown; map: Record<string, ItemStatus> }>({ forData: serverData, map: {} });
   const flushing = useRef(false);
   const dataRef = useRef(serverData);
+  const optionsRef = useRef(options);
   useEffect(() => {
     dataRef.current = serverData;
-  }, [serverData]);
+    optionsRef.current = options;
+  });
 
   const flush = useCallback(async () => {
     if (flushing.current) return;
@@ -104,6 +111,7 @@ export function useWorkoutLogger(serverData: unknown) {
           const key = itemKey(op.assignmentId, op.planItemId, op.scheduledFor);
           if (result.kind === "ok") {
             synced += 1;
+            optionsRef.current?.onSynced?.(op, result.data);
             const st = result.status;
             if (st) {
               setConfirmed((c) => ({
@@ -113,6 +121,7 @@ export function useWorkoutLogger(serverData: unknown) {
             }
           } else if (result.kind === "reject") {
             rejected.push({ code: result.code });
+            optionsRef.current?.onRejected?.(op, result.code);
           }
         });
         if (res.interrupted) {
@@ -126,7 +135,7 @@ export function useWorkoutLogger(serverData: unknown) {
     }
     if (synced > 0 || rejected.length > 0 || stoppedBy) setReport({ synced, rejected, stoppedBy });
     // Refresh the server-rendered status (also after a refusal, so the item rolls back to the truth).
-    if (synced > 0 || rejected.length > 0) router.refresh();
+    if ((synced > 0 || rejected.length > 0) && optionsRef.current?.refreshOnSync !== false) router.refresh();
   }, [router]);
 
   // Replay on load, when the connection returns, and now and then while taps are waiting.
@@ -151,6 +160,16 @@ export function useWorkoutLogger(serverData: unknown) {
     [flush],
   );
 
+  /** Saves ticked sets of one exercise (per-set recordWorkoutSets). Saved on the phone first, then replayed. */
+  const performSets = useCallback(
+    (input: { memberId: string; assignmentId: string; planItemId: string; scheduledFor: string; sets: SetPayload[]; complete?: boolean }) => {
+      queueStore.set(enqueue(queueStore.getSnapshot(), makeSetsOp(input)));
+      setReport(null);
+      void flush();
+    },
+    [flush],
+  );
+
   const known = confirmed.forData === serverData ? confirmed.map : {};
   const statusOf = (item: { assignmentId: string; planItemId: string; date: string; status: ItemStatus }): { status: ItemStatus; queued: boolean } => {
     const key = itemKey(item.assignmentId, item.planItemId, item.date);
@@ -158,5 +177,5 @@ export function useWorkoutLogger(serverData: unknown) {
     return { status: effectiveStatus(known[key] ?? item.status, ops), queued: ops.length > 0 };
   };
 
-  return { queue, online, syncing, report, perform, statusOf, flush, dismissReport: () => setReport(null) };
+  return { queue, online, syncing, report, perform, performSets, statusOf, flush, dismissReport: () => setReport(null) };
 }

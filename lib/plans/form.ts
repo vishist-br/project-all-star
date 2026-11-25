@@ -2,6 +2,10 @@
  * Pure plan-builder logic (no React, no network): form state, validation that mirrors the
  * contract limits (docs/api/openapi.yaml WorkoutPlanInput) and payload building.
  */
+import { validateSupersets } from "../workouts/supersets";
+
+export type FormMetricType = "WEIGHT_REPS" | "REPS" | "TIME" | "DISTANCE_TIME" | "SCORE" | "CHECKLIST";
+
 export const CADENCES = ["daily", "weekly", "monthly"] as const;
 export type Cadence = (typeof CADENCES)[number];
 
@@ -17,6 +21,9 @@ export const LIMITS = {
   reps: [1, 200],
   durationSeconds: [1, 7200],
   restSeconds: [0, 900],
+  rounds: [1, 20],
+  targetDistanceMeters: [1, 100000],
+  targetWeightKg: [0.01, 1000],
 } as const;
 
 export type ItemForm = {
@@ -30,6 +37,14 @@ export type ItemForm = {
   durationSeconds: string;
   restSeconds: string;
   notes: string;
+  /** How the exercise is logged (decides the target fields). Default weight and reps. */
+  metricType: FormMetricType;
+  /** Superset label ("A"), "" when the exercise stands alone. */
+  supersetGroup: string;
+  /** Rounds, shared by every exercise of the superset; "" when not in one. */
+  rounds: string;
+  targetWeightKg: string;
+  targetDistanceMeters: string;
 };
 export type DayForm = { key: string; dayIndex: number; title: string; notes: string; items: ItemForm[] };
 export type PlanForm = { title: string; description: string; cadence: Cadence; sportSlug: string; days: DayForm[] };
@@ -53,6 +68,11 @@ export type PlanLike = {
       durationSeconds: number | null;
       restSeconds: number | null;
       notes: string | null;
+      metricType?: string | null;
+      supersetGroup?: string | null;
+      rounds?: number | null;
+      targetWeightKg?: number | null;
+      targetDistanceMeters?: number | null;
     }[];
   }[];
 };
@@ -73,16 +93,31 @@ export function emptyForm(): PlanForm {
   return { title: "", description: "", cadence: "weekly", sportSlug: "", days: [emptyDay(1)] };
 }
 
-export function emptyItem(exercise: { id: string; name: string }): ItemForm {
+const METRICS: readonly FormMetricType[] = ["WEIGHT_REPS", "REPS", "TIME", "DISTANCE_TIME", "SCORE", "CHECKLIST"];
+export const asFormMetric = (v: string | null | undefined): FormMetricType => ((METRICS as readonly string[]).includes(v ?? "") ? (v as FormMetricType) : "WEIGHT_REPS");
+
+/** Starting targets that suit the metric type; the coach edits them. */
+const DEFAULTS: Record<FormMetricType, Pick<ItemForm, "sets" | "reps" | "durationSeconds" | "restSeconds" | "targetDistanceMeters">> = {
+  WEIGHT_REPS: { sets: "3", reps: "10", durationSeconds: "", restSeconds: "60", targetDistanceMeters: "" },
+  REPS: { sets: "3", reps: "10", durationSeconds: "", restSeconds: "60", targetDistanceMeters: "" },
+  TIME: { sets: "3", reps: "", durationSeconds: "30", restSeconds: "30", targetDistanceMeters: "" },
+  DISTANCE_TIME: { sets: "4", reps: "", durationSeconds: "", restSeconds: "30", targetDistanceMeters: "50" },
+  SCORE: { sets: "3", reps: "10", durationSeconds: "", restSeconds: "30", targetDistanceMeters: "" },
+  CHECKLIST: { sets: "1", reps: "1", durationSeconds: "", restSeconds: "", targetDistanceMeters: "" },
+};
+
+export function emptyItem(exercise: { id: string; name: string; metricType?: string | null }): ItemForm {
+  const metricType = asFormMetric(exercise.metricType);
   return {
     key: newKey(),
     exerciseId: exercise.id,
     exerciseName: exercise.name,
-    sets: "3",
-    reps: "10",
-    durationSeconds: "",
-    restSeconds: "60",
     notes: "",
+    metricType,
+    supersetGroup: "",
+    rounds: "",
+    targetWeightKg: "",
+    ...DEFAULTS[metricType],
   };
 }
 
@@ -110,6 +145,11 @@ export function formFromPlan(plan: PlanLike): PlanForm {
           durationSeconds: str(i.durationSeconds),
           restSeconds: str(i.restSeconds),
           notes: i.notes ?? "",
+          metricType: asFormMetric(i.metricType),
+          supersetGroup: i.supersetGroup ?? "",
+          rounds: i.supersetGroup ? str(i.rounds) : "",
+          targetWeightKg: str(i.targetWeightKg),
+          targetDistanceMeters: str(i.targetDistanceMeters),
         })),
       })),
   };
@@ -169,7 +209,7 @@ export function moveItem<T>(items: T[], from: number, direction: -1 | 1): T[] {
 
 // ---- validation ----
 
-export type FormErrorCode = "required" | "tooLong" | "range" | "measure" | "noExercises" | "tooManyItems";
+export type FormErrorCode = "required" | "tooLong" | "range" | "measure" | "noExercises" | "tooManyItems" | "group" | "weight";
 export type FormError = { path: string; code: FormErrorCode; params?: { max?: number; min?: number } };
 
 function checkInt(errors: FormError[], path: string, raw: string, [min, max]: readonly [number, number]) {
@@ -204,13 +244,24 @@ export function validateForm(form: PlanForm, status: "draft" | "active"): FormEr
       checkInt(errors, `${ip}.reps`, it.reps, LIMITS.reps);
       checkInt(errors, `${ip}.durationSeconds`, it.durationSeconds, LIMITS.durationSeconds);
       checkInt(errors, `${ip}.restSeconds`, it.restSeconds, LIMITS.restSeconds);
-      if (it.reps.trim() === "" && it.durationSeconds.trim() === "") errors.push({ path: ip, code: "measure" });
+      checkInt(errors, `${ip}.targetDistanceMeters`, it.targetDistanceMeters, LIMITS.targetDistanceMeters);
+      if (it.supersetGroup !== "") checkInt(errors, `${ip}.rounds`, it.rounds, LIMITS.rounds);
+      const w = it.targetWeightKg.trim().replace(",", ".");
+      if (w !== "" && !(/^\d+(\.\d{1,2})?$/.test(w) && Number(w) > 0 && Number(w) <= LIMITS.targetWeightKg[1])) errors.push({ path: `${ip}.targetWeightKg`, code: "weight" });
+      if (it.reps.trim() === "" && it.durationSeconds.trim() === "" && it.targetDistanceMeters.trim() === "") errors.push({ path: ip, code: "measure" });
       if (it.notes.length > LIMITS.itemNotes) errors.push({ path: `${ip}.notes`, code: "tooLong", params: { max: LIMITS.itemNotes } });
     });
+    // Supersets: 2+ exercises, next to each other, same rounds (same rules as the API).
+    for (const p of validateSupersets(d.items.map((it, j) => ({ position: j + 1, supersetGroup: it.supersetGroup || null, rounds: it.rounds.trim() === "" ? null : Number(it.rounds) })))) {
+      const path = `${p2(i, p.index)}.supersetGroup`;
+      if (!errors.some((e) => e.path === path)) errors.push({ path, code: "group" });
+    }
   });
   if (status === "active" && form.days.every((d) => d.items.length === 0)) errors.push({ path: "days", code: "noExercises" });
   return errors;
 }
+
+const p2 = (day: number, item: number) => `days[${day}].items[${item}]`;
 
 export function errorFor(errors: FormError[], path: string): FormError | undefined {
   return errors.find((e) => e.path === path);
@@ -240,6 +291,10 @@ export type PlanPayload = {
       durationSeconds: number | null;
       restSeconds: number | null;
       notes: string | null;
+      supersetGroup?: string;
+      rounds?: number;
+      targetWeightKg?: number;
+      targetDistanceMeters?: number;
     }[];
   }[];
   expectedVersion?: number;
@@ -268,6 +323,11 @@ export function buildPayload(form: PlanForm, status: "draft" | "active", expecte
           durationSeconds: num(it.durationSeconds),
           restSeconds: num(it.restSeconds),
           notes: text(it.notes),
+          // New fields are left out when empty, so a plan without supersets sends the same body as before.
+          ...(it.supersetGroup.trim() !== "" ? { supersetGroup: it.supersetGroup.trim() } : {}),
+          ...(it.supersetGroup.trim() !== "" && it.rounds.trim() !== "" ? { rounds: Number(it.rounds) } : {}),
+          ...(it.targetWeightKg.trim() !== "" ? { targetWeightKg: Number(it.targetWeightKg.trim().replace(",", ".")) } : {}),
+          ...(it.targetDistanceMeters.trim() !== "" ? { targetDistanceMeters: Number(it.targetDistanceMeters) } : {}),
         })),
       })),
     ...(expectedVersion !== undefined ? { expectedVersion } : {}),

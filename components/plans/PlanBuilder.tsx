@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createPlanAction, updatePlanAction } from "@/app/[role]/_actions/plans";
-import { Button, ButtonLink, IconButton } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Select, TextInput } from "@/components/ui/Form";
 import { useToast } from "@/components/ui/Toast";
@@ -18,18 +18,16 @@ import {
   emptyItem,
   formFromPlan,
   freeDayIndexes,
-  moveItem,
   removeDay,
   setDayIndex,
   updateDay,
   validateForm,
   type Cadence,
-  type DayForm,
   type FormError,
-  type ItemForm,
   type PlanForm,
   type PlanLike,
 } from "@/lib/plans/form";
+import { PlanItemsEditor } from "@/components/workout/builder/PlanItemsEditor";
 import { ExercisePicker } from "./ExercisePicker";
 import s from "./plans.module.css";
 
@@ -49,6 +47,8 @@ export function PlanBuilder({ role, plan, facets }: { role: string; plan?: Edita
   const [problem, setProblem] = useState<string | null>(null);
   const [conflict, setConflict] = useState(false);
   const [pickerDay, setPickerDay] = useState<string | null>(null);
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const [announcement, setAnnouncement] = useState("");
 
   const listHref = `/${role}/plans`;
 
@@ -64,11 +64,15 @@ export function PlanBuilder({ role, plan, facets }: { role: string; plan?: Edita
       case "range":
         return t("plans.err.range", { min: e.params?.min ?? 0, max: e.params?.max ?? 0 });
       case "measure":
-        return t("plans.err.measure");
+        return t("pb.err.measure");
       case "noExercises":
         return t("plans.err.noExercises");
       case "tooManyItems":
         return t("plans.err.tooManyItems", { max: e.params?.max ?? 0 });
+      case "group":
+        return t("pb.err.group");
+      case "weight":
+        return t("pb.err.weight");
     }
   }
   const msg = (path: string): string | undefined => {
@@ -139,8 +143,6 @@ export function PlanBuilder({ role, plan, facets }: { role: string; plan?: Edita
   const pickerTarget = form.days.find((d) => d.key === pickerDay);
   const busy = saving !== null;
   const freeDays = freeDayIndexes(form);
-  const editItem = (day: DayForm, key: string, patch: Partial<ItemForm>) =>
-    setForm((f) => updateDay(f, day.key, (d) => ({ ...d, items: d.items.map((i) => (i.key === key ? { ...i, ...patch } : i)) })));
 
   return (
     <>
@@ -209,49 +211,18 @@ export function PlanBuilder({ role, plan, facets }: { role: string; plan?: Edita
             {day.items.length === 0 ? (
               <p className={s.emptyDay}>{t("plans.day.empty")}</p>
             ) : (
-              <ol className={s.itemList}>
-                {day.items.map((it, ii) => {
-                  const ip = `days[${di}].items[${ii}]`;
-                  const num = (field: "sets" | "reps" | "durationSeconds" | "restSeconds", label: string) => (
-                    <div className="field">
-                      <label className="field-label" htmlFor={idFor(`${ip}.${field}`)}>{label}</label>
-                      <TextInput
-                        {...fieldProps(`${ip}.${field}`)}
-                        type="number"
-                        inputMode="numeric"
-                        min={0}
-                        value={it[field]}
-                        onChange={(e) => editItem(day, it.key, { [field]: e.target.value })}
-                      />
-                      {fieldError(`${ip}.${field}`)}
-                    </div>
-                  );
-                  return (
-                    <li key={it.key} className={s.item}>
-                      <div className={s.itemHead}>
-                        <span className={s.itemName}>{ii + 1}. {it.exerciseName}</span>
-                        <div className={s.itemTools}>
-                          <IconButton label={t("plans.item.up", { name: it.exerciseName })} disabled={ii === 0} onClick={() => setForm(updateDay(form, day.key, (d) => ({ ...d, items: moveItem(d.items, ii, -1) })))}>↑</IconButton>
-                          <IconButton label={t("plans.item.down", { name: it.exerciseName })} disabled={ii === day.items.length - 1} onClick={() => setForm(updateDay(form, day.key, (d) => ({ ...d, items: moveItem(d.items, ii, 1) })))}>↓</IconButton>
-                          <IconButton label={t("plans.item.remove", { name: it.exerciseName })} onClick={() => setForm(updateDay(form, day.key, (d) => ({ ...d, items: d.items.filter((x) => x.key !== it.key) })))}>×</IconButton>
-                        </div>
-                      </div>
-                      <div className={s.numbers}>
-                        {num("sets", t("plans.item.sets"))}
-                        {num("reps", t("plans.item.reps"))}
-                        {num("durationSeconds", t("plans.item.duration"))}
-                        {num("restSeconds", t("plans.item.rest"))}
-                      </div>
-                      {msg(ip) && <p className="field-error" role="alert">{msg(ip)}</p>}
-                      <div className="field">
-                        <label className="field-label" htmlFor={idFor(`${ip}.notes`)}>{t("plans.item.notes")}</label>
-                        <TextInput {...fieldProps(`${ip}.notes`)} value={it.notes} onChange={(e) => editItem(day, it.key, { notes: e.target.value })} autoComplete="off" />
-                        {fieldError(`${ip}.notes`)}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
+              <PlanItemsEditor
+                items={day.items}
+                onChange={(items) => setForm((f) => updateDay(f, day.key, (d) => ({ ...d, items })))}
+                basePath={`days[${di}]`}
+                selected={selected}
+                onSelectedChange={setSelected}
+                onAnnounce={(text) => {
+                  setAnnouncement(text);
+                  toast(text);
+                }}
+                helpers={{ idFor, fieldProps, fieldError, msg }}
+              />
             )}
             <div>
               <Button id={di === 0 ? idFor("days") : undefined} variant="secondary" onClick={() => setPickerDay(day.key)}>
@@ -278,10 +249,12 @@ export function PlanBuilder({ role, plan, facets }: { role: string; plan?: Edita
         </div>
       </form>
 
+      <p className="sr-only" role="status" aria-live="polite">{announcement}</p>
       <ExercisePicker
         open={pickerDay !== null && !!pickerTarget}
         dayLabel={pickerTarget ? dayName(form.cadence, pickerTarget.dayIndex) : ""}
         facets={facets}
+        defaultSport={form.sportSlug}
         onAdd={(ex) => {
           const target = pickerDay;
           if (target) setForm((f) => updateDay(f, target, (d) => ({ ...d, items: [...d.items, emptyItem(ex)] })));
