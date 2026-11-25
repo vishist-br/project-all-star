@@ -6,6 +6,9 @@ import { getMemberStats } from "@/lib/api/member-stats";
 import { loadTenantSettings } from "@/lib/api/tenant-settings";
 import { listWorkoutLogs } from "@/lib/api/workout-logs";
 import { BarChart, Donut, LineChart, ProgressRing } from "@/components/charts";
+import { BeltCard } from "@/components/skills/BeltCard";
+import { getMemberSkillProgress } from "@/lib/api/skills";
+import { beltCards, type SkillProgress } from "@/lib/skills/view";
 import { ChildSwitcher } from "@/components/customer/ChildSwitcher";
 import { NoMember } from "@/components/customer/NoMember";
 import { Badge, Card, EmptyState, PageHeader, ProgressBar, Segmented, StatGrid, StatTile } from "@/components/ui";
@@ -49,6 +52,14 @@ export async function ProgressScreen({ searchParams }: { searchParams: Search })
     listWorkoutLogs(db, principal, selected.id, new URLSearchParams({ limit: "8" })),
   ]);
 
+  let belts: ReturnType<typeof beltCards> = [];
+  try {
+    allow(principal, "getMemberSkillProgress");
+    belts = beltCards((await getMemberSkillProgress(db, principal, selected.id, new URLSearchParams())) as unknown as SkillProgress);
+  } catch (err) {
+    console.error("belt card failed", err instanceof Error ? err.message : err);
+  }
+
   const noData = t("cp.noData");
   const att = stats.attendance;
   const wk = stats.workouts;
@@ -68,6 +79,12 @@ export async function ProgressScreen({ searchParams }: { searchParams: Search })
       <ChildSwitcher members={ctx.children} selectedId={selected.id} />
       <Segmented label={t("cp.range.label")} items={period} />
       <Link className="btn btn-secondary" href="/customer/progress/week" data-testid="weekly-card-link">{t("pc.open")}</Link>
+
+      <Link className="btn btn-secondary" href="/customer/progress/exercises" data-testid="exercises-link">{t("xp.link.exercises")}</Link>
+
+      {belts.map((b) => (
+        <BeltCard key={b.checklist.checklistId} model={b} href="/customer/progress/skills" />
+      ))}
 
       <Card title={t("cp.level.title")}>
         {lvl ? (
