@@ -34,7 +34,7 @@ First full audit 2026-11-10 against `package.json` and `package-lock.json` from 
 | --- | --- | --- |
 | Design system, SVG chart kit, offline queues, CSV import, schedule expansion, analytics (`app/globals.css`, `components/ui`, `components/charts`, `lib/offline`, `lib/import`, `lib/workouts`, `lib/analytics`) | Own code | Sprint 2 UI and logic. No chart, component, date, CSV or state library was added, so no new licence. |
 | lib/i18n (en/hi/kn) | Own code | Small i18n layer; no i18n library added, so no new dependency or licence. Hindi and Kannada strings are our own drafts, marked "needs native-speaker review". |
-| data/exercises/original-sports.json | Own content | Draft exercises for karate, yoga and dance fitness. All text self-written (no text, images or videos from Hevy, Cult.fit or any commercial app). Every entry is flagged "needs trainer review". |
+| data/exercises/original-sports.json | Own content | Draft exercises for karate, yoga, dance fitness, badminton and swimming (each with the metric it logs). All text self-written (no text, images or videos from Hevy, Cult.fit or any commercial app). Every entry is flagged "needs trainer review". |
 
 ## Infrastructure (not bundled in the repo)
 

@@ -53,7 +53,7 @@ const handlerOf = (op: Op): Handler | undefined => routeModules[routeKey(op.path
 /** Contract operations that have no route in this POC (phone OTP is out of scope, PLAN-POC section 8). */
 const NOT_IMPLEMENTED = ["requestOtp", "verifyOtp"];
 /** Public operations: tested by their own cases below, not by the role matrix. */
-const PUBLIC = ["exchangeMagicLink", "refreshSession", "getTenantTheme", "getSharedProgressCard"];
+const PUBLIC = ["exchangeMagicLink", "refreshSession", "getTenantTheme", "getSharedProgressCard", "getSharedClassSummary"];
 
 type Row = "own" | "open";
 interface Req { params?: Record<string, string>; query?: string; body?: unknown; form?: FormData }
@@ -151,6 +151,35 @@ const CASES: Record<string, Case> = {
   listHolidays: read(),
   createHoliday: read(() => ({ body: { date: d(400 + ++seq), name: `QA Closure ${uniq()}` } })),
   deleteHoliday: { rows: "open", scoped: true, build: async (c) => ({ params: { holidayId: await c.fresh.holiday() } }) },
+  // STAR-107: workout engine
+  recordWorkoutSets: {
+    rows: "own",
+    scoped: true,
+    build: (c) => ({
+      body: {
+        clientId: `qa-log-${uniq()}`,
+        assignmentId: c.ids.assignment,
+        planItemId: c.ids.planItem,
+        scheduledFor: d(0),
+        sets: [{ clientId: `qa-set-${uniq()}`, setNumber: 1, weightKg: 20, reps: 10 }],
+      },
+    }),
+  },
+  listWorkoutSets: memberRead(),
+  getExerciseHistory: { rows: "own", scoped: true, build: (c) => ({ params: { memberId: c.ids.kid, exerciseId: c.ids.exA } }) },
+  getSessionWorkout: { rows: "own", scoped: true, build: (c) => ({ params: { sessionId: c.ids.sessionFuture } }) },
+  attachSessionWorkout: { rows: "own", scoped: true, build: (c) => ({ params: { sessionId: c.ids.sessionFuture }, body: { planDayId: c.ids.planDay } }) },
+  getClassSummary: { rows: "own", scoped: true, build: (c) => ({ params: { sessionId: c.ids.sessionDone }, query: `memberId=${c.ids.kid}` }) },
+  publishClassSummary: { rows: "own", scoped: true, build: (c) => ({ params: { sessionId: c.ids.sessionPast }, body: { coachNote: "QA note", homePractice: "QA practice" } }) },
+  createClassSummaryShare: { rows: "own", scoped: true, build: (c) => ({ params: { sessionId: c.ids.sessionDone }, body: { memberId: c.ids.kid } }) },
+  getMemberClassSummaries: memberRead(),
+  listSkillChecklists: read(),
+  getMemberSkillProgress: memberRead(),
+  signOffSkill: { rows: "own", scoped: true, build: (c) => ({ params: { memberId: c.ids.kid, skillItemId: c.ids.skillItem }, body: { rating: 3 } }) },
+  clearSkillSignOff: { rows: "own", scoped: true, build: (c) => ({ params: { memberId: c.ids.kid, skillItemId: c.ids.skillItem } }) },
+  sendPlanToMembers: { rows: "own", scoped: true, build: async (c) => ({ body: { planId: (await c.fresh.plan()).id, memberIds: [c.ids.kid], startsOn: d(0) } }) },
+  getPlanResults: { rows: "own", scoped: true, build: (c) => ({ params: { planId: c.ids.plan } }) },
+  getClassInsights: read(),
   listExcusedAbsences: memberRead(),
   createExcusedAbsence: { rows: "own", scoped: true, build: (c) => ({ params: { memberId: c.ids.kid }, body: { fromDate: d(20 + ++seq), reason: "travel", note: "QA trip" } }) },
   getProgressCard: memberRead(),

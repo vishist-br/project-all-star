@@ -112,3 +112,14 @@ The schema stores a measurement unit and value, and member stats expose hours at
 - Rich layer (`prisma/seed/rich.ts`, `rich-data.ts`): about 12 weeks of history relative to today in Asia/Kolkata (`SEED_TODAY` pins it): more members with joining and leaving dates and attendance patterns, workout plans (daily, weekly, monthly, draft and archived), assignments (active, paused, ended), workout logs, goals and check-ins, upcoming sessions with bookings and one full class with a waitlist, coach availability, tenant settings, and the updates feed. Ids start with `seed-<slug>-r-`; the layer is deleted and rewritten on each run.
 
 Both scripts refuse a non-local `DATABASE_URL` unless `SEED_ALLOW_REMOTE=1`. `seedDemo(prisma)` (used in tests) is base-only; `seedDemo(prisma, { rich: true })` adds the rich layer.
+
+## Workout engine (STAR-107)
+
+Migration `20261125090000_workout_engine_core` (additive, `down.sql` for local rollback). Contract: `docs/WORKOUT-ENGINE-CONTRACT.md`.
+
+- `exercises.metric_type` (`MetricType`: WEIGHT_REPS, REPS, TIME, DISTANCE_TIME, SCORE, CHECKLIST). Gym stays WEIGHT_REPS; other sports were backfilled to REPS and the catalog files set the real metric.
+- `workout_plan_items`: `superset_group`, `rounds`, `target_weight_kg`, `target_distance_meters` (checks: a target needs reps, time or distance; rounds need a group).
+- `workout_sets`: one row per logged set of a workout log (`set_type` NORMAL/WARMUP/DROP/FAILURE, weight, reps, seconds, meters, score made of, rating 1-4, `client_id` unique per tenant). Log totals are derived from the sets when sets exist.
+- `sessions.plan_day_id` (class workout), `class_summaries` (one per session, frozen workout snapshot), `class_summary_shares` (hash-only token, 30 days).
+- `skill_checklists` (a sport, optionally the `levels` row it leads to), `skill_items`, `skill_sign_offs` (member, item, rating 1-4, who and when). The member level timeline (`member_levels`) is reused, not duplicated.
+- `member_updates.kind` gained CLASS_SUMMARY, CLASS_CATCHUP, CLASS_CATCHUP_EXCUSED.

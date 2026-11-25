@@ -10,15 +10,15 @@ import { loadScheduledEntries } from "./schedule";
 const ACTIONS = ["start", "stop", "complete", "skip"] as const;
 type Action = (typeof ACTIONS)[number];
 /** Device clocks may run ahead; an occurredAt further in the future is clamped to now. */
-const CLOCK_SKEW_MS = 5 * 60_000;
+export const CLOCK_SKEW_MS = 5 * 60_000;
 
-const include = {
+export const include = {
   assignment: { select: { planId: true, plan: { select: { title: true } } } },
   planItem: { select: { exerciseId: true, exercise: { select: { name: true } } } },
 } satisfies Prisma.WorkoutLogInclude;
-type Row = Prisma.WorkoutLogGetPayload<{ include: typeof include }>;
+export type Row = Prisma.WorkoutLogGetPayload<{ include: typeof include }>;
 
-function toDto(r: Row) {
+export function toDto(r: Row) {
   return {
     id: r.id,
     clientId: r.clientId,
@@ -200,6 +200,10 @@ export async function recordWorkoutLog(db: TenantClient, p: Principal, body: unk
       ...(input.actualDurationSeconds !== undefined ? { actualDurationSeconds: input.actualDurationSeconds } : {}),
       ...(input.note !== undefined ? { note: input.note } : {}),
     };
+    // Totals are derived from per-set rows when a log has sets; item-level actuals then stay out of the way.
+    if (row && Object.keys(actuals).some((k) => k.startsWith("actual")) && (await db.workoutSet.count({ where: { logId: row.id } })) > 0) {
+      for (const k of ["actualSets", "actualReps", "actualDurationSeconds"] as const) delete (actuals as Record<string, unknown>)[k];
+    }
     try {
       if (!row) {
         const created = await db.workoutLog.create({

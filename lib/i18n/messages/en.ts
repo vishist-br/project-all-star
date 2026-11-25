@@ -12,8 +12,9 @@ import { analytics } from "./en/analytics";
 import { absences } from "./en/absences";
 import { credentials } from "./en/credentials";
 
-export const en = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...credentials, ...progressCard } as const;
+export const en = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...credentials, ...progressCard, ...workoutEngine } as const;
 import { progressCard } from "./en/progressCard";
+import { workoutEngine } from "./en/workout-engine";
 
 
 export type MessageKey = keyof typeof en;

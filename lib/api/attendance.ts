@@ -1,6 +1,7 @@
 import type { AttendanceStatus, ExcuseReason, Prisma } from "@prisma/client";
 import { preMarkClientId } from "../absences/rules";
 import { ApiError, type ErrorDetail } from "../auth/errors";
+import { publishSummaryTx } from "./class-summary";
 import type { Principal } from "../auth/principal";
 import type { TenantClient } from "../tenant-scope";
 import {
@@ -166,6 +167,12 @@ export async function recordAttendance(db: TenantClient, p: Principal, sessionId
           data: { tenantId: p.tenantId, sessionId: s.id, memberId: r.memberId, status: "EXCUSED", reason: dec.reason.toUpperCase() as ExcuseReason, clientId, markedAt: now, markedById: p.userId },
         });
       }
+    }
+
+    // A class workout is attached: finishing the roll call publishes the after-class summary and tells every
+    // marked member (present: what they did; absent: a catch-up; excused: the same, in softer words).
+    if (input.complete && s.status === "SCHEDULED" && s.planDayId) {
+      await publishSummaryTx(tx, p, s, { coachNote: input.coachNote !== undefined ? input.coachNote : s.coachNote }, now);
     }
 
     const sessionData: Prisma.SessionUncheckedUpdateInput = {};

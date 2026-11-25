@@ -31,7 +31,7 @@ export interface TenantFx {
   ids: Record<string, string>;
   /** Fresh single-use rows, created through the real API or directly. */
   fresh: {
-    plan(): Promise<{ id: string; itemId: string }>;
+    plan(): Promise<{ id: string; itemId: string; dayId: string }>;
     futureSession(): Promise<string>;
     booking(): Promise<string>;
     holiday(): Promise<string>;
@@ -136,14 +136,26 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
     const freshPlan = async () => {
       const r = await call(createPlanRoute, "POST", "/workout-plans", token.coach, { body: planBody(`Plan ${uniq()}`) });
       if (r.status !== 201) throw new Error(`fixture plan failed ${r.status} ${r.text}`);
-      return { id: r.body.id as string, itemId: r.body.days[0].items[0].id as string };
+      return { id: r.body.id as string, itemId: r.body.days[0].items[0].id as string, dayId: r.body.days[0].id as string };
     };
     const plan = await freshPlan();
     ids.plan = plan.id;
     ids.planItem = plan.itemId;
+    ids.planDay = plan.dayId;
     const asg = await call(createAssignmentsRoute, "POST", "/plan-assignments", token.coach, { body: { planId: plan.id, memberIds: [kid.id], startsOn: d(-3) } });
     if (asg.status !== 201) throw new Error(`fixture assignment failed ${asg.status} ${asg.text}`);
     ids.assignment = asg.body.items[0].id;
+    // Workout engine fixtures (STAR-107): a belt checklist, and a completed class with a published summary.
+    const level = await prisma.level.create({ data: { tenantId: t.id, sportId: sport.id, name: `White ${key}`, rank: 1 } });
+    const checklist = await prisma.skillChecklist.create({ data: { tenantId: t.id, sportId: sport.id, levelId: level.id, title: `Yellow belt skills ${key}`, sortOrder: 1 } });
+    const skill = await prisma.skillItem.create({ data: { tenantId: t.id, checklistId: checklist.id, title: `Front stance ${key}`, sortOrder: 1 } });
+    ids.level = level.id;
+    ids.skillChecklist = checklist.id;
+    ids.skillItem = skill.id;
+    ids.sessionDone = await mkSession(ids.batch1, user.coach, new Date(Date.now() - 50 * 3_600_000), { status: "COMPLETED", completedAt: new Date(Date.now() - 49 * 3_600_000) });
+    await prisma.attendance.create({ data: { tenantId: t.id, sessionId: ids.sessionDone, memberId: kid.id, status: "EXCUSED", reason: "ILLNESS", clientId: `fx-att-${key}-${sfx}`, markedById: user.coach } });
+    await prisma.classSummary.create({ data: { tenantId: t.id, sessionId: ids.sessionDone, coachNote: "Fixture note", homePractice: "Fixture practice", publishedById: user.coach } });
+
     const goal = await call(createGoalRoute, "POST", "", token.coach, { params: { memberId: kid.id }, body: { title: "Fixture goal", metric: "custom", startValue: 0, targetValue: 10 } });
     if (goal.status !== 201) throw new Error(`fixture goal failed ${goal.status} ${goal.text}`);
     ids.goal = goal.body.id;
@@ -199,6 +211,10 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
     async cleanup() {
       await prisma.authSession.deleteMany({ where: { id: { in: sessionIds } } });
       for (const tenantId of tenantIds) {
+        await prisma.classSummaryShare.deleteMany({ where: { tenantId } });
+        await prisma.classSummary.deleteMany({ where: { tenantId } });
+        await prisma.workoutSet.deleteMany({ where: { tenantId } });
+        await prisma.skillSignOff.deleteMany({ where: { tenantId } });
         await prisma.excusedAbsence.deleteMany({ where: { tenantId } });
         await prisma.coachCredential.deleteMany({ where: { tenantId } });
         await prisma.progressCardLink.deleteMany({ where: { tenantId } });
@@ -221,7 +237,7 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
   };
 }
 
-const ID_MODELS = ["user", "member", "guardian", "venue", "sport", "batch", "session", "attendance", "workoutPlan", "planAssignment", "workoutLog", "goal", "sessionBooking", "memberUpdate", "exercise", "magicLink", "authSession", "coachAvailability", "tenantSettings", "holiday", "excusedAbsence", "coachCredential", "progressNote", "progressCardLink"] as const;
+const ID_MODELS = ["user", "member", "guardian", "venue", "sport", "batch", "session", "attendance", "workoutPlan", "planAssignment", "workoutLog", "goal", "sessionBooking", "memberUpdate", "exercise", "magicLink", "authSession", "coachAvailability", "tenantSettings", "holiday", "excusedAbsence", "coachCredential", "progressNote", "progressCardLink", "workoutSet", "classSummary", "classSummaryShare", "skillChecklist", "skillItem", "skillSignOff", "level"] as const;
 
 /** All row ids of a tenant (for response leakage checks) and per-table counts (for write checks). */
 export async function tenantIds(prisma: PrismaClient, tenantId: string): Promise<Set<string>> {

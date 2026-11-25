@@ -23,11 +23,13 @@ export type CatalogEntry = {
   licence: string;
   sourceCommit: string | null;
   needsTrainerReview: boolean;
+  metricType: "WEIGHT_REPS" | "REPS" | "TIME" | "DISTANCE_TIME" | "SCORE" | "CHECKLIST";
 };
 
 type FedFile = { license: string; commit: string; exercises: Record<string, unknown>[] };
 type OriginalFile = { exercises: Record<string, unknown>[] };
 
+const METRICS = ["WEIGHT_REPS", "REPS", "TIME", "DISTANCE_TIME", "SCORE", "CHECKLIST"];
 const str = (v: unknown): string | null => (typeof v === "string" && v.length > 0 ? v : null);
 const strs = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 
@@ -50,6 +52,8 @@ export function loadGymEntries(path = "data/free-exercise-db/exercises.json"): C
     sourceCommit: file.commit,
     // A public dataset, not a draft of ours; a trainer can still flag entries later.
     needsTrainerReview: false,
+    // Gym stays weight and reps.
+    metricType: "WEIGHT_REPS" as const,
   }));
 }
 
@@ -72,6 +76,7 @@ export function loadOriginalEntries(path = "data/exercises/original-sports.json"
     licence: "Original (project)",
     sourceCommit: null,
     needsTrainerReview: true,
+    metricType: METRICS.includes(e.metricType as string) ? (e.metricType as CatalogEntry["metricType"]) : "REPS",
   }));
 }
 
