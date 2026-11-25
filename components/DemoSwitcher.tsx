@@ -21,7 +21,8 @@ export function DemoSwitcher({
   const { t } = useI18n();
   const router = useRouter();
   // The public weekly card (/card/<token>) is for outsiders: no demo controls on it.
-  if (usePathname().startsWith("/card/")) return null;
+  const path = usePathname();
+  if (path.startsWith("/card/") || path.startsWith("/share/")) return null;
 
   return (
     <div className="demo-switcher" role="group" aria-label={t("demo.label")}>

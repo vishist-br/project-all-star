@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PlanBuilder } from "@/components/plans/PlanBuilder";
+import { SendToMembersButton } from "@/components/send/SendLinks";
 import s from "@/components/plans/plans.module.css";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -38,7 +39,7 @@ export default async function EditPlanPage({ params }: { params: Promise<{ role:
 
   return (
     <>
-      <PageHeader title={t("plans.builder.editTitle")} subtitle={plan.title} />
+      <PageHeader title={t("plans.builder.editTitle")} subtitle={plan.title} actions={<SendToMembersButton role={role} planId={plan.id} />} />
       <PlanBuilder role={role} plan={plan} facets={await loadExerciseFacets(db)} />
     </>
   );

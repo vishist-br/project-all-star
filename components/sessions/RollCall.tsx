@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { recordAttendanceAction, updateSessionAction } from "@/app/[role]/_actions/sessions";
+import { FinishClass } from "@/components/classes/FinishClass";
 import { Avatar, Badge, type Tone } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { FormField, Select, TextInput } from "@/components/ui/Form";
@@ -24,7 +25,7 @@ const TONE: Record<string, Tone> = { present: "ok", absent: "warn", excused: "in
  * adds a note. Taps are saved on this device first (works offline) and sent in order when the
  * connection is there. Complete session needs a connection.
  */
-export function RollCall({ detail, userId }: { detail: SessionDetail; userId: string }) {
+export function RollCall({ detail, userId, classWorkoutTitle = null }: { detail: SessionDetail; userId: string; classWorkoutTitle?: string | null }) {
   const { t } = useI18n();
   const { toast } = useToast();
   const router = useRouter();
@@ -45,6 +46,8 @@ export function RollCall({ detail, userId }: { detail: SessionDetail; userId: st
   const waiting = mine.filter((i) => i.state === "queued").length;
   const refused = mine.filter((i) => i.state !== "queued");
   const completed = detail.status === "completed";
+  // Group classes finish with "Finish class and send" (confirm sheet, summary for members); one-to-one sessions keep the plain complete.
+  const isClass = detail.kind === "group_class";
 
   function tap(r: RowView) {
     setProblem(null);
@@ -234,13 +237,24 @@ export function RollCall({ detail, userId }: { detail: SessionDetail; userId: st
       <div className={s.completeBar}>
         <div className={s.bar}>
           <Button variant="secondary" onClick={() => void saveNote()} loading={savingNote} disabled={!q.online}>{t("sess.note.save")}</Button>
-          {!completed && (
+          {!completed && !isClass && (
             <Button onClick={() => void complete()} loading={completing} disabled={!q.online}>{t("sess.complete.button")}</Button>
           )}
           {completed && <Badge tone="ok">{t("sess.complete.already")}</Badge>}
         </div>
-        {!q.online && <p className="muted small">{t("sess.complete.needsOnline")}</p>}
+        {!q.online && !isClass && <p className="muted small">{t("sess.complete.needsOnline")}</p>}
       </div>
+      {isClass && (
+        <FinishClass
+          sessionId={detail.id}
+          userId={userId}
+          rows={rows}
+          q={{ online: q.online, waiting: q.waiting, latest: q.latest }}
+          note={sessionNote}
+          workoutTitle={classWorkoutTitle}
+          completed={completed}
+        />
+      )}
 
       <MemberSheet
         row={moreFor}

@@ -1,0 +1,51 @@
+/* Class summaries (member cards, list, public share page) and the coach class workout card. Tokens from globals.css. */
+.card { display: grid; gap: var(--s3); border-inline-start: 4px solid var(--primary); }
+.tagRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); }
+.tags { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+.title { margin: 0; font-size: var(--fs-lg); font-weight: 700; overflow-wrap: anywhere; }
+.body { margin: 0; color: var(--muted); overflow-wrap: anywhere; }
+.when { font-size: var(--fs-sm); color: var(--muted); margin: 0; }
+.quote { margin: 0; padding: var(--s3) var(--s4); border-radius: var(--r); background: var(--primary-soft); border-inline-start: 3px solid var(--primary); display: grid; gap: var(--s1); }
+.label { margin: 0; font-size: var(--fs-xs); font-weight: 700; color: var(--muted); }
+.text { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.sectionTitle { margin: 0; font-size: var(--fs-md); }
+.rows { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+.row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s2); padding: var(--s2) 0; border-bottom: 1px solid var(--line); }
+.row:last-child { border-bottom: 0; }
+.rowName { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.rowTarget { font-size: var(--fs-sm); color: var(--muted); font-variant-numeric: tabular-nums; }
+.superset { border: 1px solid var(--line-strong); border-inline-start: 4px solid var(--c3); border-radius: var(--r); padding: var(--s2) var(--s3); background: var(--bg); display: grid; gap: var(--s1); }
+.blockHead { margin: 0; font-size: var(--fs-xs); font-weight: 700; color: var(--muted); }
+.belt { display: grid; gap: var(--s1); }
+.beltLine { margin: 0; font-size: var(--fs-sm); font-weight: 600; }
+.practise { margin: 0; padding: var(--s3) var(--s4); border-radius: var(--r); background: var(--warn-soft); border-inline-start: 3px solid var(--accent); display: grid; gap: var(--s1); color: var(--fg); }
+.actions { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.shareBox { display: grid; gap: var(--s1); }
+.hint { margin: 0; font-size: var(--fs-xs); color: var(--muted); }
+.errorBox { margin: 0; padding: var(--s3) var(--s4); border: 1px solid var(--danger); border-radius: var(--r); background: var(--danger-soft); color: var(--danger); font-weight: 600; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.stack { display: grid; gap: var(--s4); min-width: 0; }
+
+/* coach class workout and finish */
+.workoutCard { display: grid; gap: var(--s3); }
+.attached { display: grid; gap: var(--s1); padding: var(--s3) var(--s4); border-radius: var(--r); background: var(--primary-soft); border: 1px solid var(--line); }
+.attachedName { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.infoCard { margin: 0; padding: var(--s3) var(--s4); border-radius: var(--r); background: var(--info-soft); color: var(--fg); border-inline-start: 3px solid var(--info); }
+.sheetBody { display: grid; gap: var(--s3); }
+.audience { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+.audience li { display: flex; align-items: flex-start; gap: var(--s2); }
+.dot { flex: none; width: 10px; height: 10px; border-radius: 999px; margin-top: .45em; }
+.dotOk { background: var(--ok); } .dotWarn { background: var(--warn); } .dotInfo { background: var(--info); }
+.textarea { min-height: 5rem; resize: vertical; font: inherit; width: 100%; padding: var(--s3); }
+.queued { margin: 0; padding: var(--s3) var(--s4); border-radius: var(--r); background: var(--warn-soft); color: var(--warn); font-weight: 600; }
+
+/* public share page */
+.pub { min-height: 100dvh; padding: var(--s5) var(--s4); background: var(--bg); display: grid; align-content: start; justify-items: center; gap: var(--s4); }
+.pubInner { width: 100%; max-width: 32rem; display: grid; gap: var(--s4); }
+.pubBrand { display: flex; align-items: center; gap: var(--s3); }
+.pubLogo { width: 40px; height: 40px; border-radius: var(--r); object-fit: cover; flex: none; }
+.pubName { margin: 0; font-weight: 700; font-size: var(--fs-md); overflow-wrap: anywhere; }
+.pubFoot { margin: 0; text-align: center; font-size: var(--fs-xs); color: var(--muted); }
+.unavailable { min-height: 100dvh; display: grid; place-content: center; justify-items: center; text-align: center; gap: var(--s3); padding: var(--s5) var(--s4); }
+.unavailable h1 { margin: 0; font-size: var(--fs-xl); }
+.unavailable p { margin: 0; color: var(--muted); max-width: 28rem; }

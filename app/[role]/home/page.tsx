@@ -6,6 +6,8 @@ import { listPlanAssignments } from "@/lib/api/assignments";
 import { ChildSwitcher } from "@/components/customer/ChildSwitcher";
 import { NoMember } from "@/components/customer/NoMember";
 import { TodayWorkouts } from "@/components/customer/workout/TodayWorkouts";
+import { LatestClasses } from "@/components/classes/LatestClasses";
+import { NewFromCoach } from "@/components/send/NewFromCoach";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader, SectionHeader, StatGrid, StatTile } from "@/components/ui";
 import { formatDay, formatWhen } from "@/lib/customer/format";
 import { toWorkoutItems } from "@/lib/customer/items";
@@ -50,6 +52,8 @@ export default async function CustomerHome({ params }: { params: Promise<{ role:
         subtitle={selected.isOwn ? t("cu.home.subtitleSelf") : t("cu.home.subtitleChild", { name: selected.name })}
       />
       <ChildSwitcher members={ctx.children} selectedId={selected.id} />
+      <NewFromCoach ctx={ctx} />
+      <LatestClasses ctx={ctx} heading={t("csm.home.title")} />
 
       <section aria-labelledby="today-h" className={s.stack}>
         <SectionHeader title={<span id="today-h">{t("cu.today.title")}</span>} />

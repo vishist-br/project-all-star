@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { ClassWorkoutCard } from "@/components/classes/ClassWorkoutCard";
 import { RollCall } from "@/components/sessions/RollCall";
 import { SessionManage } from "@/components/sessions/SessionManage";
 import s from "@/components/sessions/sessions.module.css";
@@ -6,6 +7,7 @@ import { Badge, type Tone } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ErrorState } from "@/components/ui/States";
+import { getSessionWorkout } from "@/lib/api/class-summary";
 import { getSession } from "@/lib/api/session-detail";
 import { ApiError } from "@/lib/auth/errors";
 import { checkRole } from "@/lib/auth/guard";
@@ -44,6 +46,21 @@ export default async function SessionPage({ params }: { params: Promise<{ role: 
       </>
     );
   }
+  // The class workout (group classes only): attached plan day, shown in a card and used by "Finish class and send".
+  let workout: { planDayId: string | null; planTitle: string | null; dayTitle: string | null; exerciseCount: number } | null = null;
+  if (detail.kind === "group_class" && detail.status !== "cancelled") {
+    try {
+      const w = await getSessionWorkout(db, principal, sessionId);
+      workout = {
+        planDayId: w.planDayId,
+        planTitle: w.workout?.planTitle ?? null,
+        dayTitle: w.workout?.dayTitle ?? null,
+        exerciseCount: (w.workout?.blocks ?? []).reduce((n, b) => n + b.items.length, 0),
+      };
+    } catch (err) {
+      if (!(err instanceof ApiError)) throw err;
+    }
+  }
   const date = formatDay(istDate(detail.startsAt), locale, { weekday: "long", day: "numeric", month: "long" });
   return (
     <>
@@ -69,7 +86,10 @@ export default async function SessionPage({ params }: { params: Promise<{ role: 
           {detail.cancelReason ? ` ${detail.cancelReason}` : ""}
         </p>
       ) : (
-        <RollCall detail={detail} userId={principal.userId} />
+        <div className={s.stack}>
+          {workout && <ClassWorkoutCard role={role} sessionId={detail.id} initial={workout} />}
+          <RollCall detail={detail} userId={principal.userId} classWorkoutTitle={workout?.planTitle ?? null} />
+        </div>
       )}
     </>
   );

@@ -11,9 +11,10 @@ import { analytics } from "./kn/analytics";
 import { absences } from "./kn/absences";
 import { credentials } from "./kn/credentials";
 
-export const kn: Record<MessageKey, string> = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...credentials, ...progressCard, ...workoutEngine, ...progressInsights, ...liveWorkout };
+export const kn: Record<MessageKey, string> = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...credentials, ...progressCard, ...workoutEngine, ...progressInsights, ...liveWorkout, ...sendClasses };
 import { progressCard } from "./kn/progressCard";
 import { progressInsights } from "./kn/progress-insights";
 import { workoutEngine } from "./kn/workout-engine";
+import { sendClasses } from "./kn/send-classes";
 
 import { liveWorkout } from "./kn/live-workout";

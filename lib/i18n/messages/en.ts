@@ -12,10 +12,11 @@ import { analytics } from "./en/analytics";
 import { absences } from "./en/absences";
 import { credentials } from "./en/credentials";
 
-export const en = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...credentials, ...progressCard, ...workoutEngine, ...progressInsights, ...liveWorkout } as const;
+export const en = { ...common, ...owner, ...coach, ...customer, ...plans, ...sessions, ...analytics, ...absences, ...credentials, ...progressCard, ...workoutEngine, ...progressInsights, ...liveWorkout, ...sendClasses } as const;
 import { progressCard } from "./en/progressCard";
 import { progressInsights } from "./en/progress-insights";
 import { workoutEngine } from "./en/workout-engine";
+import { sendClasses } from "./en/send-classes";
 
 
 export type MessageKey = keyof typeof en;

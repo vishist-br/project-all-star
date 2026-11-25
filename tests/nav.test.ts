@@ -12,7 +12,7 @@ describe("role navigation", () => {
     const has = (r: (typeof ROLES)[number], s: string) => expect(findNavItem(r, s), `${r}/${s}`).toBeDefined();
     for (const s of ["dashboard", "members", "members/import", "batches", "coaches", "insights", "workouts", "holidays", "settings"]) has("owner", s);
     for (const s of ["today", "today/week", "today/availability", "members", "plans", "workouts", "record"]) has("coach", s);
-    for (const s of ["home", "workouts", "schedule", "progress", "updates", "absences", "profile"]) has("customer", s);
+    for (const s of ["home", "workouts", "schedule", "progress", "classes", "updates", "absences", "profile"]) has("customer", s);
   });
   it("every label key exists in locale files", () => {
     for (const r of ROLES) for (const i of NAV[r]) expect(messages.en[i.label]).toBeTruthy();

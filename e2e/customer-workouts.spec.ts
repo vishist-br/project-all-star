@@ -30,7 +30,7 @@ test("home shows today's items, start/complete/skip persist after a reload, with
 
   // Customer nav: five items, Home first.
   const nav = page.getByRole("navigation", { name: "Main navigation" }).locator("a");
-  await expect(nav).toHaveText(["⌂Home", "✚Workouts", "◷Schedule", "▲Progress", "☺Profile"]);
+  await expect(nav).toHaveText(["⌂Home", "✚Workouts", "◷Schedule", "▲Progress", "◐Classes", "✉Updates", "✎Plan an absence", "☺Profile", "⋯More"]);
 
   // Seeded state today: one done, one in progress, the rest to do.
   const plan = page.getByRole("region", { name: A1.plan });
