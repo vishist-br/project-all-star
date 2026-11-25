@@ -51,7 +51,7 @@ export const liveWorkout: Record<keyof typeof en, string> = {
   "lw.type.warmup": "वार्म-अप",
   "lw.type.drop": "ड्रॉप",
   "lw.type.failure": "फ़ेल्योर",
-  "lw.type.change": "सेट {n} का प्रकार: {type}। बदलें",
+  "lw.type.change": "{n} {type}। सेट का प्रकार बदलें",
   "lw.row.tick": "सेट {n} पूरा करें, {name}",
   "lw.row.ticked": "सेट {n} पूरा, {name}",
   "lw.row.field": "{field}, सेट {n}, {name}",

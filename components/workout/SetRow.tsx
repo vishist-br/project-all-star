@@ -105,7 +105,7 @@ export function SetRow({
             aria-label={t("lw.type.change", { n, type: typeLabel })}
             onClick={() => setPickType((v) => !v)}
           >
-            <span className={s.chipNum} aria-hidden="true">{n}</span>
+            <span className={s.chipNum} aria-hidden="true">{n}</span>{" "}
             <span aria-hidden="true">{typeLabel}</span>
           </button>
         ) : (

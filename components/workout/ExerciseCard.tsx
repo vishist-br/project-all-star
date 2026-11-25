@@ -42,12 +42,12 @@ export function ExerciseCard({
   return (
     <article className={s.card} data-done={allDone} aria-labelledby={headingId} data-testid="exercise-card">
       <div className={s.cardHead}>
-        <h3 id={headingId} className={s.name}>
+        <h2 id={headingId} className={s.name}>
           <Link href={`/customer/exercise/${item.exerciseId}?item=${item.planItemId}`}>
             {item.exerciseName}
             <span className="sr-only"> ({t("lw.card.details")})</span>
           </Link>
-        </h3>
+        </h2>
         {allDone && <Badge tone="ok">{t("lw.card.doneBadge")}</Badge>}
       </div>
       {targets.length > 0 && <p className={s.hint}>{t("lw.card.target", { value: targets.join(" · ") })}</p>}

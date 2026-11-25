@@ -58,6 +58,7 @@ export default async function SharedClassPage({ params }: { params: Promise<{ to
               homePractice: shared.homePractice,
               workout: shared.workout,
             }}
+            headingLevel={1}
           />
         </Card>
         <p className={s.pubFoot}>{t("csm.share.page.shared", { name: shared.tenantName })} · {t("csm.share.page.footnote")}</p>
