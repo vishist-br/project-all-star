@@ -120,11 +120,18 @@ describe("rich seed against local Postgres", () => {
 
   it("N+1 guard: owner analytics query counts stay flat across the rich tenants and under a fixed ceiling", async (ctx) => {
     if (!prisma) return ctx.skip();
-    const counting = new PrismaClient({ log: [{ emit: "event", level: "query" }] });
+    // Count Prisma operations as they start. The "query" log events used before arrive asynchronously, so
+    // under load an event of one run could be counted in the next one (seen as "fees counts 4,4,1").
+    const base = new PrismaClient();
     let n = 0;
-    (counting as any).$on("query", () => {
-      n += 1;
-    });
+    const counting = base.$extends({
+      query: {
+        async $allOperations({ args, query }) {
+          n += 1;
+          return query(args);
+        },
+      },
+    }) as unknown as PrismaClient;
     const now = new Date(`${today}T12:00:00+05:30`);
     const q = (o: Record<string, string> = {}) => new URLSearchParams(o);
     try {
@@ -156,7 +163,7 @@ describe("rich seed against local Postgres", () => {
         expect(Math.abs(n - counts[0]), detail).toBeLessThanOrEqual(1);
       }
     } finally {
-      await counting.$disconnect();
+      await base.$disconnect();
     }
   }, 120_000);
 });
