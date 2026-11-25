@@ -30,6 +30,14 @@ STAR-103 | Owner and coach record an excused absence on behalf of a family (reus
 STAR-104 | QR check-in (stretch, per-session token, coach confirms) | Customer agent | STAR-100 | wave 2
 STAR-105 | Anonymous class and coach feedback, owner-only trainer scorecard (stretch) | Owner agent | STAR-100 | wave 2
 STAR-106 | Configurable no-show policy engine, off by default (stretch) | Backend agent | STAR-100 | wave 2
+STAR-107 | Workout engine phase 1: per-set logging (WorkoutSet), live workout screen, offline queue | Backend + Customer agents | user go-ahead | proposed, docs/PLAN-WORKOUT-ENGINE.md
+STAR-108 | Workout engine phase 2: metric types and sport packs (gym, karate, badminton, swimming, generic) | Backend agent | STAR-107 | proposed
+STAR-109 | Workout engine phase 3: supersets and rounds in plan builder and live workout | Coach + Customer agents | STAR-108 | proposed
+STAR-110 | Workout engine phase 4: coach send step, member inbox, coach results view | Coach agent | STAR-109 | proposed
+STAR-111 | Workout engine phase 5: group class workout attach, after-class summary, absent catch-up | Coach agent | STAR-110 | proposed
+STAR-112 | Workout engine phase 6: exercise history, records, charts, belt and skill checklists | Customer agent | STAR-108 | proposed
+STAR-113 | Workout engine phase 7: owner class insights and timetable suggestions | Owner agent | STAR-111 | proposed
+STAR-114 | Workout engine phase 8: folders, templates, body measurements, muscle-group volume (gym) | Customer agent | STAR-112 | proposed
 STAR-98 | Parent OTP sign-in (skipped by the user for now; needs messaging provider and DPDP decision) | Auth agent | human decision | blocked
 
 ## In Progress
