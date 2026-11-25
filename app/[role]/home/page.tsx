@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { addDays, getMemberSchedule } from "@/lib/api/schedule";
+import { assignmentWhere } from "@/lib/auth/access";
+import { addDays, getMemberSchedule, loadScheduledEntries } from "@/lib/api/schedule";
 import { getMemberStats } from "@/lib/api/member-stats";
-import { listPlanAssignments } from "@/lib/api/assignments";
 import { ChildSwitcher } from "@/components/customer/ChildSwitcher";
 import { NoMember } from "@/components/customer/NoMember";
 import { TodayWorkouts } from "@/components/customer/workout/TodayWorkouts";
@@ -20,18 +20,44 @@ export const dynamic = "force-dynamic";
 /** Customer home: today's workouts, next sessions, what's new and quick stats for the chosen member. */
 export default async function CustomerHome({ params }: { params: Promise<{ role: string }> }) {
   if ((await params).role !== "customer") notFound();
-  const { t, locale } = await getT();
+  const { t } = await getT();
   const ctx = await getCustomerContext();
   if (!ctx.selected) return <NoMember />;
-  const { principal, db, today, now, selected } = ctx;
+  const { selected } = ctx;
+
+  // The page itself does no more awaiting: the inbox, the class summary and the body are sibling async
+  // components, so their queries run at the same time instead of one after the other (STAR-102).
+  return (
+    <div className={s.stack}>
+      <PageHeader
+        title={t("cu.home.greeting", { name: ctx.userName })}
+        subtitle={selected.isOwn ? t("cu.home.subtitleSelf") : t("cu.home.subtitleChild", { name: selected.name })}
+      />
+      <ChildSwitcher members={ctx.children} selectedId={selected.id} />
+      <NewFromCoach ctx={ctx} />
+      <LatestClasses ctx={ctx} heading={t("csm.home.title")} />
+
+      <HomeBody ctx={ctx} />
+    </div>
+  );
+}
+
+/** Today's workouts, updates, next sessions and stats of the selected member. */
+async function HomeBody({ ctx }: { ctx: Awaited<ReturnType<typeof getCustomerContext>> }) {
+  const { t, locale } = await getT();
+  const { principal, db, today, now } = ctx;
+  const selected = ctx.selected!;
 
   allow(principal, "getMemberSchedule");
   allow(principal, "getMemberStats");
   allow(principal, "listPlanAssignments");
-  const [schedule, stats, active] = await Promise.all([
-    getMemberSchedule(db, principal, selected.id, new URLSearchParams({ from: today, to: addDays(today, 6) })),
-    getMemberStats(db, principal, selected.id, new URLSearchParams()),
-    listPlanAssignments(db, principal, new URLSearchParams({ memberId: selected.id, status: "active", limit: "1" })),
+  // One schedule load serves both the week ahead and the 30-day stats (STAR-102).
+  const entries = loadScheduledEntries(db, [selected.id], addDays(today, -29), addDays(today, 6));
+  const [schedule, stats, activePlans] = await Promise.all([
+    getMemberSchedule(db, principal, selected.id, new URLSearchParams({ from: today, to: addDays(today, 6) }), now, entries),
+    getMemberStats(db, principal, selected.id, new URLSearchParams(), now, entries),
+    // Only "does this member have an active plan" is needed here, so a count, not the full list.
+    db.planAssignment.count({ where: { AND: [assignmentWhere(principal), { memberId: selected.id, status: "ACTIVE" }] } }),
   ]);
 
   const todayDay = schedule.days[0]!;
@@ -46,20 +72,12 @@ export default async function CustomerHome({ params }: { params: Promise<{ role:
   const none = t("cu.stats.noValue");
 
   return (
-    <div className={s.stack}>
-      <PageHeader
-        title={t("cu.home.greeting", { name: ctx.userName })}
-        subtitle={selected.isOwn ? t("cu.home.subtitleSelf") : t("cu.home.subtitleChild", { name: selected.name })}
-      />
-      <ChildSwitcher members={ctx.children} selectedId={selected.id} />
-      <NewFromCoach ctx={ctx} />
-      <LatestClasses ctx={ctx} heading={t("csm.home.title")} />
-
+    <>
       <section aria-labelledby="today-h" className={s.stack}>
         <SectionHeader title={<span id="today-h">{t("cu.today.title")}</span>} />
         {items.length > 0 ? (
           <TodayWorkouts memberId={selected.id} date={today} items={items} />
-        ) : active.items.length === 0 ? (
+        ) : activePlans === 0 ? (
           <EmptyState title={t("cu.today.empty.title")} text={t("cu.today.empty.body")} icon="✚" />
         ) : (
           <EmptyState
@@ -130,6 +148,6 @@ export default async function CustomerHome({ params }: { params: Promise<{ role:
           <StatTile label={t("cu.stats.level")} value={stats.level?.name ?? none} />
         </StatGrid>
       </section>
-    </div>
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getExerciseHistory } from "@/lib/api/workout-sets";
+import { getExerciseHistories } from "@/lib/api/workout-sets";
 import { checkRole } from "@/lib/auth/guard";
 import { Sparkline } from "@/components/charts";
 import { ChildSwitcher } from "@/components/customer/ChildSwitcher";
@@ -20,12 +20,13 @@ export async function ExercisesOverview() {
   checkRole(principal, "getExerciseHistory");
 
   const exercises = await loggedExercises(db, selected.id);
-  const rows = await Promise.all(
-    exercises.map(async (e) => {
-      const h = (await getExerciseHistory(db, principal, selected.id, e.id, new URLSearchParams({ range: "all" }))) as unknown as HistoryLike;
-      return { e, o: overviewOf(h) };
-    }),
-  );
+  // One batched read for every exercise (a fixed number of queries, however many are logged).
+  const histories = await getExerciseHistories(db, principal, selected.id, exercises.map((e) => e.id), new URLSearchParams({ range: "all" }));
+  const historyOf = new Map(histories.map((h) => [h.exerciseId, h as unknown as HistoryLike]));
+  const rows = exercises.flatMap((e) => {
+    const h = historyOf.get(e.id);
+    return h ? [{ e, o: overviewOf(h) }] : [];
+  });
   const fmt = { t, locale };
 
   return (

@@ -42,6 +42,10 @@ export interface TenantFx {
     /** A live shared progress-card link of the parent's child (STAR-96), created directly; returns the row id. */
     link(): Promise<string>;
     token(who: Who): Promise<string>;
+    /** A folder of the tenant coach (STAR-114), created directly. */
+    folder(): Promise<string>;
+    /** A body measurement of the parent's child (STAR-114), created directly; each call uses a new day. */
+    measurement(): Promise<string>;
   };
 }
 
@@ -159,6 +163,8 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
     const goal = await call(createGoalRoute, "POST", "", token.coach, { params: { memberId: kid.id }, body: { title: "Fixture goal", metric: "custom", startValue: 0, targetValue: 10 } });
     if (goal.status !== 201) throw new Error(`fixture goal failed ${goal.status} ${goal.text}`);
     ids.goal = goal.body.id;
+    ids.folder = (await prisma.planFolder.create({ data: { tenantId: t.id, coachId: user.coach, name: `Folder ${key}`, sortOrder: 1 } })).id;
+    ids.measurement = (await prisma.bodyMeasurement.create({ data: { tenantId: t.id, memberId: kid.id, measuredOn: new Date(`${d(-200)}T00:00:00Z`), weightKg: 41.5, recordedById: user.parent } })).id;
 
     return {
       key,
@@ -181,6 +187,12 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
           return row.id;
         },
         token: (who: Who) => mint(user[who], t.id),
+        async folder() {
+          return (await prisma.planFolder.create({ data: { tenantId: t.id, coachId: user.coach, name: `Fresh ${uniq()}`, sortOrder: 5 } })).id;
+        },
+        async measurement() {
+          return (await prisma.bodyMeasurement.create({ data: { tenantId: t.id, memberId: kid.id, measuredOn: new Date(`${d(-300 - ++slot)}T00:00:00Z`), weightKg: 40, recordedById: user.parent } })).id;
+        },
         async link() {
           const row = await prisma.progressCardLink.create({
             data: { tenantId: t.id, memberId: kid.id, weekStart: new Date(`${d(-7)}T00:00:00Z`), tokenHash: hashToken(`fx-${uniq()}`), createdById: user.parent, expiresAt: new Date(Date.now() + 86_400_000) },
@@ -211,6 +223,7 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
     async cleanup() {
       await prisma.authSession.deleteMany({ where: { id: { in: sessionIds } } });
       for (const tenantId of tenantIds) {
+        await prisma.bodyMeasurement.deleteMany({ where: { tenantId } });
         await prisma.classSummaryShare.deleteMany({ where: { tenantId } });
         await prisma.classSummary.deleteMany({ where: { tenantId } });
         await prisma.workoutSet.deleteMany({ where: { tenantId } });
@@ -237,7 +250,7 @@ export async function buildWorld(prisma: PrismaClient, tag: string): Promise<Wor
   };
 }
 
-const ID_MODELS = ["user", "member", "guardian", "venue", "sport", "batch", "session", "attendance", "workoutPlan", "planAssignment", "workoutLog", "goal", "sessionBooking", "memberUpdate", "exercise", "magicLink", "authSession", "coachAvailability", "tenantSettings", "holiday", "excusedAbsence", "coachCredential", "progressNote", "progressCardLink", "workoutSet", "classSummary", "classSummaryShare", "skillChecklist", "skillItem", "skillSignOff", "level"] as const;
+const ID_MODELS = ["user", "member", "guardian", "venue", "sport", "batch", "session", "attendance", "workoutPlan", "planAssignment", "workoutLog", "goal", "sessionBooking", "memberUpdate", "exercise", "magicLink", "authSession", "coachAvailability", "tenantSettings", "holiday", "excusedAbsence", "coachCredential", "progressNote", "progressCardLink", "workoutSet", "classSummary", "classSummaryShare", "skillChecklist", "skillItem", "skillSignOff", "level", "planFolder", "bodyMeasurement"] as const;
 
 /** All row ids of a tenant (for response leakage checks) and per-table counts (for write checks). */
 export async function tenantIds(prisma: PrismaClient, tenantId: string): Promise<Set<string>> {

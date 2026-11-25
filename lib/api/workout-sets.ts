@@ -179,20 +179,34 @@ function parseInput(body: unknown): Input {
   return { clientId, assignmentId, planItemId, memberId, scheduledFor, note, complete: body.complete === true, sets };
 }
 
-/** History of one member and exercise: every set row with its log date, oldest first. */
-async function loadHistory(db: TenantClient, memberId: string, exerciseId: string) {
+type LoggedSession = { logId: string; date: string; status: WorkoutLogStatus; note: string | null; rows: SetRow[] };
+
+/** History of one member for several exercises in one query: every set row with its log date, oldest first, per exercise. */
+async function loadHistories(db: TenantClient, memberId: string, exerciseIds: readonly string[]) {
+  const out = new Map<string, LoggedSession[]>(exerciseIds.map((id) => [id, []]));
+  if (exerciseIds.length === 0) return out;
   const rows = await db.workoutSet.findMany({
-    where: { log: { memberId, planItem: { exerciseId } } },
-    include: { log: { select: { id: true, scheduledFor: true, status: true, note: true } } },
+    where: { log: { memberId, planItem: { exerciseId: { in: [...exerciseIds] } } } },
+    include: { log: { select: { id: true, scheduledFor: true, status: true, note: true, planItem: { select: { exerciseId: true } } } } },
     orderBy: [{ log: { scheduledFor: "asc" } }, { setNumber: "asc" }, { completedAt: "asc" }, { id: "asc" }],
   });
-  const byLog = new Map<string, { logId: string; date: string; status: WorkoutLogStatus; note: string | null; rows: SetRow[] }>();
+  const byLog = new Map<string, LoggedSession>();
+  const exerciseOf = new Map<string, string>();
   for (const r of rows) {
     const cur = byLog.get(r.logId) ?? { logId: r.logId, date: dateFromDb(r.log.scheduledFor), status: r.log.status, note: r.log.note, rows: [] };
     cur.rows.push(r);
-    byLog.set(r.logId, cur);
+    if (!byLog.has(r.logId)) {
+      byLog.set(r.logId, cur);
+      exerciseOf.set(r.logId, r.log.planItem.exerciseId);
+    }
   }
-  return [...byLog.values()];
+  for (const [logId, sess] of byLog) out.get(exerciseOf.get(logId)!)!.push(sess);
+  return out;
+}
+
+/** History of one member and exercise: every set row with its log date, oldest first. */
+async function loadHistory(db: TenantClient, memberId: string, exerciseId: string) {
+  return (await loadHistories(db, memberId, [exerciseId])).get(exerciseId) ?? [];
 }
 
 /**
@@ -340,13 +354,52 @@ export async function listWorkoutSets(db: TenantClient, p: Principal, memberId: 
 
 /** GET /members/{memberId}/exercises/{exerciseId}/history (getExerciseHistory). */
 export async function getExerciseHistory(db: TenantClient, p: Principal, memberId: string, exerciseId: string, params: URLSearchParams, now = new Date()) {
+  const [one] = await getExerciseHistories(db, p, memberId, [exerciseId], params, now, true);
+  return one!;
+}
+
+/**
+ * getExerciseHistory for several exercises of one member with a fixed number of queries (STAR-102): the
+ * overview of every logged exercise no longer costs three queries per exercise. Same shape and order as the
+ * input ids; an unknown exercise id is a 404 when `strict`, and skipped otherwise.
+ */
+export async function getExerciseHistories(
+  db: TenantClient,
+  p: Principal,
+  memberId: string,
+  exerciseIds: readonly string[],
+  params: URLSearchParams,
+  now = new Date(),
+  strict = false,
+) {
   await assertCanViewMember(db, p, memberId);
-  const exercise = await db.exercise.findFirst({ where: { id: exerciseId }, select: { id: true, name: true, metricType: true } });
-  if (!exercise) throw new ApiError("not_found", "Exercise not found");
   const range = (enumParam(params, "range", HISTORY_RANGES) ?? "3m") as HistoryRange;
   const start = rangeStart(range, tenantDate(now));
+  const ids = [...new Set(exerciseIds)];
+  const [exercises, histories] = await Promise.all([
+    db.exercise.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, metricType: true } }),
+    loadHistories(db, memberId, ids),
+  ]);
+  const byId = new Map(exercises.map((e) => [e.id, e]));
+  const out: ReturnType<typeof buildExerciseHistory>[] = [];
+  for (const id of ids) {
+    const exercise = byId.get(id);
+    if (!exercise) {
+      if (strict) throw new ApiError("not_found", "Exercise not found");
+      continue;
+    }
+    out.push(buildExerciseHistory(memberId, exercise, histories.get(id) ?? [], range, start));
+  }
+  return out;
+}
 
-  const history = await loadHistory(db, memberId, exerciseId);
+function buildExerciseHistory(
+  memberId: string,
+  exercise: { id: string; name: string; metricType: string },
+  history: LoggedSession[],
+  range: HistoryRange,
+  start: string | null,
+) {
   const all: HistorySession[] = history.map((h) => ({ logId: h.logId, date: h.date, sets: h.rows.map(toSetLike) }));
   const inRange = history.filter((h) => start === null || h.date >= start);
   const inRangeSessions = all.filter((s) => start === null || s.date >= start);

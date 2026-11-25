@@ -9,6 +9,8 @@ import { BarChart, Donut, LineChart, ProgressRing } from "@/components/charts";
 import { BeltCard } from "@/components/skills/BeltCard";
 import { getMemberSkillProgress } from "@/lib/api/skills";
 import { beltCards, type SkillProgress } from "@/lib/skills/view";
+import { MuscleBars } from "@/components/muscle-volume/MuscleBars";
+import { getMuscleVolume } from "@/lib/api/muscle-volume";
 import { ChildSwitcher } from "@/components/customer/ChildSwitcher";
 import { NoMember } from "@/components/customer/NoMember";
 import { Badge, Card, EmptyState, PageHeader, ProgressBar, Segmented, StatGrid, StatTile } from "@/components/ui";
@@ -60,6 +62,14 @@ export async function ProgressScreen({ searchParams }: { searchParams: Search })
     console.error("belt card failed", err instanceof Error ? err.message : err);
   }
 
+  let muscles: Awaited<ReturnType<typeof getMuscleVolume>> | null = null;
+  try {
+    allow(principal, "getMuscleVolume");
+    muscles = await getMuscleVolume(db, principal, selected.id, new URLSearchParams({ range: "7d" }));
+  } catch (err) {
+    console.error("muscle volume failed", err instanceof Error ? err.message : err);
+  }
+
   const noData = t("cp.noData");
   const att = stats.attendance;
   const wk = stats.workouts;
@@ -81,6 +91,15 @@ export async function ProgressScreen({ searchParams }: { searchParams: Search })
       <Link className="btn btn-secondary" href="/customer/progress/week" data-testid="weekly-card-link">{t("pc.open")}</Link>
 
       <Link className="btn btn-secondary" href="/customer/progress/exercises" data-testid="exercises-link">{t("xp.link.exercises")}</Link>
+
+      <Link className="btn btn-secondary" href="/customer/progress/body" data-testid="body-link">{t("gx.bm.link")}</Link>
+      <Link className="btn btn-secondary" href="/customer/progress/muscles" data-testid="muscles-link">{t("gx.mv.link")}</Link>
+
+      {muscles?.hasGymData && muscles.muscles.length > 0 && (
+        <Card title={t("gx.mv.cardWeek")} actions={<Link href="/customer/progress/muscles">{t("gx.mv.seeAll")}</Link>}>
+          <MuscleBars rows={muscles.muscles.slice(0, 6)} t={t} weeks={muscles.weeks} />
+        </Card>
+      )}
 
       {belts.map((b) => (
         <BeltCard key={b.checklist.checklistId} model={b} href="/customer/progress/skills" />

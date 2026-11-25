@@ -2,7 +2,7 @@
  * STAR-91 / STAR-92: speed guards. The batched roster stats must equal getMemberStats per member,
  * every role route must sit under a loading skeleton, and navigation must use next/link (prefetch).
  */
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { PrismaClient } from "@prisma/client";
 import { tryConnect } from "./helpers-db";
@@ -72,6 +72,32 @@ describe("navigation speed", () => {
   });
   it("heavy owner routes have their own skeleton", () => {
     for (const s of ["dashboard", "batches", "coaches", "settings"]) expect(existsSync(root + `app/[role]/${s}/loading.tsx`), s).toBe(true);
+  });
+  it("the data-heavy screens added in later sprints have their own skeleton (STAR-102)", () => {
+    for (const s of [
+      "workouts/live",
+      "classes",
+      "progress/exercises",
+      "progress/skills",
+      "exercise/[exerciseId]",
+      "insights",
+      "plans/[planId]/results",
+      "plans/[planId]/send",
+    ]) {
+      expect(existsSync(root + `app/[role]/${s}/loading.tsx`), s).toBe(true);
+    }
+  });
+  it("every page under a role route sits under a loading skeleton", () => {
+    const walk = (dir: string, covered: boolean): string[] => {
+      const here = covered || existsSync(`${dir}/loading.tsx`);
+      const missing: string[] = [];
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        if (e.isDirectory()) missing.push(...walk(`${dir}/${e.name}`, here));
+        else if (e.name === "page.tsx" && !here) missing.push(dir);
+      }
+      return missing;
+    };
+    expect(walk(root + "app/[role]", false)).toEqual([]);
   });
   it("nav links are next/link with default prefetch", () => {
     const nav = read("components/NavLink.tsx");

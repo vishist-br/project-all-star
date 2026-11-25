@@ -1,6 +1,6 @@
-import { listPlanAssignments } from "@/lib/api/assignments";
+import { listAssignmentBriefs } from "@/lib/api/assignments";
 import { listMemberUpdates } from "@/lib/api/member-updates";
-import { getWorkoutPlan } from "@/lib/api/workout-plans";
+import { getPlanBriefs } from "@/lib/api/workout-plans";
 import { ApiError } from "@/lib/auth/errors";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
@@ -26,21 +26,14 @@ export async function NewFromCoach({ ctx, markRead = false }: { ctx: Ctx; markRe
   try {
     const [feed, assignments] = await Promise.all([
       listMemberUpdates(db, principal, selected.id, new URLSearchParams({ limit: "30" })),
-      listPlanAssignments(db, principal, new URLSearchParams({ memberId: selected.id, limit: "50" })),
+      listAssignmentBriefs(db, principal, selected.id, 50),
     ]);
-    const planIds = new Set(assignments.items.map((a) => a.planId));
-    const plans = new Map<string, InboxPlan>();
-    await Promise.all(
-      [...planIds].map(async (id) => {
-        try {
-          const p = await getWorkoutPlan(db, principal, id);
-          plans.set(id, { id, title: p.title, days: p.days.map((d) => ({ items: d.items.map((i) => ({ exerciseName: i.exerciseName })) })) });
-        } catch {
-          /* a plan the member cannot open simply has no preview */
-        }
-      }),
-    );
-    cards = buildInboxCards(feed.items, assignments.items, plans, t, locale, today);
+    // Previews are only needed for plans of unread "new plan" updates; one batched read for all of them.
+    const freshIds = new Set(feed.items.filter((u) => u.kind === "plan_assigned" && !u.read).map((u) => u.entityId));
+    const planIds = new Set(assignments.filter((a) => freshIds.has(a.id)).map((a) => a.planId));
+    const briefs = await getPlanBriefs(db, principal, [...planIds]);
+    const plans = new Map<string, InboxPlan>([...briefs].map(([id, b]) => [id, { id, title: b.title, days: b.days }]));
+    cards = buildInboxCards(feed.items, assignments, plans, t, locale, today);
   } catch (err) {
     if (!(err instanceof ApiError)) throw err;
     return <p className="muted small" role="status">{t("ib.loadError")}</p>;

@@ -5,7 +5,7 @@ import { isoWeekday } from "../workouts/expand";
 import { dateFromDb, dateToDb } from "../workouts/validate";
 import { extendsTimeline } from "./attendance";
 import { tenantDate } from "./pagination";
-import { STATS_MAX_DAYS, addDays, loadScheduledEntries, parseRange, startOfDay } from "./schedule";
+import { STATS_MAX_DAYS, addDays, loadScheduledEntries, parseRange, startOfDay, type ScheduledEntry } from "./schedule";
 
 /** `round(100 * a / b, 1)`, null when b is 0 (docs/PLAN-POC.md section 4). */
 export function pct(a: number, b: number): number | null {
@@ -52,7 +52,15 @@ export async function holidayDates(db: TenantClient, from: string, to: string): 
  * completed, non-holiday sessions in the range; a miss only counts when it extends the timeline
  * (plain ABSENT on a non-holiday session), so excused absences and holidays never count as missed.
  */
-export async function getMemberStats(db: TenantClient, p: Principal, memberId: string, params: URLSearchParams, now = new Date()) {
+export async function getMemberStats(
+  db: TenantClient,
+  p: Principal,
+  memberId: string,
+  params: URLSearchParams,
+  now = new Date(),
+  /** Entries already loaded for a range that covers [from, to] (STAR-102). */
+  preloaded?: ScheduledEntry[] | Promise<ScheduledEntry[]>,
+) {
   await assertCanViewMember(db, p, memberId);
   const today = tenantDate(now);
   const { from, to } = parseRange(params, today, { from: -29, to: 0 }, STATS_MAX_DAYS);
@@ -63,7 +71,7 @@ export async function getMemberStats(db: TenantClient, p: Principal, memberId: s
       select: { status: true, session: { select: { startsAt: true, endsAt: true } } },
     }),
     holidayDates(db, from, to),
-    loadScheduledEntries(db, [memberId], from, to),
+    preloaded ? Promise.resolve(preloaded).then((all) => all.filter((e) => e.date >= from && e.date <= to)) : loadScheduledEntries(db, [memberId], from, to),
     db.goal.groupBy({ by: ["status"], where: { memberId }, _count: { _all: true } }),
     db.memberLevel.findMany({
       where: { memberId },

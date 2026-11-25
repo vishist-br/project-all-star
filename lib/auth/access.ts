@@ -48,11 +48,28 @@ export function sessionWhere(p: Principal): Prisma.SessionWhereInput {
  * 404 when the row is not in the caller's tenant (or does not exist), 403 when it is in
  * the tenant but outside the caller's own view.
  */
+// STAR-102: a page checks the same member from several loaders (schedule, stats, updates, classes, skills).
+// A successful check is remembered for the lifetime of the (per-request) tenant client and principal, so
+// those loaders share one pair of queries. Failures are never cached.
+const viewMemo = new WeakMap<object, Map<string, Promise<void>>>();
+
 export async function assertCanViewMember(db: TenantClient, p: Principal, memberId: string): Promise<void> {
-  const inTenant = await db.member.findFirst({ where: { id: memberId }, select: { id: true } });
-  if (!inTenant) throw new ApiError("not_found", "Member not found");
-  const visible = await db.member.findFirst({ where: { id: memberId, ...memberWhere(p) }, select: { id: true } });
-  if (!visible) throw new ApiError("forbidden", "This member is outside your own view");
+  const key = `${p.role}|${p.userId}|${memberId}`;
+  const map = viewMemo.get(db) ?? new Map<string, Promise<void>>();
+  viewMemo.set(db, map);
+  const seen = map.get(key);
+  if (seen) return seen; // also joins a check that is still running (loaders fired in parallel)
+  const check = (async () => {
+    const [inTenant, visible] = await Promise.all([
+      db.member.findFirst({ where: { id: memberId }, select: { id: true } }),
+      db.member.findFirst({ where: { id: memberId, ...memberWhere(p) }, select: { id: true } }),
+    ]);
+    if (!inTenant) throw new ApiError("not_found", "Member not found");
+    if (!visible) throw new ApiError("forbidden", "This member is outside your own view");
+  })();
+  map.set(key, check);
+  check.catch(() => map.delete(key));
+  return check;
 }
 
 export async function assertCanViewBatch(db: TenantClient, p: Principal, batchId: string): Promise<void> {

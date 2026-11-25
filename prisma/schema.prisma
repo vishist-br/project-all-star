@@ -52,6 +52,8 @@ model Tenant {
   skillChecklists   SkillChecklist[]
   skillItems        SkillItem[]
   skillSignOffs     SkillSignOff[]
+  planFolders       PlanFolder[]
+  bodyMeasurements  BodyMeasurement[]
 
   @@map("tenants")
 }
@@ -82,6 +84,7 @@ model User {
   awarded             MemberLevel[]       @relation("LevelAwardedBy")
   goalsSet            Goal[]              @relation("GoalCreatedBy")
   plans               WorkoutPlan[]       @relation("PlanCoach")
+  planFolders         PlanFolder[]        @relation("PlanFolderCoach")
   assignmentsBy       PlanAssignment[]    @relation("AssignmentBy")
   workoutLogsBy       WorkoutLog[]        @relation("WorkoutLogBy")
   updatesActed        MemberUpdate[]      @relation("MemberUpdateActor")
@@ -236,23 +239,24 @@ model Member {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @default(now()) @updatedAt
 
-  tenant        Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  guardian      Guardian?           @relation(fields: [guardianId], references: [id], onDelete: SetNull)
-  user          User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
-  enrollments   BatchMember[]
-  attendance    Attendance[]
-  excused       ExcusedAbsence[]
-  progressNotes ProgressNote[]
-  progressLinks ProgressCardLink[]
-  levelHistory  MemberLevel[]
-  goals         Goal[]
-  achievements  Achievement[]
-  assignments   PlanAssignment[]
-  workoutLogs   WorkoutLog[]
-  updates       MemberUpdate[]
-  bookings      SessionBooking[]
-  signOffs      SkillSignOff[]
-  shares        ClassSummaryShare[]
+  tenant           Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  guardian         Guardian?           @relation(fields: [guardianId], references: [id], onDelete: SetNull)
+  user             User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  enrollments      BatchMember[]
+  attendance       Attendance[]
+  excused          ExcusedAbsence[]
+  progressNotes    ProgressNote[]
+  progressLinks    ProgressCardLink[]
+  levelHistory     MemberLevel[]
+  goals            Goal[]
+  achievements     Achievement[]
+  assignments      PlanAssignment[]
+  workoutLogs      WorkoutLog[]
+  updates          MemberUpdate[]
+  bookings         SessionBooking[]
+  signOffs         SkillSignOff[]
+  shares           ClassSummaryShare[]
+  bodyMeasurements BodyMeasurement[]
 
   @@index([tenantId, isActive])
   @@index([tenantId, guardianId])
@@ -718,17 +722,66 @@ model WorkoutPlan {
   sportSlug   String?          @map("sport_slug")
   status      PlanStatus       @default(ACTIVE)
   version     Int              @default(1)
+  folderId    String?          @map("folder_id")
+  isTemplate  Boolean          @default(false) @map("is_template")
   archivedAt  DateTime?        @map("archived_at")
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @default(now()) @updatedAt
   tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   coach       User             @relation("PlanCoach", fields: [coachId], references: [id], onDelete: Restrict)
+  folder      PlanFolder?      @relation(fields: [folderId], references: [id], onDelete: SetNull)
   days        WorkoutPlanDay[]
   assignments PlanAssignment[]
 
   @@index([tenantId, coachId, status])
   @@index([tenantId, status])
+  @@index([tenantId, folderId])
   @@map("workout_plans")
+}
+
+// A coach's (or the owner's) own folder for organising plans. Deleting a folder moves its plans out.
+model PlanFolder {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  coachId   String   @map("coach_id") // creator, User with role COACH or OWNER
+  name      String
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  coach  User          @relation("PlanFolderCoach", fields: [coachId], references: [id], onDelete: Cascade)
+  plans  WorkoutPlan[]
+
+  @@index([tenantId, coachId, sortOrder])
+  @@map("plan_folders")
+}
+
+// Personal body numbers of a member. Visible to the member, their guardian and the member's coach
+// and owner only. One row per member and day; recording again for the same day replaces it.
+model BodyMeasurement {
+  id           String   @id @default(cuid())
+  tenantId     String   @map("tenant_id")
+  memberId     String   @map("member_id")
+  measuredOn   DateTime @map("measured_on") @db.Date
+  weightKg     Decimal  @map("weight_kg") @db.Decimal(5, 1)
+  bodyFatPct   Decimal? @map("body_fat_pct") @db.Decimal(4, 1)
+  chestCm      Decimal? @map("chest_cm") @db.Decimal(4, 1)
+  waistCm      Decimal? @map("waist_cm") @db.Decimal(4, 1)
+  hipCm        Decimal? @map("hip_cm") @db.Decimal(4, 1)
+  armCm        Decimal? @map("arm_cm") @db.Decimal(4, 1)
+  thighCm      Decimal? @map("thigh_cm") @db.Decimal(4, 1)
+  note         String?
+  recordedById String?  @map("recorded_by_id")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, memberId, measuredOn])
+  @@index([tenantId, memberId, measuredOn])
+  @@map("body_measurements")
 }
 
 model WorkoutPlanDay {

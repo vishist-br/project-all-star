@@ -10,9 +10,9 @@ describe("role navigation", () => {
   });
   it("lists every top-level screen of each role, so none is reachable only by a link", () => {
     const has = (r: (typeof ROLES)[number], s: string) => expect(findNavItem(r, s), `${r}/${s}`).toBeDefined();
-    for (const s of ["dashboard", "members", "members/import", "batches", "coaches", "insights", "workouts", "holidays", "settings"]) has("owner", s);
+    for (const s of ["dashboard", "members", "members/import", "batches", "coaches", "plans", "insights", "workouts", "holidays", "settings"]) has("owner", s);
     for (const s of ["today", "today/week", "today/availability", "members", "plans", "workouts", "record"]) has("coach", s);
-    for (const s of ["home", "workouts", "schedule", "progress", "classes", "updates", "absences", "profile"]) has("customer", s);
+    for (const s of ["home", "workouts", "workouts/live", "schedule", "progress", "progress/week", "progress/exercises", "progress/skills", "progress/body", "progress/muscles", "classes", "updates", "absences", "profile"]) has("customer", s);
   });
   it("every label key exists in locale files", () => {
     for (const r of ROLES) for (const i of NAV[r]) expect(messages.en[i.label]).toBeTruthy();

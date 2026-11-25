@@ -222,6 +222,8 @@ export function planDto(plan: PlanRow) {
     sportSlug: plan.sportSlug,
     status: lower(plan.status),
     version: plan.version,
+    folderId: plan.folderId,
+    isTemplate: plan.isTemplate,
     coachId: plan.coachId,
     coachName: plan.coach.name,
     activeAssignmentCount: plan._count.assignments,
@@ -258,36 +260,157 @@ export async function listWorkoutPlans(db: TenantClient, p: Principal, params: U
   if (status) and.push({ status: status.toUpperCase() as PlanStatus });
   const q = params.get("q")?.trim();
   if (q) and.push({ title: { contains: q, mode: "insensitive" } });
+  // Templates are starting points, listed by listPlanTemplates; the plan list holds real plans only.
+  and.push({ isTemplate: false });
+  const folderId = params.get("folderId");
+  if (folderId) and.push({ folderId: folderId === "none" ? null : folderId });
   const rows = await db.workoutPlan.findMany({
     where: { AND: and },
     orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
-    include: {
-      coach: { select: { name: true } },
-      days: { select: { items: { select: { archivedAt: true } } } },
-      _count: { select: { assignments: { where: { status: "ACTIVE" } } } },
-    },
+    include: summaryInclude,
     ...args,
   });
   const page = toPage(rows, limit);
   return {
-    items: page.rows.map((r) => {
-      const live = r.days.map((d) => d.items.filter((i) => !i.archivedAt).length);
-      return {
-        id: r.id,
-        title: r.title,
-        cadence: lower(r.cadence),
-        status: lower(r.status),
-        version: r.version,
-        coachId: r.coachId,
-        coachName: r.coach.name,
-        dayCount: r.days.filter((d, i) => d.items.length === 0 || live[i] > 0).length,
-        itemCount: live.reduce((a, b) => a + b, 0),
-        activeAssignmentCount: r._count.assignments,
-        updatedAt: r.updatedAt.toISOString(),
-      };
-    }),
+    items: page.rows.map(planSummaryDto),
     nextCursor: page.nextCursor,
   };
+}
+
+const summaryInclude = {
+  coach: { select: { name: true } },
+  days: { select: { items: { select: { archivedAt: true } } } },
+  _count: { select: { assignments: { where: { status: "ACTIVE" } } } },
+} satisfies Prisma.WorkoutPlanInclude;
+
+export function planSummaryDto(r: Prisma.WorkoutPlanGetPayload<{ include: typeof summaryInclude }>) {
+  const live = r.days.map((d) => d.items.filter((i) => !i.archivedAt).length);
+  return {
+    id: r.id,
+    title: r.title,
+    cadence: lower(r.cadence),
+    status: lower(r.status),
+    version: r.version,
+    folderId: r.folderId,
+    isTemplate: r.isTemplate,
+    coachId: r.coachId,
+    coachName: r.coach.name,
+    dayCount: r.days.filter((d, i) => d.items.length === 0 || live[i] > 0).length,
+    itemCount: live.reduce((a, b) => a + b, 0),
+    activeAssignmentCount: r._count.assignments,
+    updatedAt: r.updatedAt.toISOString(),
+  };
+}
+
+/** GET /plan-templates (listPlanTemplates): the caller's own templates (owner: every template), newest first. */
+export async function listPlanTemplates(db: TenantClient, p: Principal) {
+  const rows = await db.workoutPlan.findMany({
+    where: { AND: [planWhere(p), { isTemplate: true, status: { not: "ARCHIVED" } }] },
+    orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
+    include: summaryInclude,
+    take: 100,
+  });
+  return { items: rows.map(planSummaryDto) };
+}
+
+/**
+ * POST /workout-plans/{planId}/duplicate (duplicatePlan). Copies the plan's live days and items into a
+ * new plan owned by the caller. `asTemplate: true` saves a template; copying a template with
+ * `asTemplate: false` (the default) makes a real plan from it ("use template"). The copy is a
+ * fresh plan: version 1, no assignments, same folder unless `folderId` says otherwise.
+ */
+export async function duplicatePlan(db: TenantClient, p: Principal, planId: string, body: unknown) {
+  const input = body === undefined || body === null ? {} : body;
+  if (!isRecord(input)) throw new ApiError("validation_failed", "Body must be a JSON object");
+  const v = new Problems();
+  let title: string | null = null;
+  if (input.title !== undefined && input.title !== null) {
+    if (typeof input.title === "string" && input.title.trim().length >= 1 && input.title.trim().length <= 80) title = input.title.trim();
+    else v.add("title", "Text 1..80 characters");
+  }
+  let asTemplate = false;
+  if (input.asTemplate !== undefined) {
+    if (typeof input.asTemplate === "boolean") asTemplate = input.asTemplate;
+    else v.add("asTemplate", "Boolean");
+  }
+  let folderId: string | null | undefined;
+  if (input.folderId !== undefined) {
+    if (input.folderId === null || (typeof input.folderId === "string" && input.folderId.length > 0)) folderId = input.folderId as string | null;
+    else v.add("folderId", "Folder id or null");
+  }
+  v.throwIfAny();
+
+  await assertCanEditPlan(db, p, planId);
+  const src = await db.workoutPlan.findFirst({
+    where: { id: planId },
+    include: { days: { orderBy: { dayIndex: "asc" }, include: { items: { where: { archivedAt: null }, orderBy: [{ position: "asc" }, { id: "asc" }] } } } },
+  });
+  if (!src) throw new ApiError("not_found", "Plan not found");
+  if (folderId) await assertFolderUsable(db, p, folderId);
+
+  const fromTemplate = src.isTemplate && !asTemplate;
+  const finalTitle = title ?? (fromTemplate ? src.title : `${src.title.slice(0, 73)} (copy)`);
+  const days = src.days.filter((d) => d.items.length > 0);
+  const created = await db.workoutPlan.create({
+    data: {
+      coachId: p.userId,
+      title: finalTitle,
+      description: src.description,
+      cadence: src.cadence,
+      sportSlug: src.sportSlug,
+      status: src.status === "ARCHIVED" ? "ACTIVE" : src.status,
+      isTemplate: asTemplate,
+      folderId: folderId === undefined ? (fromTemplate || asTemplate ? null : src.folderId) : folderId,
+      days: {
+        create: days.map((d) => ({
+          tenantId: p.tenantId,
+          dayIndex: d.dayIndex,
+          title: d.title,
+          notes: d.notes,
+          items: {
+            create: d.items.map((i) => ({
+              tenantId: p.tenantId,
+              exerciseId: i.exerciseId,
+              position: i.position,
+              sets: i.sets,
+              reps: i.reps,
+              durationSeconds: i.durationSeconds,
+              restSeconds: i.restSeconds,
+              supersetGroup: i.supersetGroup,
+              rounds: i.rounds,
+              targetWeightKg: i.targetWeightKg,
+              targetDistanceMeters: i.targetDistanceMeters,
+              notes: i.notes,
+            })),
+          },
+        })),
+      },
+    } as never,
+    select: { id: true },
+  });
+  return loadPlanDto(db, created.id);
+}
+
+/** A folder the caller may file plans in: owner any folder of the business, coach only their own. */
+export async function assertFolderUsable(db: TenantClient, p: Principal, folderId: string): Promise<void> {
+  const row = await db.planFolder.findFirst({ where: { id: folderId }, select: { coachId: true } });
+  if (!row) throw new ApiError("not_found", "Folder not found");
+  if (p.role !== "owner" && row.coachId !== p.userId) throw new ApiError("forbidden", "This folder is not yours");
+}
+
+/** PUT /workout-plans/{planId}/folder (movePlanToFolder). `folderId: null` takes the plan out of its folder. */
+export async function movePlanToFolder(db: TenantClient, p: Principal, planId: string, body: unknown) {
+  if (!isRecord(body) || !("folderId" in body)) throw new ApiError("validation_failed", "Body must be an object with folderId", [{ field: "folderId", message: "Folder id or null" }]);
+  const folderId = body.folderId;
+  if (folderId !== null && (typeof folderId !== "string" || folderId.length === 0)) {
+    throw new ApiError("validation_failed", "folderId must be a folder id or null", [{ field: "folderId", message: "Folder id or null" }]);
+  }
+  await assertCanEditPlan(db, p, planId);
+  if (folderId !== null) await assertFolderUsable(db, p, folderId as string);
+  await db.workoutPlan.update({ where: { id: planId }, data: { folderId: folderId as string | null } });
+  const row = await db.workoutPlan.findFirst({ where: { id: planId }, include: summaryInclude });
+  if (!row) throw new ApiError("not_found", "Plan not found");
+  return planSummaryDto(row);
 }
 
 /** POST /workout-plans (createWorkoutPlan). The caller (owner or coach) is the creator. */
@@ -330,6 +453,34 @@ export async function createWorkoutPlan(db: TenantClient, p: Principal, body: un
     select: { id: true },
   });
   return loadPlanDto(db, created.id);
+}
+
+export type PlanBrief = { id: string; title: string; description: string | null; days: { items: { exerciseName: string }[] }[] };
+
+/**
+ * Title, description and exercise names of several plans in one round of queries (STAR-102), for cards
+ * that preview many plans at once. Same visibility as getWorkoutPlan: plans outside the caller's view
+ * are simply absent from the map instead of throwing.
+ */
+export async function getPlanBriefs(db: TenantClient, p: Principal, planIds: readonly string[]): Promise<Map<string, PlanBrief>> {
+  const out = new Map<string, PlanBrief>();
+  if (planIds.length === 0) return out;
+  const rows = await db.workoutPlan.findMany({
+    where: { id: { in: [...new Set(planIds)] }, ...planViewWhere(p) },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      days: {
+        orderBy: { dayIndex: "asc" },
+        select: { items: { where: { archivedAt: null }, orderBy: [{ position: "asc" }, { id: "asc" }], select: { exercise: { select: { name: true } } } } },
+      },
+    },
+  });
+  for (const r of rows) {
+    out.set(r.id, { id: r.id, title: r.title, description: r.description, days: r.days.map((d) => ({ items: d.items.map((i) => ({ exerciseName: i.exercise.name })) })) });
+  }
+  return out;
 }
 
 /** GET /workout-plans/{id} (getWorkoutPlan). 404 other tenant, 403 outside the caller's view. */

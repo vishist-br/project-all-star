@@ -118,6 +118,28 @@ export async function listPlanAssignments(db: TenantClient, p: Principal, params
   return { items: await toDtos(db, page.rows), nextCursor: page.nextCursor };
 }
 
+/**
+ * Lean listPlanAssignments for cards that only need the plan, dates, status and note (STAR-102): one
+ * query, no adherence maths (which reads every plan day and log). Same visibility and order.
+ */
+export async function listAssignmentBriefs(db: TenantClient, p: Principal, memberId: string, limit = 50) {
+  const rows = await db.planAssignment.findMany({
+    where: { AND: [assignmentWhere(p), { memberId }] },
+    orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+    take: Math.min(Math.max(limit, 1), 100),
+    select: { id: true, planId: true, status: true, startsOn: true, endsOn: true, note: true, plan: { select: { title: true } } },
+  });
+  return rows.map((r) => ({
+    id: r.id,
+    planId: r.planId,
+    planTitle: r.plan.title,
+    status: r.status.toLowerCase(),
+    startsOn: dateFromDb(r.startsOn),
+    endsOn: r.endsOn ? dateFromDb(r.endsOn) : null,
+    note: r.note,
+  }));
+}
+
 /** POST /plan-assignments (createPlanAssignments). All or nothing; 409 for a duplicate active assignment. */
 export async function createPlanAssignments(db: TenantClient, p: Principal, body: unknown) {
   if (!isRecord(body)) throw new ApiError("validation_failed", "Body must be a JSON object");
@@ -141,11 +163,11 @@ export async function createPlanAssignments(db: TenantClient, p: Principal, body
   const note = textField(v, body, "note", "", 280);
   v.throwIfAny();
 
-  const plan = await db.workoutPlan.findFirst({ where: { id: planId! }, select: { id: true, title: true, status: true, version: true } });
+  const plan = await db.workoutPlan.findFirst({ where: { id: planId! }, select: { id: true, title: true, status: true, version: true, isTemplate: true } });
   if (!plan) throw new ApiError("not_found", "Plan not found");
   const mine = await db.workoutPlan.findFirst({ where: { id: plan.id, ...planWhere(p) }, select: { id: true } });
   if (!mine) throw new ApiError("forbidden", "This plan is not yours");
-  if (plan.status !== "ACTIVE") throw new ApiError("conflict", "Only an active plan can be assigned");
+  if (plan.status !== "ACTIVE" || plan.isTemplate) throw new ApiError("conflict", "Only an active plan can be assigned (a template is a starting point: use it to make a plan first)");
 
   const inTenant = await db.member.findMany({ where: { id: { in: memberIds } }, select: { id: true, isActive: true } });
   if (inTenant.length !== memberIds.length) throw new ApiError("not_found", "Member not found");
