@@ -38,15 +38,18 @@ STAR-98 | Parent OTP sign-in (skipped by the user for now; needs messaging provi
 
 ## In Progress
 
-STAR-108 | Workout engine UI A: customer live workout (per-set logging, supersets, rest timer, offline sets) and coach superset plan builder | Frontend agent "Workout" | STAR-107 | claimed 2026-11-25, branch star-108-live-workout
-STAR-110 | Workout engine UI B: coach send step, member inbox, coach results view, class workout attach, finish class and send, member class summaries, public /share/class/[token] | Frontend agent "Send and classes" | STAR-107 | claimed 2026-11-25, branch star-110-send-and-classes
-STAR-112 | Workout engine UI C: exercise Progress/History/How to, belts and skills, owner class insights | Frontend agent "Progress and insights" | STAR-107 | claimed 2026-11-25, branch star-112-history-belts-insights
 
 ## Blocked
 
 (none)
 
 ## Completed
+
+- STAR-112 | Workout engine UI C: exercise Progress/History/How to, belts and skills, owner class insights | merged into main 2026-11-26 | Notion In Review pending (maintainer sets). Migration none beyond STAR-107's 20261125090000_workout_engine_core (NOT applied to Neon). Hi/kn strings are drafts needing native-speaker review. See agent reports in the session; known gaps: no delete-set op, no 'each side' for reps, reply-to-member note overwrites the assignment note, no skill checklist authoring screen.
+
+- STAR-110 | Workout engine UI B: coach send step, member inbox, coach results view, class workout attach, finish class and send, member class summaries, public /share/class/[token] | merged into main 2026-11-26 | Notion In Review pending (maintainer sets). Migration none beyond STAR-107's 20261125090000_workout_engine_core (NOT applied to Neon). Hi/kn strings are drafts needing native-speaker review. See agent reports in the session; known gaps: no delete-set op, no 'each side' for reps, reply-to-member note overwrites the assignment note, no skill checklist authoring screen.
+
+- STAR-108 | Workout engine UI A: customer live workout (per-set logging, supersets, rest timer, offline sets) and coach superset plan builder | merged into main 2026-11-26 | Notion In Review pending (maintainer sets). Migration none beyond STAR-107's 20261125090000_workout_engine_core (NOT applied to Neon). Hi/kn strings are drafts needing native-speaker review. See agent reports in the session; known gaps: no delete-set op, no 'each side' for reps, reply-to-member note overwrites the assignment note, no skill checklist authoring screen.
 
 - STAR-99 | Sprint 3 migrations applied to Neon, demo re-seeded, main pushed | Planner | user approval | 2026-11-25 | live pages checked over HTTP (owner/coaches, coach/record, customer/profile, customer/progress/week, owner/holidays, customer/absences all 200).
 - STAR-107 | Workout engine core: schema, contract 0.3.0, 17 operations, seed | Backend agent | none | 2026-11-25 | Merged into main (05b2232), migration 20261125090000_workout_engine_core NOT applied to Neon. vitest 1116 passed, typecheck and lint clean.
