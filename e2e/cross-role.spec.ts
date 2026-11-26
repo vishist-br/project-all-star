@@ -459,15 +459,23 @@ test("(5) import: new members appear in the owner list and never in another tena
     await p.goto("/owner/members/import");
     await ex(p.getByRole("heading", { level: 1, name: "Import members from CSV" })).toBeVisible();
     const csv = ["name,phone,email,guardian_name,guardian_phone,batch_name,sport,level,goal,join_date,fee_status", ...names.map((n, i) => `${n},+9190001${u.length}${i}${String(i).padStart(3, "0")},,,,,,,,${istToday()},paid`)].join("\n");
-    // The file input can be chosen before the page has hydrated (the change is then lost): choose again until the review shows.
+    const imported = () => withDb((db) => db.member.count({ where: { displayName: { in: names } } }));
+    // `next dev` can full-reload the page while another route compiles, which loses the screen's state (the review, or
+    // the result after the import). Redo the flow until the import shows its result; a repeat never imports twice.
     await expect(async () => {
-      await p.getByTestId("file-input").setInputFiles({ name: "qa75.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
-      await expect(p.getByTestId("review")).toBeVisible({ timeout: 8_000 });
-    }).toPass({ timeout: 90_000 });
-    await ex(p.getByTestId("review")).toContainText("3 new members are ready to import.");
-    await p.getByTestId("confirm-import").click();
-    await p.getByRole("button", { name: "Yes, import" }).click();
-    await ex(p.getByTestId("done")).toContainText("3 members added to your business.");
+      if ((await imported()) === 3) return; // an earlier attempt imported them; only its result screen was lost
+      await p.goto("/owner/members/import");
+      // The file input can be chosen before the page has hydrated (the change is then lost): choose again until the review shows.
+      await expect(async () => {
+        await p.getByTestId("file-input").setInputFiles({ name: "qa75.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
+        await expect(p.getByTestId("review")).toBeVisible({ timeout: 8_000 });
+      }).toPass({ timeout: 90_000 });
+      await ex(p.getByTestId("review")).toContainText("3 new members are ready to import.");
+      await p.getByTestId("confirm-import").click();
+      await p.getByRole("button", { name: "Yes, import" }).click();
+      await ex(p.getByTestId("done")).toContainText("3 members added to your business.", { timeout: 20_000 });
+    }).toPass({ timeout: 180_000 });
+    expect(await imported()).toBe(3);
 
     await p.goto("/owner/members");
     for (const n of names) await ex(p.getByText(n)).toBeVisible();
