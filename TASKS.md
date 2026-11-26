@@ -23,7 +23,6 @@ Format: `ID | title | owner agent | depends on | wave`
 Sprint 4 (verify what is built, finish the speed work, then the stretch features). Wave 1 first; wave 2 starts after wave 1 is merged and demos are done.
 
 STAR-99 | Ship Sprint 3 data: apply migrations 20261123140000_coach_credentials and _progress_card to Neon, re-seed demo, push main, verify live pages | Planner | human approval | wave 0
-STAR-100 | Full Playwright e2e on main in open POC mode: fix failures, de-flake tests/seed.test.ts and tests/seed-rich-qa.test.ts under load | QA agent | STAR-99 | wave 1
 STAR-101 | Mobile click-through QA of every nav entry per role at 360px on the live site (holidays, absences, credentials, weekly card, /card/<token>); file bugs | QA agent | STAR-99 | wave 1
 STAR-103 | Owner and coach record an excused absence on behalf of a family (reuses STAR-95 rules) | Coach agent | none | wave 2
 STAR-104 | QR check-in (stretch, per-session token, coach confirms) | Customer agent | STAR-100 | wave 2
@@ -42,6 +41,8 @@ STAR-98 | Parent OTP sign-in (skipped by the user for now; needs messaging provi
 (none)
 
 ## Completed
+
+- STAR-100 | Full e2e on main: stale tests rewritten (nav, Finish class and send, open POC mode), races and flakes fixed, seed tests stable, a11y fixes on new screens | QA agent | merged 2026-11-26 | Notion In Review pending. Playwright 132/132 twice via scripts/e2e-sharded.sh (single-process run exhausts memory on 8 GB); vitest 1336 passed 4 times. Left: weekly card has two h1s; axe 'region' note for demo switcher and review banner.
 
 - STAR-114 | Gym extras: plan folders and templates, body measurements, muscle-group volume | Full-stack agent | merged 2026-11-26 | Notion In Review pending. Migration 20261126100000_gym_extras (additive; NOT applied to Neon). Screens /[role]/plans folders and templates, /customer/progress/body, /customer/progress/muscles. Gaps: no offline queue for measurements, no folder reorder UI.
 
