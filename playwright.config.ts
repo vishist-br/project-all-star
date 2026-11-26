@@ -13,6 +13,9 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   timeout: 60_000,
+  // `next dev` compiles each route on its first visit, which can take 10 s or more: the 5 s default made
+  // navigations flaky. Assertions still return as soon as they hold, so this only costs time on a real failure.
+  expect: { timeout: 30_000 },
   reporter: [["list"]],
   globalTeardown: "./e2e/global-teardown.ts",
   use: {

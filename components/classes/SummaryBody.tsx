@@ -20,11 +20,11 @@ export type SummaryBodyData = {
  * belt progress, practise at home. Shared by the member card, the member page and the public family page.
  * Titles come from message keys, never from English text. Only a first name is ever in the params.
  */
-export async function SummaryBody({ data, belt, headingLevel = 2 }: { data: SummaryBodyData; belt?: BeltLike | null; headingLevel?: 2 | 3 }) {
+export async function SummaryBody({ data, belt, headingLevel = 2 }: { data: SummaryBodyData; belt?: BeltLike | null; headingLevel?: 1 | 2 | 3 }) {
   const { t } = await getT();
   const tt = (k: string, p?: Params) => t(k as MessageKey, p);
   const blocks = workoutBlocks(data.workout, t);
-  const H = `h${headingLevel}` as "h2" | "h3";
+  const H = `h${headingLevel}` as "h1" | "h2" | "h3";
   return (
     <>
       <div>
@@ -38,7 +38,7 @@ export async function SummaryBody({ data, belt, headingLevel = 2 }: { data: Summ
         </blockquote>
       )}
       {blocks.length > 0 && (
-        <section aria-label={data.status === "present" ? t("csm.whatYouDid") : t("csm.whatWeCovered")} style={{ display: "grid", gap: "var(--s2)" }}>
+        <div role="group" aria-label={data.status === "present" ? t("csm.whatYouDid") : t("csm.whatWeCovered")} style={{ display: "grid", gap: "var(--s2)" }}>
           <p className={s.label}>{data.status === "present" ? t("csm.whatYouDid") : t("csm.whatWeCovered")}</p>
           {blocks.map((b, i) => (
             <div key={i} className={b.superset ? s.superset : undefined} role={b.superset ? "group" : undefined} aria-label={b.heading ?? undefined}>
@@ -53,7 +53,7 @@ export async function SummaryBody({ data, belt, headingLevel = 2 }: { data: Summ
               </ul>
             </div>
           ))}
-        </section>
+        </div>
       )}
       {belt && (
         <div className={s.belt}>

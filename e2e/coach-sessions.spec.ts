@@ -43,10 +43,15 @@ test.describe("coach sessions", () => {
   test("today, schedule, one-tap roll call, offline queue, complete, availability", async ({ page, context }) => {
     await signInAs(page, "demo-gym", "coach");
 
-    // Today, inside the coach nav (every coach screen plus More).
+    // Today, inside the coach nav. On a phone the bottom bar shows the four main screens plus More;
+    // the other screens are reached from the More page, which lists every coach screen.
     await page.goto("/coach");
     const nav = page.getByRole("navigation", { name: "Main navigation" });
-    await expect(nav.getByRole("link")).toHaveCount(7 + 1);
+    await expect(nav.getByRole("link")).toHaveCount(4 + 1);
+    await page.goto("/coach/more");
+    await expect(page.getByRole("heading", { level: 1, name: "More" })).toBeVisible();
+    await expect(page.locator("ul.more-list a")).toHaveCount(7);
+    await page.goto("/coach");
     // (The Next dev indicator covers the left-most nav item at 360px, so follow its href instead of clicking.)
     const todayHref = await nav.getByRole("link", { name: "Today" }).getAttribute("href");
     expect(todayHref).toBe("/coach/today");
@@ -108,7 +113,8 @@ test.describe("coach sessions", () => {
       await expect(rows(page).nth(3)).toContainText("Waiting to sync");
     }
     await expect(page.getByTestId("sync-status")).toContainText("saved on this device");
-    await expect(page.getByRole("button", { name: "Complete session" })).toBeDisabled();
+    // A group class is finished with "Finish class and send", which (unlike a one-on-one's Complete) can be queued offline.
+    await expect(page.getByRole("button", { name: "Finish class and send" })).toBeEnabled();
     const stored = await page.evaluate(() => Object.entries(localStorage).filter(([k]) => k.startsWith("rollcall.queue")).map(([, v]) => JSON.parse(v)));
     expect(stored.length).toBe(1);
     expect(stored[0].length).toBe(count > 4 ? 2 : 1);
@@ -129,13 +135,16 @@ test.describe("coach sessions", () => {
 
     // Complete with a note.
     await page.getByLabel("Session note (optional)").fill("Good energy today");
-    await page.getByRole("button", { name: "Complete session" }).click();
-    await expect(page.getByText("Session completed. Nice work!")).toBeVisible();
+    await page.getByRole("button", { name: "Finish class and send" }).click();
+    const finishSheet = page.getByRole("dialog", { name: "Finish class and send" });
+    await expect(finishSheet.getByLabel("Note to the class (optional)")).toHaveValue("Good energy today");
+    await finishSheet.getByRole("button", { name: "Finish and send" }).click();
+    await expect(page.getByText("Class finished", { exact: false }).first()).toBeVisible();
     await expect(page.getByText("Completed", { exact: true }).first()).toBeVisible();
     await page.reload();
     await expect(page.getByLabel("Session note (optional)")).toHaveValue("Good energy today");
     await expect(rowMain(page, 1)).toHaveAttribute("data-status", "absent");
-    await expect(page.getByRole("button", { name: "Complete session" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Finish class and send" })).toHaveCount(0);
 
     // Today and Week list it.
     await page.goto("/coach/today");

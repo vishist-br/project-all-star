@@ -49,8 +49,8 @@ export function ProgressChart({
   return (
     <figure className="chart xp-chart" data-testid="exercise-chart">
       <svg role="img" aria-label={labels.aria} viewBox={`0 0 ${W} ${H}`} className="chart-svg" preserveAspectRatio="xMidYMid meet">
-        {ticks.map((v) => (
-          <g key={v}>
+        {ticks.map((v, i) => (
+          <g key={`${v}-${i}`}>
             <line x1={PAD.l} x2={W - PAD.r} y1={yAt(v)} y2={yAt(v)} className="chart-grid" />
             <text x={PAD.l - 5} y={yAt(v) + 3.5} textAnchor="end" className="chart-text">{formatAxis(v)}</text>
           </g>
@@ -82,8 +82,8 @@ export function ProgressChart({
             </tr>
           </thead>
           <tbody>
-            {points.map((p) => (
-              <tr key={p.date}>
+            {points.map((p, i) => (
+              <tr key={`${p.date}-${i}`}>
                 <th scope="row">{formatDate(p.date)}</th>
                 <td>{formatValue(p.value)}{p.date === newBestDate ? `, ${labels.newBest}` : ""}</td>
               </tr>

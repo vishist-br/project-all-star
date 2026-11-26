@@ -96,10 +96,14 @@ test("log a superset round, rest timer, finish and summary", async ({ page, requ
   await expect(page.getByTestId("finish-summary")).toContainText("3");
   await expect(page.getByText(/No new bests this time|New best/)).toBeVisible();
 
-  // Saved on the server: three sets with the ticked values, bench weight 42.5 as typed.
-  const rows = await withDb((db) =>
-    db.workoutSet.findMany({ where: { log: { member: { displayName: A.name } } }, include: { log: { include: { planItem: { include: { exercise: true } } } } }, orderBy: { setNumber: "asc" } }),
-  );
+  // Saved on the server: three sets with the ticked values, bench weight 42.5 as typed. Finishing marks each
+  // exercise complete through the same queue as the sets, so poll the server.
+  const readRows = () =>
+    withDb((db) =>
+      db.workoutSet.findMany({ where: { log: { member: { displayName: A.name } } }, include: { log: { include: { planItem: { include: { exercise: true } } } } }, orderBy: { setNumber: "asc" } }),
+    );
+  await expect.poll(async () => (await readRows()).every((r) => r.log.status === "COMPLETED"), { timeout: 30_000 }).toBe(true);
+  const rows = await readRows();
   expect(rows).toHaveLength(3);
   const bench = rows.find((r) => r.log.planItem.exercise.name === BENCH)!;
   expect(Number(bench.weightKg)).toBe(42.5);

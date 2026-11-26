@@ -8,6 +8,7 @@
  * QB_DEBUG=1 prints every query, to find what a failing page added.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { seedDemo } from "../prisma/seed/demo";
 import { createElement, isValidElement, type ComponentType, type ReactNode } from "react";
 
 const h = vi.hoisted(() => {
@@ -126,6 +127,7 @@ const PAGES: {
 ];
 
 let ready = false;
+let seeded = false;
 beforeAll(async () => {
   if (!process.env.DATABASE_URL) {
     console.warn("[skip] DATABASE_URL is not set; query budgets need the seeded demo database.");
@@ -133,24 +135,31 @@ beforeAll(async () => {
   }
   const { prisma } = await import("../lib/db");
   try {
+    // Deterministic data: other test files leave the shared database on the base seed or with extra rows,
+    // so lay down the rich seed here (idempotent) and put the base seed back afterwards, as they do.
+    await seedDemo(prisma, { rich: true });
+    seeded = true;
     ready = (await prisma.tenant.count({ where: { slug: "demo-gym" } })) === 1;
   } catch {
     console.warn("[skip] Database unreachable or not migrated; query budgets not checked.");
   }
   if (!ready) console.warn("[skip] demo-gym is not seeded; run `npm run db:seed`.");
   else {
+    // A fixed seeded plan with assignments (the one the budgets were measured on).
     const plan = await prisma.workoutPlan.findFirst({
-      where: { tenant: { slug: "demo-gym" }, assignments: { some: {} } },
-      orderBy: { createdAt: "asc" },
+      where: { tenant: { slug: "demo-gym" }, id: "seed-demo-gym-r-we-plan-foundations", assignments: { some: {} } },
       select: { id: true, days: { select: { items: { select: { exerciseId: true }, take: 1 } }, take: 1 } },
     });
     ids.planId = plan?.id ?? "missing";
     ids.exerciseId = plan?.days[0]?.items[0]?.exerciseId ?? "missing";
   }
-});
+}, 120_000);
 afterAll(async () => {
-  if (ready) await (await import("../lib/db")).prisma.$disconnect();
-});
+  if (!ready && !seeded) return;
+  const { prisma } = await import("../lib/db");
+  if (seeded) await seedDemo(prisma);
+  await prisma.$disconnect();
+}, 120_000);
 beforeEach(() => {
   for (const m of h.memos) m.clear();
 });

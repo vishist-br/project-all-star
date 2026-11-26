@@ -50,6 +50,10 @@ test.setTimeout(300_000);
 test.beforeAll(async () => {
   const prisma = new PrismaClient({ datasources: { db: { url: scratchUrl() } } });
   try {
+    // Page size depends on how many rows the demo gym holds. Specs that run before this one in a full suite
+    // (CSV imports) add members, which would push the members list over its budget for reasons that are not a
+    // regression. Measure the seeded data: drop the members that are not seed rows (seed ids start with "seed-").
+    await prisma.member.deleteMany({ where: { tenant: { slug: "demo-gym" }, NOT: { id: { startsWith: "seed-" } } } });
     const plan = await prisma.workoutPlan.findFirst({
       where: { tenant: { slug: "demo-gym" }, assignments: { some: {} } },
       orderBy: { createdAt: "asc" },

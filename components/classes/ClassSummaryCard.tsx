@@ -16,7 +16,7 @@ const TONE: Record<string, Tone> = { present: "ok", absent: "info", excused: "ne
  * A member's class summary as a card: "Class summary, just now", the words, and Share with family.
  * `href` makes the title block a link to the class page (used in lists and on Home).
  */
-export async function ClassSummaryCard({ summary, belt, now = new Date(), href, share = true, headingLevel = 2 }: { summary: MemberSummary; belt?: BeltLike | null; now?: Date; href?: string; share?: boolean; headingLevel?: 2 | 3 }) {
+export async function ClassSummaryCard({ summary, belt, now = new Date(), href, share = true, headingLevel = 2 }: { summary: MemberSummary; belt?: BeltLike | null; now?: Date; href?: string; share?: boolean; headingLevel?: 1 | 2 | 3 }) {
   const { t, locale } = await getT();
   const f = summary.forMember;
   const when = whenText(relativeWhen(summary.publishedAt, now), t, (iso) => formatDay(iso.slice(0, 10), locale));

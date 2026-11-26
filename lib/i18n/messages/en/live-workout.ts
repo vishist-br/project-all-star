@@ -55,7 +55,7 @@ export const liveWorkout = {
   "lw.type.warmup": "Warm-up",
   "lw.type.drop": "Drop",
   "lw.type.failure": "Failure",
-  "lw.type.change": "Set {n} type: {type}. Change",
+  "lw.type.change": "{n} {type}. Change set type",
   "lw.row.tick": "Mark set {n} done, {name}",
   "lw.row.ticked": "Set {n} done, {name}",
   "lw.row.field": "{field}, set {n}, {name}",

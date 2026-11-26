@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 import { scratchUrl } from "./db";
+import { NAV } from "../lib/nav";
+import { messages } from "../lib/i18n";
 
 // Customer home and workouts (STAR-69): the seeded demo customers (rich seed: an active daily plan,
 // one workout done and one started today, bookings and unread updates).
@@ -28,9 +30,9 @@ const byName = (page: Page, name: string) => page.locator("li[data-status]").fil
 test("home shows today's items, start/complete/skip persist after a reload, with a rest timer", async ({ page, request }) => {
   await signIn(page, request, A1);
 
-  // Customer nav: five items, Home first.
+  // Customer nav: every customer screen in lib/nav.ts order (Home first), then More.
   const nav = page.getByRole("navigation", { name: "Main navigation" }).locator("a");
-  await expect(nav).toHaveText(["⌂Home", "✚Workouts", "◷Schedule", "▲Progress", "◐Classes", "✉Updates", "✎Plan an absence", "☺Profile", "⋯More"]);
+  await expect(nav).toHaveText([...NAV.customer.map((i) => `${i.icon}${messages.en[i.label]}`), "⋯More"]);
 
   // Seeded state today: one done, one in progress, the rest to do.
   const plan = page.getByRole("region", { name: A1.plan });
@@ -70,6 +72,14 @@ test("home shows today's items, start/complete/skip persist after a reload, with
 });
 
 test("updates: unread badge on home, feed rendered through i18n, opening marks everything read", async ({ page, request }) => {
+  // Start from the seeded state (unread updates): an earlier spec in the same run may have opened this member's feed.
+  const db = new PrismaClient({ datasources: { db: { url: scratchUrl() } } });
+  try {
+    const unread = await db.memberUpdate.updateMany({ where: { member: { user: { email: A1.email } } }, data: { readAt: null } });
+    expect(unread.count, "the member has updates in the seed").toBeGreaterThan(2);
+  } finally {
+    await db.$disconnect();
+  }
   await signIn(page, request, A1);
   const badge = page.locator("main").getByText(/^\d+ new$/);
   await expect(badge).toBeVisible();
@@ -137,6 +147,9 @@ test("workouts screen lists the assigned plans and the coming days; exercise det
   // Exercise detail from a coming-days link.
   await page.locator("ol > li ul a").first().click();
   await expect(page).toHaveURL(/\/customer\/exercise\//);
+  // The exercise page opens on Progress; the plan item and the catalog steps live under the How to tab.
+  await page.getByRole("tab", { name: "How to" }).click();
+  await expect(page).toHaveURL(/tab=howto/);
   await expect(page.getByRole("heading", { name: "In your plan" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "How to do it" })).toBeVisible();
   await expect(page.getByText("Main muscles")).toBeVisible();
@@ -155,7 +168,11 @@ test("a parent with several children switches between them", async ({ page, requ
     const group = page.getByRole("group", { name: "Choose whose day to view" });
     await expect(group.getByRole("button")).toHaveCount(2);
     await expect(page.getByRole("main")).toContainText("Sample Kid 01's day");
-    await group.getByRole("button", { name: "Sample Kid 02" }).click();
+    // A click that lands before the page has hydrated is swallowed: click again until the choice shows.
+    await expect(async () => {
+      await group.getByRole("button", { name: "Sample Kid 02" }).click();
+      await expect(group.getByRole("button", { name: "Sample Kid 02" })).toHaveAttribute("aria-pressed", "true", { timeout: 5_000 });
+    }).toPass({ timeout: 60_000 });
     await expect(page.getByRole("main")).toContainText("Sample Kid 02's day");
     await expect(group.getByRole("button", { name: "Sample Kid 02" })).toHaveAttribute("aria-pressed", "true");
     // The choice sticks across screens.

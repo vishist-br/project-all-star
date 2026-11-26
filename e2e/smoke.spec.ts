@@ -13,7 +13,18 @@ async function rootVar(page: Page, name: string) {
 }
 
 async function pick(page: Page, label: "Business" | "View as", value: string) {
+  // A change made before React hydrates the switcher is lost (no handler yet): wait until it is hydrated.
+  await page.waitForFunction(
+    (l) => {
+      const el = [...document.querySelectorAll(".demo-switcher label")].find((x) => x.textContent?.includes(l))?.querySelector("select");
+      return !!el && Object.keys(el).some((k) => k.startsWith("__reactProps"));
+    },
+    label,
+    { timeout: 60_000 },
+  );
   await page.getByRole("combobox", { name: label, exact: true }).selectOption(value);
+  // Choosing a role navigates to that role's home (router.push): wait for it, or a following goto races it.
+  if (label === "View as") await page.waitForURL(new RegExp(`/${value}(/|$)`), { timeout: 60_000 });
   // The switcher sets a cookie then router.refresh(); wait for the server render to settle.
   await page.waitForLoadState("networkidle");
 }
@@ -53,27 +64,48 @@ test.describe("(c) switch tenant in the UI", () => {
   });
 });
 
-test.describe("(d) each role sees only its own screens", () => {
+// Open POC mode (POC_OPEN=true, which is how the hosted POC runs): no sign-in, the URL decides the role, so every
+// screen of every role opens and renders with that role's own shell. With POC_OPEN unset or false (this harness's
+// default) the demo role cookie decides and another role's screens are refused. Run both:
+//   npx playwright test e2e/smoke.spec.ts                          (closed: other roles are refused)
+//   POC_OPEN=true npx playwright test e2e/smoke.spec.ts -g "(d)"   (open: role from the URL)
+const OPEN_POC = process.env.POC_OPEN === "true";
+
+test.describe(`(d) role screens, ${OPEN_POC ? "open POC mode: the role comes from the URL" : "POC_OPEN off: each role sees only its own screens"}`, () => {
+  // Every screen of every role is visited; the first visit to a route compiles it in `next dev`.
+  test.setTimeout(300_000);
   for (const role of ROLES) {
-    test(`${role}: own screens open, other roles' screens are refused`, async ({ page, context }) => {
+    test(`${role}: ${OPEN_POC ? "every role's screens open with that role's own shell" : "own screens open, other roles' screens are refused"}`, async ({ page, context }) => {
       await context.clearCookies();
       await page.goto("/");
+      if (OPEN_POC) {
+        // The landing page offers all three roles.
+        for (const r of ROLES) await expect(page.locator(`a[href="/${r}"]`).filter({ hasText: /Continue as/ })).toHaveCount(1);
+      }
+      // Choosing a role in the demo switcher goes straight to that role's home.
       await pick(page, "View as", role);
-      await expect(page.getByRole("link", { name: /Continue as/ })).toHaveAttribute("href", `/${role}`);
-      await page.goto(`/${role}`);
+      await expect(page).toHaveURL(new RegExp(`/${role}(/|$)`), { timeout: 60_000 }) // first visit compiles the route in `next dev`;
       const navLinks = page.getByRole("navigation", { name: "Main navigation" }).locator("a");
       await expect(navLinks).toHaveCount(NAV[role].length + 1);
       for (const item of NAV[role]) {
         await page.goto(`/${role}/${item.section}`);
         await expect(page.locator("section[role=alert]")).toHaveCount(0);
-        await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+        // (The weekly card screen shows the card's own title as a second h1.)
+        await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
       }
       for (const other of ROLES.filter((r) => r !== role)) {
         for (const path of [`/${other}`, ...NAV[other].map((i) => `/${other}/${i.section}`)]) {
           await page.goto(path);
-          await expect(page.locator("section[role=alert]"), path).toContainText("not available for your role");
-          // Shell stays the user's own: no link into the other role's screens.
-          await expect(page.locator(`nav a[href^="/${other}"]`), path).toHaveCount(0);
+          if (OPEN_POC) {
+            // Open: the URL decides the role, so the screen opens, in the shell of the role in the URL.
+            await expect(page.locator("section[role=alert]"), path).toHaveCount(0);
+            await expect(page.locator(`nav a[href^="/${other}/"]`).first(), path).toBeAttached();
+            await expect(page.locator(`nav a[href^="/${role}/"]`), path).toHaveCount(0);
+          } else {
+            await expect(page.locator("section[role=alert]"), path).toContainText("not available for your role");
+            // Shell stays the user's own: no link into the other role's screens.
+            await expect(page.locator(`nav a[href^="/${other}"]`), path).toHaveCount(0);
+          }
         }
       }
     });

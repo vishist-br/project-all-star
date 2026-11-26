@@ -34,8 +34,11 @@ async function findInWeeks(page: Page, pick: () => Locator, weeks = 4): Promise<
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Schedule");
     const hit = pick();
     if ((await hit.count()) > 0) return hit.first();
-    await page.getByRole("link", { name: "Next" }).click();
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Schedule");
+    // The heading is also on the page we are leaving, so wait for the new week itself: its Next link points further on.
+    const next = page.getByRole("link", { name: "Next" });
+    const href = await next.getAttribute("href");
+    await next.click();
+    await expect(page.getByRole("link", { name: "Next" })).not.toHaveAttribute("href", href!);
   }
   throw new Error("no matching session in the next weeks");
 }
