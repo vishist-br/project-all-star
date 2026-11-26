@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# Runs the whole Playwright suite (except the 40 minute ux-audit crawl) as four shards, one after the other.
+# Runs the whole Playwright suite (except the 40 minute ux-audit crawl) as five shards, one after the other.
 # Each shard starts its own `next dev` and scratch database. One long run compiles every route into a single
 # dev server whose memory grows until Next restarts it ("approaching the used memory threshold") or the OS
 # kills it on a small machine; that shows up as ECONNRESET, ERR_CONNECTION_REFUSED or pages stuck on Loading.
-# Usage: scripts/e2e-sharded.sh [port-base]   (default 3640; uses ports base..base+3 and DBs allstar_e2e_shard1..4)
+# Usage: scripts/e2e-sharded.sh [port-base]   (default 3640; uses ports base..base+4 and DBs allstar_e2e_shard1..5)
 set -u
 base="${1:-3640}"
 export E2E_WEBPACK="${E2E_WEBPACK:-1}"
 shards=(
   "e2e/coach-members e2e/coach-plans e2e/coach-sessions e2e/customer-schedule e2e/customer-workouts"
-  "e2e/cross-role e2e/owner-coaches e2e/owner-dashboard e2e/owner-import e2e/perf-budget"
+  "e2e/cross-role"
+  "e2e/owner-coaches e2e/owner-dashboard e2e/owner-import e2e/perf-budget"
   "e2e/gym-extras e2e/live-workout e2e/plan-supersets e2e/progress-insights e2e/send-classes"
   "e2e/smoke e2e/ux-new-screens"
 )
